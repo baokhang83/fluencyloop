@@ -653,15 +653,11 @@ the knowledge map (B) is derived rather than persisted anywhere.
 Consistent with how weaker ideas were killed before (LLM router, bandit, guardrails) and
 how mnemo-cache was built (small real thing, dogfooded):
 
-1. **Publish the essay** (LinkedIn post, drafted) — the demand probe. Names the pain,
-   coins FDD. Costs nothing, builds the position either way. Read the *nature* of responses:
-   "great post" + silence = position not product; "where do I get this?" = pull;
-   maintainer interest = a strong signal given the added project-level constitution.
-2. **Build the skills in parallel** — SpecKit's `speckit-constitution` is the structural
+1. **Build the skills in parallel** — SpecKit's `speckit-constitution` is the structural
    template for stage 1; `speckit-plan` for stage 2's per-feature design; `speckit-clarify`'s
    interactive one-at-a-time loop remains the template for stage 3's capture flow. Ship the
    `fluency feature` and `fluency backfill` command surface first.
-3. **Dogfood** on a real project (blastradius, or the next mnemo feature) for a week:
+2. **Dogfood** on a real project (blastradius, or the next mnemo feature) for a week:
    institute the constitution once, then run `fluency feature → design → build` on a couple
    of real features, and try `fluency backfill` on a PR that skipped the loop. Does staying
    fluent *feel* different from generic narration, and does the per-feature setup cost feel
@@ -692,7 +688,6 @@ publishing). No skill built yet. Next concrete steps:
 
 ## Standing principles
 
-- **Evidence over pitch** — probe demand cheaply before building; let responses decide.
 - **Stay out of the way** — never block the fast path; flag exposure, don't gate.
 - **The developer stays the architect** — the tool serves their authorship, not the reverse.
 - **Honest about tradeoffs** — no claim of free comprehension.
