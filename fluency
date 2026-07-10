@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# fluency — the FluencyLoop CLI dispatcher.
+#
+# Deterministic commands run directly; the interactive stages (constitution, feature,
+# review, backfill) are driven by the skills your coding agent loads from .claude/skills.
+# This dispatcher scaffolds a project and exposes the plumbing so the skills — or you — can
+# call it.
+#
+# Usage:
+#   fluency init                       scaffold .fluency/ + install skills into this repo
+#   fluency feature "<intent>"         declare a feature (branch + design stub)
+#   fluency session "<intent>"         open a session in the active feature
+#   fluency review [--base <ref>]      assemble the PR view for the active feature
+#   fluency help
+
+set -euo pipefail
+
+# Resolve the distribution's script dir whether run from a checkout or an installed .fluency.
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -d "$SELF/scripts/bash" ]; then
+    BIN="$SELF/scripts/bash"          # running from the fluency-loop checkout
+elif [ -d "$SELF/scripts" ] && [ -f "$SELF/scripts/common.sh" ]; then
+    BIN="$SELF/scripts"               # running from an installed .fluency/
+else
+    # Fall back to the current repo's installed copy.
+    ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+    BIN="${ROOT:+$ROOT/.fluency/scripts}"
+fi
+
+# Print the contiguous comment header (everything after the shebang, up to the first
+# non-comment line) with the leading "# " stripped.
+usage() { awk 'NR>1 && /^#/ {sub(/^# ?/,""); print; next} NR>1 {exit}' "${BASH_SOURCE[0]}"; }
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+    init)     exec bash "$BIN/init.sh" "$@" ;;
+    feature)  exec bash "$BIN/new-feature.sh" "$@" ;;
+    session)  exec bash "$BIN/new-session.sh" "$@" ;;
+    review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
+    help|-h|--help) usage ;;
+    *) echo "Unknown command: $cmd" >&2; usage >&2; exit 1 ;;
+esac
