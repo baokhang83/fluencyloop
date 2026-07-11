@@ -20,6 +20,15 @@ domain-dimensioned (e.g. "senior Java, reactive is new"). Use it to decide what 
 where to slow down. If it is missing, proceed and teach a little more until you learn what
 to skip — never block on it.
 
+**Never infer fluency from authorship.** That the developer wrote — or generated — the code
+you're touching does **not** mean they understand it. AI-generated / vibecoded code is
+exactly where the author is *least* fluent: they typed the intent, the model made the
+decisions. Git authorship tells you who committed it, not who can reason about it. So the
+default is to *explain how it works and check understanding*, not to skip on the basis of
+"they own this file." Fluency comes from being taught *through* the code (this loop), not
+from having produced it. Only the calibration profile or the developer's demonstrated
+engagement — never authorship — justifies skipping.
+
 ## 1. Declare the feature
 
 Take the user's one-line intent. Run:
@@ -31,20 +40,28 @@ Take the user's one-line intent. Run:
 This creates the `feature/<slug>` branch (switching to it), the feature dir, and a
 `design.md` stub. Parse the JSON for `slug`, `branch`, `design`, `sessions_dir`.
 
-## 2. Design (Stage 2) — diagrams first
+## 2. Design (Stage 2) — diagrams first, *shown* not filed
 
-Open the `design.md` stub. Draft the two defaults from the intent and the codebase:
+Draft the two defaults from the intent and the codebase:
 
 - a **class diagram** (the shapes and their relationships), and
 - a **sequence diagram** (the main flow).
 
-Keep both Mermaid blocks **top-level** (never nested inside another code fence) so GitHub
-renders them. Add an interaction/flow view only if it earns its place. Show the diagrams to
-the user, refine once with their input, and write them into `design.md`. Check them against
-the constitution — read `.fluencyloop/constitution.md`, and **if it's a pointer** (a
-`Source of truth:` line naming another file, e.g. `.specify/memory/constitution.md`), read
-*that* file for the real principles. If a shape conflicts with a principle, say so plainly;
-do not silently "fix" it.
+**Show them rendered — don't just write a file and point at it.** Publish the diagrams as a
+**self-contained Artifact** (a web page the user opens in a browser tab and actually sees) —
+load the `artifact-design` skill first. The Artifact CSP blocks external scripts, so you
+**cannot** pull Mermaid from a CDN: render the diagrams as **inline SVG** (or clean HTML/CSS)
+in the page itself, self-contained. Then walk the user through what they're looking at and
+invite reactions — this is a conversation, not a handoff.
+
+Persist the same diagrams as **Mermaid** in `design.md` (blocks **top-level**, never nested
+in another fence, so GitHub renders them) — that's the durable, committed copy. The Artifact
+is the "see it now" view; `design.md` is the record.
+
+Refine once with the user's input. Check the design against the constitution — read
+`.fluencyloop/constitution.md`, and **if it's a pointer** (a `Source of truth:` line naming
+another file, e.g. `.specify/memory/constitution.md`), read *that* file for the real
+principles. If a shape conflicts with a principle, say so plainly; do not silently "fix" it.
 
 Do not over-invest here: the design is a shape to build against, not a spec to ratify.
 
@@ -55,13 +72,20 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
 
 1. **Review what you just built.** Identify the **one or two real decisions** in that slice
    — a genuine fork where a reasonable alternative was rejected. Ignore non-decisions.
-2. **Teach the why**, calibrated:
-   - Skip what the profile says they already know.
-   - Slow down where they are on unfamiliar ground.
-   - Name where knowledge ends and trust begins — without drama.
+2. **Teach the why — live, in the conversation.** This is the *during*, so it happens *here*,
+   as an exchange — **not** by writing the journal and telling the user to go read it (that's
+   the *after*). For each decision:
+   - Explain the why and the rejected alternative in the chat, right now.
+   - **Pause and check understanding** — ask if it lands, and explicitly offer to go deeper
+     ("want me to unpack how X works, or is this enough to trust it?"). Then *wait* for the
+     answer before moving on. A monologue that ends in "see the journal" is the failure mode.
+   - Calibrate (see §0): skip only what the profile or their demonstrated engagement says
+     they know — **never** skip because they authored the code. Slow down on unfamiliar
+     ground. Name where knowledge ends and trust begins.
    - Tone: *"This is the right call here — here's the one-line why. If A and B feel shaky,
      that's where to dig, but you don't need to right now to trust this."* Not homework.
-3. **Journal it.** Open (or create) the slice's session file:
+3. **Journal it** *(the byproduct, after the live teaching — not instead of it)*. Open (or
+   create) the slice's session file:
 
    ```bash
    .fluencyloop/scripts/new-session.sh --json --slug "<feature-slug>" "<slice intent>"

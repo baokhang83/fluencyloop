@@ -35,11 +35,28 @@ Produce a concise, reviewer-facing summary:
   decision that was never checked. Flag as a surfaced note — never a blocker.
 - **Design pointer:** link the feature's `design.md` so the reviewer can see the shape.
 
-## 3. Output
+## 3. Output — create the PR, don't hand over text to paste
 
-Offer the summary as a PR description the user can paste. If they ask, write it to the PR
-body — but put any external link in the first comment, not the body. Do not open or merge
-the PR unless explicitly asked.
+The point is to remove friction, so **create a prepopulated PR** rather than leaving the user
+to copy-paste into GitHub.
+
+1. Make sure the branch is pushed (`git push -u origin <branch>` if it has no upstream).
+2. If `gh` is available (`command -v gh`), create the PR with the assembled view as the body:
+
+   ```bash
+   gh pr create --title "<feature intent>" --body-file <tmpfile>   # base defaults to main
+   ```
+
+   Confirm the title/base with the user first; show them the body you're about to use. On
+   success, give them the PR URL.
+3. If `gh` is **not** installed, don't dead-end into copy-paste silently — say so, and offer
+   the two fast paths: (a) `brew install gh && gh auth login`, then step 2; or (b) a
+   prepopulated compare URL, e.g.
+   `https://github.com/<owner>/<repo>/compare/main...<branch>?expand=1&title=<t>&body=<url-encoded>`
+   (note the URL length limit; fall back to pasting the body if it's too long).
+
+Put any external link in the PR's first comment, not the body. Do **not** merge the PR unless
+explicitly asked.
 
 ## Rules
 

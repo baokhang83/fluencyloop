@@ -404,6 +404,14 @@ from the dev's git history (languages, longevity, commit patterns) plus a couple
 first-run questions, then refines it as it teaches. It never blocks on a filled-in profile —
 an empty profile just means it teaches a little more until it learns what to skip.
 
+**Authorship is not fluency.** Calibration skips on *domain* knowledge, never on *authorship*.
+That a developer committed a file — especially AI-generated code they vibecoded — does not
+mean they can reason about it; it is often where they are *least* fluent, because they
+supplied the intent and the model supplied the decisions. Skipping teaching because "they
+wrote it" is precisely the erosion this whole project exists to catch. This is the same
+insight the knowledge map (B) formalizes: fluency is authorship *∩ having been taught through
+the code*, not authorship alone.
+
 ---
 
 ## Relationship to SpecKit / SDD
