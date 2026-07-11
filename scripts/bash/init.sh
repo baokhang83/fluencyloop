@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # init.sh — scaffold FluencyLoop state into the current repo (Stage 0, once per project).
-# Creates .fluency/ with a constitution stub and the features/ tree, and installs the
-# skills into .claude/skills so the interactive commands are available in this repo.
+# Creates .fluency/ with a constitution stub and the features/ tree. Skills are installed
+# user-wide by install.sh, so they are NOT vendored per-project unless you ask.
 #
-# Usage: init.sh [--json]
+# Usage: init.sh [--json] [--vendor-skills]
+#   --vendor-skills   also copy the skills into this repo's .claude/skills (commit them so
+#                     contributors get them on clone — the OSS/team case)
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,7 +13,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 JSON_MODE=false
-[ "${1:-}" = "--json" ] && JSON_MODE=true
+VENDOR_SKILLS=false
+for arg in "$@"; do
+    case "$arg" in
+        --json) JSON_MODE=true ;;
+        --vendor-skills) VENDOR_SKILLS=true ;;
+    esac
+done
 
 ROOT="$(repo_root)"
 if [ -z "$ROOT" ]; then
@@ -37,10 +45,12 @@ if [ ! -f "$CONSTITUTION" ]; then
     CREATED_CONSTITUTION=true
 fi
 
-# Install the interactive skills into this repo's .claude/skills.
-SKILLS_DEST="$ROOT/.claude/skills"
-mkdir -p "$SKILLS_DEST"
-if [ -d "$DIST_ROOT/skills" ]; then
+# Skills are user-wide (install.sh -> ~/.claude/skills). Only vendor them into the repo when
+# explicitly asked (so an OSS project can commit them for contributors).
+SKILLS_DEST=""
+if $VENDOR_SKILLS && [ -d "$DIST_ROOT/skills" ]; then
+    SKILLS_DEST="$ROOT/.claude/skills"
+    mkdir -p "$SKILLS_DEST"
     cp -R "$DIST_ROOT/skills/." "$SKILLS_DEST/"
 fi
 
@@ -57,9 +67,14 @@ if $JSON_MODE; then
         fluency_dir "$FLUENCY" \
         constitution "$CONSTITUTION" \
         constitution_created "$CREATED_CONSTITUTION" \
+        skills_vendored "$VENDOR_SKILLS" \
         skills_dir "$SKILLS_DEST"
 else
     echo "Initialised FluencyLoop in $FLUENCY"
     $CREATED_CONSTITUTION && echo "  constitution: $CONSTITUTION (stub — run fluency-constitution to fill it)"
-    echo "  skills:       $SKILLS_DEST"
+    if [ -n "$SKILLS_DEST" ]; then
+        echo "  skills:       $SKILLS_DEST (vendored into repo)"
+    else
+        echo "  skills:       user-wide (~/.claude/skills); pass --vendor-skills to commit them here"
+    fi
 fi

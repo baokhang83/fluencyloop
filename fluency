@@ -7,7 +7,7 @@
 # call it.
 #
 # Usage:
-#   fluency init                       scaffold .fluency/ + install skills into this repo
+#   fluency init                       scaffold .fluency/ state into this repo
 #   fluency feature "<intent>"         declare a feature (branch + design stub)
 #   fluency session "<intent>"         open a session in the active feature
 #   fluency review [--base <ref>]      assemble the PR view for the active feature
@@ -15,14 +15,27 @@
 
 set -euo pipefail
 
-# Resolve the distribution's script dir whether run from a checkout or an installed .fluency.
-SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve this script's real location, following symlinks (so a symlinked `fluency` on the
+# PATH still finds its own scripts). Portable: macOS `readlink` has no -f.
+resolve_self() {
+    local src="${BASH_SOURCE[0]}" dir
+    while [ -h "$src" ]; do
+        dir="$(cd -P "$(dirname "$src")" && pwd)"
+        src="$(readlink "$src")"
+        [[ $src != /* ]] && src="$dir/$src"
+    done
+    cd -P "$(dirname "$src")" && pwd
+}
+SELF="$(resolve_self)"
+
+# Find the scripts dir: the distribution checkout / install lib, or the current repo's
+# vendored copy after `fluency init`.
 if [ -d "$SELF/scripts/bash" ]; then
-    BIN="$SELF/scripts/bash"          # running from the fluency-loop checkout
+    BIN="$SELF/scripts/bash"          # running from the fluency-loop checkout or install lib
 elif [ -d "$SELF/scripts" ] && [ -f "$SELF/scripts/common.sh" ]; then
     BIN="$SELF/scripts"               # running from an installed .fluency/
 else
-    # Fall back to the current repo's installed copy.
+    # Fall back to the current repo's vendored copy.
     ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
     BIN="${ROOT:+$ROOT/.fluency/scripts}"
 fi
