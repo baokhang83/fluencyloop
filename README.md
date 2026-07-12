@@ -1,11 +1,25 @@
 <img width="1983" height="793" alt="image" src="https://github.com/user-attachments/assets/84b171e0-98ed-4fdc-9198-1aadfc35d369" />
 
-The code and your fluency in it are produced together, or not at all. See
-[MANIFESTO.md](MANIFESTO.md) for the why.
+# FluencyLoop
 
-FluencyLoop is a four-stage workflow, delivered as coding-agent **skills** + deterministic
-**bash scripts** + committed **state** in `.fluencyloop/` — the same three-layer shape as
-SpecKit, aimed at the opposite point on the timeline (during & after code, not before).
+[![License](https://img.shields.io/github/license/baokhang83/fluencyloop)](LICENSE)
+[![Top language](https://img.shields.io/github/languages/top/baokhang83/fluencyloop)](https://github.com/baokhang83/fluencyloop)
+[![Status: alpha](https://img.shields.io/badge/status-alpha%20%C2%B7%20dogfooding-orange)](#distribution-roadmap)
+[![Stars](https://img.shields.io/github/stars/baokhang83/fluencyloop?style=social)](https://github.com/baokhang83/fluencyloop/stargazers)
+
+**Stay fluent in the code your AI agent writes.** FluencyLoop is a four-stage workflow that
+teaches you the *why* of each change as it ships — so the agent writes the code without you
+losing the plot.
+
+> The code and your fluency in it are produced together, or not at all.
+> See [MANIFESTO.md](MANIFESTO.md) for the why.
+
+## What it does
+
+FluencyLoop is delivered as coding-agent **skills** + deterministic **bash scripts** +
+committed **state** in `.fluencyloop/` — the same three-layer shape as
+[SpecKit](https://github.com/github/spec-kit), aimed at the opposite point on the timeline
+(*during & after* code, not before).
 
 ```
 ONCE, PER PROJECT        REPEATS, PER FEATURE (contributor-driven)
@@ -14,6 +28,9 @@ constitution          →  design      →  build (teach)   →  review
 ```
 
 Nothing gates a merge. Work that skips the loop is caught **after** merge by `backfill`.
+
+**Requires:** a coding agent ([Claude Code](https://claude.com/claude-code)) plus `bash` and
+`git`. The `fluencyloop` CLI runs standalone; the interactive skills need the agent.
 
 ## Install
 
@@ -25,9 +42,9 @@ git clone https://github.com/baokhang83/fluencyloop && cd fluencyloop
 ```
 
 This copies the tool into `~/.fluencyloop/lib`, puts the `fluencyloop` CLI on your PATH
-(`~/.local/bin`), and installs the interactive skills **user-wide** (`~/.claude/skills`) so
-your coding agent sees them in every project. (`./install.sh --no-skills` skips the last
-step; `--bin-dir <dir>` changes where the CLI is linked.)
+(`~/.local/bin` — make sure that's on your `$PATH`), and installs the interactive skills
+**user-wide** (`~/.claude/skills`) so your coding agent sees them in every project.
+(`./install.sh --no-skills` skips the last step; `--bin-dir <dir>` changes where the CLI is linked.)
 
 **2. Once per project** — inside a repo you want to use FluencyLoop on:
 
@@ -43,9 +60,25 @@ copied into the repo — unless you want contributors to get them on clone, in w
 fluencyloop init --vendor-skills   # commits the skills into the repo's .claude/skills
 ```
 
-> Distribution roadmap: today it's clone + `install.sh`. Packaging the skills as a Claude
-> Code **plugin/marketplace** entry (one-click install for others) and publishing the CLI
-> (homebrew/npm) are the next distribution steps — not required to use or dogfood it.
+## Quickstart
+
+From inside an `init`-ed project, start a feature:
+
+```bash
+fluencyloop feature "add rate limiting to the API"
+```
+
+This creates the `feature/add-rate-limiting` branch and drops a design doc + session journal
+under `.fluencyloop/`. As you build, your agent teaches the *why* of each real decision at the
+slice boundary and records it in the journal. When you're ready to open a PR:
+
+```bash
+fluencyloop review
+```
+
+…assembles the reviewer-facing PR view straight from those journals — no manual linking,
+because a feature *is* its branch. Shipped something without the loop? `fluencyloop backfill`
+(or `/fluencyloop-backfill`) reconstructs the journal after merge.
 
 ## Use it
 
@@ -64,6 +97,15 @@ The **skills** carry the interactive, calibrated behaviour (teaching at slice bo
 one-question-at-a-time constitution authoring). The **scripts** carry the deterministic
 plumbing (branches, files, PR-view assembly) so the journal is reliable rather than
 left to the model.
+
+## When to use it
+
+|  | Spec-first (e.g. SpecKit) | FluencyLoop |
+|--|--|--|
+| When it runs | *before* code — plan, then generate | *during & after* code — build, then stay fluent |
+| Optimizes for | a clear specification up front | your fluency in what actually shipped |
+| Merge posture | plan-driven | nothing gates a merge; `backfill` catches skips after |
+| Main artifact | a specification | a session journal + a self-assembling PR view |
 
 ## Layout
 
@@ -84,3 +126,24 @@ MANIFESTO.md                the why
 - **Sessions describe the work, not the person.** The `trust:` marker is about a decision's
   verification state, never an author's competence.
 - **Calibration is per-developer and global** (`~/.fluencyloop/`), never committed.
+
+## Contributing & support
+
+Questions, ideas, and bug reports are welcome — open an
+[issue](https://github.com/baokhang83/fluencyloop/issues) or start a
+[discussion](https://github.com/baokhang83/fluencyloop/discussions). This is alpha and
+actively dogfooded, so expect rough edges and fast-moving changes.
+
+<a id="distribution-roadmap"></a>
+> **Distribution roadmap:** today it's clone + `install.sh`. Packaging the skills as a Claude
+> Code **plugin/marketplace** entry (one-click install for others) and publishing the CLI
+> (homebrew/npm) are the next distribution steps — not required to use or dogfood it.
+
+## License
+
+[Apache-2.0](LICENSE).
+
+---
+
+⭐ **If the "fluency *during* code" framing resonates, star the repo** — it's the clearest
+signal this direction is worth pushing on. Then read the [MANIFESTO](MANIFESTO.md).
