@@ -82,12 +82,12 @@ because a feature *is* its branch. Shipped something without the loop? `fluencyl
 
 ## Use it
 
-| Stage | Slash command (in your agent) | Or the CLI directly |
-|-------|-------------------------------|---------------------|
-| 1. Constitution *(maintainer, once)* | `/fluencyloop-constitution` | — |
-| 2–3. Feature: design → build + teach *(per feature)* | `/fluencyloop-feature` | `fluencyloop feature "<intent>"` |
-| 4. Review *(per feature)* | `/fluencyloop-review` | `fluencyloop review` |
-| Safety net *(post-merge)* | `/fluencyloop-backfill` | — |
+| Stage | Slash command (in your agent) |
+|-------|-------------------------------|
+| 1. Constitution *(maintainer, once)* | `/fluencyloop-constitution` |
+| 2–3. Feature: design → build + teach *(per feature)* | `/fluencyloop-feature` |
+| 4. Review *(per feature)* | `/fluencyloop-review` |
+| Safety net *(post-merge)* | `/fluencyloop-backfill` |
 
 You invoke a stage two ways: **type the slash command** (e.g. `/fluencyloop-feature`), or just
 **describe the task** ("start a feature to add rate limiting") and your agent triggers the
