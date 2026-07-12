@@ -11,10 +11,33 @@ repo_root() {
     git rev-parse --show-toplevel 2>/dev/null || true
 }
 
-# Absolute path to the project's .fluencyloop directory (state lives here).
+# Absolute path to the project's .fluencyloop directory. MACHINE STATE ONLY lives here:
+# the vendored scripts/ and templates/ plumbing. Human-facing artifacts live under docs_dir.
 fluency_dir() {
     local root; root="$(repo_root)"
     [ -n "$root" ] && printf '%s/.fluencyloop' "$root"
+}
+
+# Absolute path to the project's human-facing FluencyLoop docs. The constitution, per-feature
+# design.md, and session journals live here — visible and committed, namespaced under docs/ so
+# they don't collide with a project's own documentation.
+docs_dir() {
+    local root; root="$(repo_root)"
+    [ -n "$root" ] && printf '%s/docs/fluencyloop' "$root"
+}
+
+# The project constitution (a human doc). Lives under docs_dir now, with the same back-compat
+# fallback as feature_path: if only the pre-refactor copy (.fluencyloop/constitution.md) exists,
+# resolve to it so init won't orphan it and readers find it until `fluencyloop migrate` runs.
+constitution_path() {
+    local new old
+    new="$(docs_dir)/constitution.md"
+    old="$(fluency_dir)/constitution.md"
+    if [ ! -f "$new" ] && [ -f "$old" ]; then
+        printf '%s' "$old"
+    else
+        printf '%s' "$new"
+    fi
 }
 
 # Fail unless FluencyLoop has been initialised in this repo.
@@ -64,7 +87,20 @@ emit_json() {
 # A feature IS a branch: feature/<slug>. The feature dir mirrors the slug.
 
 branch_for()      { printf 'feature/%s' "$1"; }         # slug -> branch name
-feature_path()    { printf '%s/features/%s' "$(fluency_dir)" "$1"; }  # slug -> dir
+
+# slug -> feature dir. Lives under docs_dir now. Back-compat: if a feature still sits at the
+# pre-refactor location (.fluencyloop/features/<slug>) and hasn't been migrated, resolve to
+# that so existing repos keep working until they run `fluencyloop migrate`.
+feature_path() {
+    local slug="$1" new old
+    new="$(docs_dir)/features/$slug"
+    old="$(fluency_dir)/features/$slug"
+    if [ ! -d "$new" ] && [ -d "$old" ]; then
+        printf '%s' "$old"
+    else
+        printf '%s' "$new"
+    fi
+}
 
 # The active feature slug, derived from the current branch (empty if not on one).
 current_feature_slug() {

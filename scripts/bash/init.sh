@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# init.sh — scaffold FluencyLoop state into the current repo (Stage 0, once per project).
-# Creates .fluencyloop/ with a constitution stub and the features/ tree. Skills are installed
-# user-wide by install.sh, so they are NOT vendored per-project unless you ask.
+# init.sh — scaffold FluencyLoop into the current repo (Stage 0, once per project).
+# Creates .fluencyloop/ for machine state (scripts + templates) and docs/fluencyloop/ for the
+# human-facing artifacts (constitution stub; per-feature design + sessions land here later).
+# Skills are installed user-wide by install.sh, so they are NOT vendored per-project unless you ask.
 #
 # Usage: init.sh [--json] [--vendor-skills]
 #   --vendor-skills   also copy the skills into this repo's .claude/skills (commit them so
@@ -29,16 +30,17 @@ fi
 
 # The distribution root is two levels up from scripts/bash.
 DIST_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-FLUENCY="$ROOT/.fluencyloop"
+FLUENCY="$ROOT/.fluencyloop"          # machine state: scripts + templates
+DOCS="$(docs_dir)"                    # human-facing docs: constitution, designs, sessions
 
-mkdir -p "$FLUENCY/features" "$FLUENCY/scripts" "$FLUENCY/templates"
+mkdir -p "$FLUENCY/scripts" "$FLUENCY/templates" "$DOCS"
 
 # Copy scripts + templates into the project so the tool is self-contained per repo.
 cp "$DIST_ROOT/scripts/bash/"*.sh "$FLUENCY/scripts/"
 cp "$DIST_ROOT/templates/"*.md   "$FLUENCY/templates/"
 
 # Seed the constitution from the template if absent (never clobber an existing one).
-CONSTITUTION="$FLUENCY/constitution.md"
+CONSTITUTION="$(constitution_path)"
 CREATED_CONSTITUTION=false
 if [ ! -f "$CONSTITUTION" ]; then
     cp "$DIST_ROOT/templates/constitution.md" "$CONSTITUTION"
@@ -74,13 +76,16 @@ fi
 if $JSON_MODE; then
     emit_json \
         fluency_dir "$FLUENCY" \
+        docs_dir "$DOCS" \
         constitution "$CONSTITUTION" \
         constitution_created "$CREATED_CONSTITUTION" \
         skills_vendored "$VENDOR_SKILLS" \
         skills_dir "$SKILLS_DEST" \
         push_autoremote_set "$AUTO_REMOTE_SET"
 else
-    echo "Initialised FluencyLoop in $FLUENCY"
+    echo "Initialised FluencyLoop"
+    echo "  state:        $FLUENCY (scripts + templates)"
+    echo "  docs:         $DOCS (constitution, designs, session journals)"
     $AUTO_REMOTE_SET && echo "  git:          push.autoSetupRemote=true (feature branches push without --set-upstream)"
     $CREATED_CONSTITUTION && echo "  constitution: $CONSTITUTION (stub — run fluencyloop-constitution to fill it)"
     if [ -n "$SKILLS_DEST" ]; then

@@ -59,7 +59,7 @@ in another fence, so GitHub renders them) — that's the durable, committed copy
 is the "see it now" view; `design.md` is the record.
 
 Refine once with the user's input. Check the design against the constitution — read
-`.fluencyloop/constitution.md`, and **if it's a pointer** (a `Source of truth:` line naming
+`docs/fluencyloop/constitution.md`, and **if it's a pointer** (a `Source of truth:` line naming
 another file, e.g. `.specify/memory/constitution.md`), read *that* file for the real
 principles. If a shape conflicts with a principle, say so plainly; do not silently "fix" it.
 

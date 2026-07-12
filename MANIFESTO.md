@@ -72,7 +72,7 @@ backfill, not blocked before it (see *Enforcement & backfill*).
 
 ## Stage 1: Constitution
 
-`.fluencyloop/constitution.md` — the project's principles, written (or generated
+`docs/fluencyloop/constitution.md` — the project's principles, written (or generated
 interactively, in the spirit of SpecKit's `speckit-constitution`) once by the maintainer(s)
 and revisited rarely. Unlike SpecKit's constitution, which exists to gate a spec-writing
 ritual, FluencyLoop's constitution exists so stages 2–4 — run fresh for every feature —
@@ -318,7 +318,7 @@ ASSEMBLE  → at PR time, gather the feature(s) whose branch commits are in this
 
 ### Output format: (c) — both
 
-- **Committed `.fluencyloop/features/<feature>/sessions/<name>.md`** — the durable project
+- **Committed `docs/fluencyloop/features/<feature>/sessions/<name>.md`** — the durable project
   artifact; permanent project memory; how a new contributor gets fluent fast.
   Version-controlled, in-repo.
 - **Generated PR-description summary** — the reviewer-facing view, assembled from the
@@ -329,7 +329,7 @@ design diagrams, the branch, and the sessions that built it), PR is the assemble
 
 ### Session file schema
 
-What actually goes inside a `.fluencyloop/features/<feature>/sessions/<name>.md` — a header
+What actually goes inside a `docs/fluencyloop/features/<feature>/sessions/<name>.md` — a header
 plus one block per decision. Human-readable first, script-parseable second.
 
 ```markdown
@@ -690,10 +690,10 @@ top of the original contributor loop), not a flip away from the contributor wedg
 Essay drafted (pre-refinement; needs a pass reflecting the additive framing before
 publishing). No skill built yet. Next concrete steps:
 
-- The `.fluencyloop/constitution.md` template (stage 1, maintainer, project-level).
-- The `.fluencyloop/features/<feature>/design.md` schema — class + sequence by default; how
+- The `docs/fluencyloop/constitution.md` template (stage 1, maintainer, project-level).
+- The `docs/fluencyloop/features/<feature>/design.md` schema — class + sequence by default; how
   `fluencyloop feature` scaffolds the dir + branch (stage 2).
-- The `.fluencyloop/features/<feature>/sessions/<name>.md` schema — as refined above (no
+- The `docs/fluencyloop/features/<feature>/sessions/<name>.md` schema — as refined above (no
   `commits:` header; optional `design:` and `constitution:` fields), plus the
   slice-boundary capture flow (stage 3) and branch-based PR-view assembly (stage 4).
 - The `fluencyloop feature` and `fluencyloop backfill` commands (scripts layer).

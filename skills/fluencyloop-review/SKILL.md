@@ -29,7 +29,7 @@ Produce a concise, reviewer-facing summary:
   its `where:` code anchor. Lead with the decisions carrying `trust: ⚠` — those are where a
   reviewer should look hardest.
 - **Constitution check:** scan each decision's `constitution:` field against the project's
-  principles — read `.fluencyloop/constitution.md`, and **if it's a pointer** (`Source of
+  principles — read `docs/fluencyloop/constitution.md`, and **if it's a pointer** (`Source of
   truth:` naming another file, e.g. `.specify/memory/constitution.md`), read *that* for the
   real principles. **Flag** any decision that appears to conflict, or any principle-relevant
   decision that was never checked. Flag as a surfaced note — never a blocker.

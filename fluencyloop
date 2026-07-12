@@ -7,10 +7,11 @@
 # call it.
 #
 # Usage:
-#   fluencyloop init                       scaffold .fluencyloop/ state into this repo
+#   fluencyloop init                       scaffold .fluencyloop/ state + docs/fluencyloop/
 #   fluencyloop feature "<intent>"         declare a feature (branch + design stub)
 #   fluencyloop session "<intent>"         open a session in the active feature
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
+#   fluencyloop migrate [--dry-run]        move docs from .fluencyloop/ to docs/fluencyloop/
 #   fluencyloop help
 
 set -euo pipefail
@@ -50,6 +51,7 @@ case "$cmd" in
     feature)  exec bash "$BIN/new-feature.sh" "$@" ;;
     session)  exec bash "$BIN/new-session.sh" "$@" ;;
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
+    migrate)  exec bash "$BIN/migrate.sh" "$@" ;;
     help|-h|--help) usage ;;
     *) echo "Unknown command: $cmd" >&2; usage >&2; exit 1 ;;
 esac
