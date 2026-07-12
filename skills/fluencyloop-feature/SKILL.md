@@ -102,11 +102,14 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    ```
 
    Append two things, from the live teaching you just did:
-   - **Knowledge transfer** — under the session's `## Knowledge transfer` heading, one bullet
-     per component/role/mechanism you covered in this slice: the *subject*, *what it does and
-     under what conditions*, and *status:* `documented` / `follow-up`. This is the persistent
-     record of the ground now covered — it does not evaporate with the chat, and it is separate
-     from decisions (a role you explained is knowledge transfer even if no fork was chosen).
+   - **Knowledge transfer** — under the session's `## Knowledge transfer` heading, record the
+     ground this slice covers: one bullet per component/role/mechanism — the *subject*, *what it
+     does and under what conditions*, and *status:* `documented` / `follow-up`. Make it **rich,
+     not a token list**: capture the roles *and* the non-obvious conditions, gotchas, and hard-won
+     lessons (a bug's root cause, why something is done an odd way, a documented limitation) —
+     that is the highest-value fluency. It is the persistent record of the ground now covered — it
+     does not evaporate with the chat, and it is separate from decisions (a role you explained is
+     knowledge transfer even if no fork was chosen).
      **Keep it about the work, never the person:** record what the code does, never anyone's
      competence, prior knowledge, or "who learned what" — these files are committed and name an
      identifiable author via git (GDPR). The per-developer picture belongs only in the

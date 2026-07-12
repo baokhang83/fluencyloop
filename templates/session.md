@@ -25,6 +25,9 @@ KNOWLEDGE-TRANSFER fields (one bullet per component/role/mechanism explained):
   subject      — the component, role, or mechanism (e.g. a class, an agent, a rule)
   what         — what it does, and under what conditions it does it
   status       — documented (captured here) | follow-up (worth covering later)
+  Make it RICH, not a token list: cover the component inventory AND the non-obvious, hard-won
+  lessons (a bug's root cause, why something is done an odd way, a documented limitation) —
+  that's the highest-value fluency. Group by area when there's a lot.
   Describe the WORK, never a person: no competence, no prior-knowledge, no "who learned what".
   These files are committed and name an identifiable author via git — keep them GDPR-safe.
 
@@ -40,7 +43,13 @@ persisted so the fluency doesn't evaporate with the conversation. About the work
 person: it records what the code does, not who knew what (the per-developer picture lives in
 the uncommitted, global calibration profile)._
 
+### Components (role, conditions)
+
 - **<component / role / mechanism>** — <what it does, and under what conditions> · status: <documented | follow-up>
+
+### Hard-won conditions (gotchas, root causes, limitations)
+
+- **<the non-obvious thing>** — <why it's this way / what breaks otherwise> · status: <documented | follow-up>
 
 ---
 

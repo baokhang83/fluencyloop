@@ -6,10 +6,12 @@ description: 'FluencyLoop safety net. Reconstruct journal entries for work that 
 # fluencyloop-backfill — reconstruct, make fluent, then flag
 
 FluencyLoop never blocks a merge. The safety net for work that skipped the loop is
-**post-merge backfill**: it gives ad-hoc work a home retroactively. Backfilled rationale had
-**no real-time teaching to force honesty**, so it is the entry most at risk of plausible
-post-hoc fiction — which is why every backfilled entry is stamped `trust: ⚠ unverified` and
-**must pass a human before it lands**.
+**post-merge backfill**: it gives ad-hoc work a home retroactively. Backfilled rationale
+*usually* had no real-time teaching in FluencyLoop's format to force honesty, so it is the entry
+most at risk of plausible post-hoc fiction — which is why every backfilled entry is stamped
+`trust: ⚠ unverified` and **must pass a human before it lands**. (Sometimes a contemporaneous
+record *does* exist outside the loop — see step 1 — which strengthens, but does not replace, that
+review.)
 
 Backfill is not just bookkeeping. Its job is to **make the human fluent again** in the
 components the work touched — the fluency the missing real-time loop never gave them. So you
@@ -25,6 +27,14 @@ its base:
 git log --oneline <base>..<ref>
 git diff <base>..<ref>
 ```
+
+**Look for a contemporaneous record first.** Work that skipped *FluencyLoop's* loop may still
+have a real-time log — a `SESSION.md`, ADRs, a spec-kit session summary, design notes, a rich PR
+description. If one exists, **reconstruct from it**, cite it as a source, and frame the entries
+as backed by a contemporaneous record (stronger than post-hoc memory) — do **not** write "no
+real-time teaching happened" when it did. Only a genuine from-nothing reconstruction gets the
+blind-backfill framing. Such a log is also the best raw material for a rich knowledge-transfer
+record (step 3).
 
 ## 2. Reconstruct — carefully
 
@@ -90,10 +100,19 @@ PY
 Prefer pure ASCII (HTML entities over literal box-drawing/dashes). If it reports `DIRTY`,
 sanitize (or drop the offending inlined content) before calling the Artifact tool.
 
-**Persist the coverage.** The components you brief become the session's `## Knowledge transfer`
-record — one bullet each (*subject* / *what it does and under what conditions* / *status:*
-`documented` or `follow-up`). This is the durable fluency the missing real-time loop never left
-behind. Keep it strictly person-neutral: it records what the code does, never anyone's
+**Persist the coverage — make it rich, not a token list.** The components you brief become the
+session's `## Knowledge transfer` record, and this is where the durable fluency lives, so invest
+in it. A thin one-liner per class is not enough. Aim to cover:
+
+- **The whole pipeline / component inventory**, grouped by area (not just the 3–4 classes a
+  decision touched) — each with its *role* and *the conditions under which it does its job*.
+- **The hard-won, non-obvious mechanism lessons** — the bugs found and fixed, the gotchas, the
+  "why it's done this odd way," the documented limitations. These are the highest-value fluency
+  and are exactly what a contemporaneous log (step 1) captures; mine it for them.
+- Each bullet: *subject* / *what it does and under what conditions* / *status:* `documented` or
+  `follow-up`.
+
+Keep it strictly person-neutral: it records what the code does and why, never anyone's
 competence, prior knowledge, or "who knew what" (GDPR — these files are committed and name an
 identifiable author via git).
 
