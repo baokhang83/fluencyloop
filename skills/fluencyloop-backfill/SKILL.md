@@ -90,6 +90,13 @@ PY
 Prefer pure ASCII (HTML entities over literal box-drawing/dashes). If it reports `DIRTY`,
 sanitize (or drop the offending inlined content) before calling the Artifact tool.
 
+**Persist the coverage.** The components you brief become the session's `## Knowledge transfer`
+record — one bullet each (*subject* / *what it does and under what conditions* / *status:*
+`documented` or `follow-up`). This is the durable fluency the missing real-time loop never left
+behind. Keep it strictly person-neutral: it records what the code does, never anyone's
+competence, prior knowledge, or "who knew what" (GDPR — these files are committed and name an
+identifiable author via git).
+
 Give the user the rendered URL and let them read before you ask anything.
 
 ## 4. Confirm — interactively, one decision at a time
@@ -115,4 +122,8 @@ backfill banner, and only then commit. Nothing lands unreviewed.
 - **Byte-check every Artifact before publishing** — never ship content that fails the check.
 - **Reconstruct, don't fabricate.** "Alternative unknown" is a truthful entry; a plausible
   invented tradeoff is not.
+- **Describe the work, never the person.** Knowledge-transfer and decision entries record what
+  the code does — never an individual's competence, knowledge state, or "who learned what."
+  These files are committed and name an identifiable author (GDPR); the per-developer picture
+  stays only in the global, uncommitted calibration profile.
 - **Still never gates.** Backfill documents after the fact; it does not block anything.
