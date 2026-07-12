@@ -33,6 +33,16 @@ Nothing gates a merge. Work that skips the loop is caught **after** merge by `ba
 **Requires:** a coding agent ([Claude Code](https://claude.com/claude-code)) plus `bash` and
 `git`. The `fluencyloop` CLI runs standalone; the interactive skills need the agent.
 
+## Teaches to your level
+
+FluencyLoop doesn't lecture at a fixed depth. Before a feature touches unfamiliar ground it
+**asks** — *"For the new Maven plugin, are you familiar with `plugin.xml` and Mojo objects?"* — then keeps re-estimating what you
+know from how you respond: terse on solid ground, deeper where it's shaky. What it learns is
+persisted to a **per-developer knowledge base** in `~/.fluencyloop/` (global, never committed),
+so the next feature starts already calibrated instead of cold — and the fluency compounds. Your
+knowledge profile stays private to your machine; the committed journal only ever describes the
+work, never you.
+
 ## Install
 
 **1. Once per machine** — from a clone of this repo:
@@ -126,7 +136,9 @@ MANIFESTO.md                the why
 - **Never gate.** Flag exposure and unverified trust; never block building or merging.
 - **Sessions describe the work, not the person.** The `trust:` marker is about a decision's
   verification state, never an author's competence.
-- **Calibration is per-developer and global** (`~/.fluencyloop/`), never committed.
+- **Calibrated to you, privately.** The loop probes what you know, adapts explanation depth as it
+  goes, and builds a per-developer knowledge base in `~/.fluencyloop/` — global, never committed.
+  Person-specific knowledge lives *only* there; the repo journal stays person-neutral.
 
 ## Contributing & support
 

@@ -1,6 +1,6 @@
 ---
 name: fluencyloop-feature
-description: 'FluencyLoop Stage 2–3. Declare a feature and build it while staying fluent: creates the feature branch + design diagrams, then builds in slices, teaching the why of each real decision at the slice boundary and journaling it. Use when starting a new unit of work in a repo that has a .fluencyloop/ directory, or when the user says "fluencyloop feature", "start a feature", or describes something they want to build with FluencyLoop.'
+description: 'FluencyLoop Stage 2–3. Declare a feature and build it while staying fluent: creates the feature branch + design diagrams, then builds in slices, teaching the why of each real decision at the slice boundary and journaling it. Probes the concepts the work needs up front, adapts explanation depth to the developer''s knowledge, and builds/maintains a per-developer knowledge base in ~/.fluencyloop. Use when starting a new unit of work in a repo that has a .fluencyloop/ directory, or when the user says "fluencyloop feature", "start a feature", or describes something they want to build with FluencyLoop.'
 ---
 
 # fluencyloop-feature — declare a feature, build it fluent
@@ -15,10 +15,21 @@ each slice boundary. Never gate; never lecture. Keep the developer the author.
 Confirm `.fluencyloop/` exists (run `.fluencyloop/scripts/common.sh` context). If it does not, tell
 the user to run `fluencyloop-constitution` / `fluencyloop init` first, and stop.
 
-Read the calibration profile if present: `~/.fluencyloop/calibration.md`. It is
-domain-dimensioned (e.g. "senior Java, reactive is new"). Use it to decide what to skip and
-where to slow down. If it is missing, proceed and teach a little more until you learn what
-to skip — never block on it.
+**Load the learner's knowledge base.** Read `~/.fluencyloop/calibration.md` — the persisted,
+per-developer record of what this learner knows solidly, finds shaky, or hasn't met yet. It is
+domain-dimensioned (e.g. "senior Java; Maven plugin internals new"). Use it to set the **starting
+depth** of every explanation: terse on solid ground, deeper on shaky. If it's missing, that's
+fine — you will *build* it (see §3.4); never block on it. This file is per-developer, global, and
+**never committed** — it is the *only* place person-specific knowledge lives (the repo journal
+stays person-neutral; see Rules).
+
+**Probe before you dive in.** Continuously estimating the learner's knowledge is critical, and it
+starts *before* the first explanation. From the feature's intent and the code, list the domain
+concepts this work will actually require, and for each one the knowledge base doesn't already
+settle, **ask** — concisely and batched (one tab per concept via `AskUserQuestion` when there are
+several). For example, before building a Maven plugin: *"Are you familiar with `plugin.xml` and
+Mojo objects (`@Mojo` / `AbstractMojo`)?"* — rather than silently guessing and either boring or
+losing them. Record the answers into the knowledge base and let them set your opening depth.
 
 **Never infer fluency from authorship.** That the developer wrote — or generated — the code
 you're touching does **not** mean they understand it. AI-generated / vibecoded code is
@@ -89,9 +100,12 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    - **Pause and check understanding** — ask if it lands, and explicitly offer to go deeper
      ("want me to unpack how X works, or is this enough to trust it?"). Then *wait* for the
      answer before moving on. A monologue that ends in "see the journal" is the failure mode.
-   - Calibrate (see §0): skip only what the profile or their demonstrated engagement says
-     they know — **never** skip because they authored the code. Slow down on unfamiliar
-     ground. Name where knowledge ends and trust begins.
+   - **Calibrate continuously (see §0).** Hold a live estimate of what they know and *update it
+     every exchange*: a quick confirmation is evidence of solid ground (go terser next time); a
+     surprised "wait, why?" or a follow-up question is evidence it's shaky (go deeper, now). Set
+     this explanation's depth from that running estimate. Skip only what the knowledge base or
+     their demonstrated engagement says they know — **never** skip because they authored the code.
+     Name where knowledge ends and trust begins.
    - Tone: *"This is the right call here — here's the one-line why. If A and B feel shaky,
      that's where to dig, but you don't need to right now to trust this."* Not homework.
 3. **Journal it** *(the byproduct, after the live teaching — not instead of it)*. Open (or
@@ -123,6 +137,21 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
 
    Remove the template's example blocks and HTML comment the first time you write real content.
 
+4. **Update the learner's knowledge base** *(theirs, in `~/.fluencyloop/` — not the repo's)*.
+   Persist what this slice revealed about the learner to `~/.fluencyloop/calibration.md`, so the
+   estimate you built survives the conversation. Add or adjust one line per concept that moved:
+
+   ```
+   <concept>: <solid | learning | new | unknown> — <one-line note> · <YYYY-MM-DD>
+   maven-mojo: learning — taught @Mojo/AbstractMojo params and plugin.xml binding · 2026-07-12
+   junit5-platform: solid · 2026-07-11
+   ```
+
+   Refresh the free-text summary line too. Create the file if absent. This is how the base is
+   *built and maintained* — so the next slice, session, and feature start already calibrated
+   instead of cold. Keep it global and **uncommitted**; never write person-specific knowledge
+   into the repo.
+
 Repeat per slice until the feature is built. The journal accretes as a byproduct — the
 developer never writes it by hand.
 
@@ -138,4 +167,9 @@ asked.
 - **Honesty over polish.** A journaled `why` must be one the developer actually engaged with.
   If they waved a decision through, mark it `trust: ⚠`. Do not manufacture rationale.
 - **Anchor every claim to code** (`where:`) — file/area, so it survives refactoring.
+- **Estimate continuously, adapt depth, and persist it.** Probe the concepts a feature needs
+  *before* diving in, re-estimate every exchange, and set explanation depth from that estimate.
+  Build and maintain the learner's knowledge base in `~/.fluencyloop/calibration.md` so fluency
+  compounds across features. Person-specific knowledge lives *only* there (global, uncommitted) —
+  never in the repo journal.
 - **The developer stays the architect.** Teach to keep them fluent; do not take authorship.
