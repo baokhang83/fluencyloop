@@ -61,3 +61,37 @@ assert not any(".fluencyloop" in p or "docs/fluencyloop" in p for p in paths+d["
     [[ "$output" == *"Slice context"* ]]
     [[ "$output" == *"b changed"* ]]
 }
+
+# --- decision pre-filter -------------------------------------------------
+
+likely() { json | python3 -c "import json,sys;d=json.load(sys.stdin);print(d['likely_decision'], d['decision_signals'])"; }
+
+@test "pre-filter: JSON carries likely_decision / decision_score / decision_signals" {
+    printf 'a\nb changed\n' > app.txt
+    json | python3 -c '
+import json,sys
+d=json.load(sys.stdin)
+for k in ("likely_decision","decision_score","decision_signals"): assert k in d, k
+assert isinstance(d["likely_decision"], bool) and isinstance(d["decision_score"], int), d
+'
+}
+
+@test "pre-filter: a comment-only tweak is NOT a likely decision" {
+    printf 'a\nb\n// just a note\n' > app.txt
+    [[ "$(likely)" == "False"* ]]
+}
+
+@test "pre-filter: a new import IS a likely decision (dep-or-import)" {
+    printf 'import x from "x";\na\nb\n' > app.txt
+    [[ "$(likely)" == "True"*"dep-or-import"* ]]
+}
+
+@test "pre-filter: a new exported function IS a likely decision (new-api)" {
+    printf 'export function foo(){ return 1; }\n' > app.txt
+    [[ "$(likely)" == "True"*"new-api"* ]]
+}
+
+@test "pre-filter: substantive branching logic IS a likely decision (control-flow)" {
+    printf 'let t=0;\nfor(let i=0;i<9;i++){\n if(i>4){t+=i;}else{t-=i;}\n}\nlet a=t;\nlet b=a+1;\nlet c=b+1;\nlet d=c+1;\n' > app.txt
+    [[ "$(likely)" == "True"*"control-flow"* ]]
+}
