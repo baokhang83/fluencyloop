@@ -21,7 +21,7 @@ journals; the tool's own machine state stays in `.fluencyloop/`).
 
 The core is a **per-feature loop**, with an optional planning step in front for big chunks:
 
-<img width="1998" height="787" alt="image" src="https://github.com/user-attachments/assets/fb5e1855-2ff7-4ff5-bb4b-4d0fc102bd54" />
+<img width="1000" height="390" alt="image" src="https://github.com/user-attachments/assets/fb5e1855-2ff7-4ff5-bb4b-4d0fc102bd54" />
 
 - **plan** — *optional*, only when a chunk is too big for one feature: architecture + roadmap,
   broken into feature-sized tasks.
@@ -100,7 +100,7 @@ because a feature *is* its branch. Shipped something without the loop? `fluencyl
 
 | Step | Slash command (in your agent) |
 |------|-------------------------------|
-| Plan a big chunk *(optional)* — architecture + roadmap | `/fluencyloop-plan` |
+|  *(optionally)* Plan a big chunk — architecture + roadmap | `/fluencyloop-plan` |
 | Build a feature — design → build + teach *(per feature)* | `/fluencyloop-feature` |
 | Review — the PR view assembles itself *(per feature)* | `/fluencyloop-review` |
 | Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop-backfill` |
