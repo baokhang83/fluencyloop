@@ -102,6 +102,10 @@ feature_path() {
     fi
 }
 
+# slug -> plan dir. A plan is an initiative that spawns several features; it is a committed
+# doc (no dedicated branch), and lives under docs_dir alongside features.
+plan_path() { printf '%s/plans/%s' "$(docs_dir)" "$1"; }
+
 # The active feature slug, derived from the current branch (empty if not on one).
 current_feature_slug() {
     local b; b="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"

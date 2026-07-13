@@ -8,6 +8,7 @@
 #
 # Usage:
 #   fluencyloop init                       scaffold .fluencyloop/ state + docs/fluencyloop/
+#   fluencyloop plan "<intent>"            declare a plan (architecture + roadmap for a big chunk)
 #   fluencyloop feature "<intent>"         declare a feature (branch + design stub)
 #   fluencyloop session "<intent>"         open a session in the active feature
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
@@ -48,6 +49,7 @@ usage() { awk 'NR>1 && /^#/ {sub(/^# ?/,""); print; next} NR>1 {exit}' "${BASH_S
 cmd="${1:-help}"; shift || true
 case "$cmd" in
     init)     exec bash "$BIN/init.sh" "$@" ;;
+    plan)     exec bash "$BIN/new-plan.sh" "$@" ;;
     feature)  exec bash "$BIN/new-feature.sh" "$@" ;;
     session)  exec bash "$BIN/new-session.sh" "$@" ;;
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
