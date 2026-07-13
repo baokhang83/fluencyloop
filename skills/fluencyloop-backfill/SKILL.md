@@ -32,6 +32,11 @@ If `.fluencyloop/state.json` exists, read it for the `feature` slug and `base_re
 guessing. Usually it's **absent** for backfill (the work skipped the loop, so nothing wrote it) —
 derive the base from git as above; §2 writes a fresh state record when it reconstructs the feature.
 
+**Quantify the drift deterministically** with `fluencyloop check --json` (or
+`.fluencyloop/scripts/check.sh --json`): its `unjournaled_commits` counts commits since the last
+journaled session. A non-zero count with no matching sessions is exactly the skipped-loop work
+backfill exists to catch — let it scope how much there is to reconstruct.
+
 **Look for a contemporaneous record first.** Work that skipped *FluencyLoop's* loop may still
 have a real-time log — a `SESSION.md`, ADRs, a spec-kit session summary, design notes, a rich PR
 description. If one exists, **reconstruct from it**, cite it as a source, and frame the entries
