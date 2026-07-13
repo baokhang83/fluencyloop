@@ -1,4 +1,4 @@
-<img width="1983" height="793" alt="image" src="https://github.com/user-attachments/assets/24b508b0-0332-45e3-bd0b-6681220fc796" />
+<img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/e3a04a63-4b68-4f61-ad58-60df8cc67045" />
 
 # FluencyLoop
 
