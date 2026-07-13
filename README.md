@@ -102,7 +102,7 @@ because a feature *is* its branch. Shipped something without the loop? `fluencyl
 
 | Step | Slash command (in your agent) |
 |------|-------------------------------|
-| Plan a big chunk — architecture + roadmap *(optional)* | `/fluencyloop-plan` |
+| Plan a big chunk *(optional)* — architecture + roadmap | `/fluencyloop-plan` |
 | Build a feature — design → build + teach *(per feature)* | `/fluencyloop-feature` |
 | Review — the PR view assembles itself *(per feature)* | `/fluencyloop-review` |
 | Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop-backfill` |
