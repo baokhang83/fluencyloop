@@ -56,6 +56,45 @@ UNTRACKED_COUNT="$(git ls-files --others --exclude-standard "${EXCLUDE[@]}" | aw
 FILES_CHANGED=$((TRACKED_FILES + UNTRACKED_COUNT))
 SHORT="$(git rev-parse --short "$SINCE" 2>/dev/null || printf '%s' "$SINCE")"
 
+# --- decision pre-filter: cheap heuristics over the slice's ADDED lines, so the model only spends
+# a full teaching pass where a real decision probably lives. New imports/deps, new public API /
+# exports, new control flow, and change size each contribute; likely_decision = score >= 2.
+HEUR="$(printf '%s\n' "$DIFF" | awk '
+    function base(p,   n,a){ n=split(p,a,"/"); return a[n] }
+    /^\+\+\+ / { f=$2; sub(/^b\//,"",f); bn=base(f)
+        manifest = (bn ~ /^(package\.json|pom\.xml|go\.mod|Cargo\.toml|Gemfile|composer\.json|pyproject\.toml|requirements[^ ]*\.txt|Pipfile|build\.gradle(\.kts)?)$/)
+        next }
+    /^(---|diff |index |@@|new file|deleted file|similarity|rename|Binary)/ { next }
+    /^\+/ {
+        t=substr($0,2); gsub(/^[[:space:]]+/,"",t)
+        if (t=="") next
+        iscomment = (t ~ /^(\/\/|#|\*|\/\*|--|<!--)/)
+        if (!iscomment) code++
+        if (t ~ /^(import|from|#include|using|use)[[:space:]]/ || t ~ /require[[:space:]]*\(/) imp++
+        if (manifest && !iscomment) dep++
+        if (t ~ /^(export|public)[[:space:]]/ \
+            || t ~ /^(export[[:space:]]+)?(default[[:space:]]+)?(async[[:space:]]+)?function[[:space:]]/ \
+            || t ~ /^(public[[:space:]]+|export[[:space:]]+|abstract[[:space:]]+)*(class|interface|enum|trait|struct)[[:space:]]/ \
+            || t ~ /^(pub[[:space:]]+)?fn[[:space:]]/ || t ~ /^func[[:space:]]/ || t ~ /^def[[:space:]]/ \
+            || t ~ /^@[A-Za-z_.]*(route|mapping|[GgPpDd][a-z]+)[(:]?/) api++
+        if (t ~ /(^|[^A-Za-z_])(if|else|for|while|switch|case|try|catch|except|match)([^A-Za-z_]|$)/) ctl++
+    }
+    END {
+        score=0; sig=""
+        if (imp>0 || dep>0)   { score+=2; sig=sig "dep-or-import " }
+        if (api>0)            { score+=2; sig=sig "new-api " }
+        if (ctl>0 && code>=8) { score+=2; sig=sig "control-flow " }
+        if (code>=15)         { score+=1; sig=sig "size " }
+        if (code>=40)         { score+=1 }
+        if (code==0)          { score=0; sig="trivial" }
+        sub(/[[:space:]]+$/,"",sig)
+        printf "%d %s %s\n", score, (score>=2 ? "true" : "false"), sig
+    }
+')"
+read -r DEC_SCORE DEC_LIKELY DEC_SIGNALS <<<"$HEUR" || true
+: "${DEC_SCORE:=0}" "${DEC_LIKELY:=false}"
+DEC_SIGNALS_JSON="$(printf '%s' "${DEC_SIGNALS:-}" | awk '{for(i=1;i<=NF;i++) printf "%s\"%s\"",(i>1?",":""),$i}')"
+
 if $JSON_MODE; then
     files="$(git diff --name-status "$SINCE" "${EXCLUDE[@]}" | awk -F'\t' '
         NF>=2 { p=$NF; gsub(/\\/,"\\\\",p); gsub(/"/,"\\\"",p)
@@ -66,12 +105,14 @@ if $JSON_MODE; then
     diff_esc="$(printf '%s' "$DIFF" | awk '
         { s=$0; gsub(/\\/,"\\\\",s); gsub(/"/,"\\\"",s); gsub(/\t/,"\\t",s); gsub(/\r/,"\\r",s)
           printf "%s%s", (NR>1?"\\n":""), s }')"
-    printf '{"feature":"%s","base_kind":"%s","base":"%s","files_changed":%s,"insertions":%s,"deletions":%s,"files":[%s],"untracked":[%s],"diff":"%s"}\n' \
+    printf '{"feature":"%s","base_kind":"%s","base":"%s","files_changed":%s,"insertions":%s,"deletions":%s,"likely_decision":%s,"decision_score":%s,"decision_signals":[%s],"files":[%s],"untracked":[%s],"diff":"%s"}\n' \
         "$(json_escape "$FEATURE")" "$BASE_KIND" "$(json_escape "$SHORT")" \
-        "$FILES_CHANGED" "$INS" "$DEL" "$files" "$untracked" "$diff_esc"
+        "$FILES_CHANGED" "$INS" "$DEL" "$DEC_LIKELY" "$DEC_SCORE" "$DEC_SIGNALS_JSON" \
+        "$files" "$untracked" "$diff_esc"
 else
     echo "# Slice context — feature: ${FEATURE:-<none>} (since $BASE_KIND $SHORT)"
     echo "# $FILES_CHANGED file(s), +$INS -$DEL"
+    echo "# likely_decision: $DEC_LIKELY (score $DEC_SCORE${DEC_SIGNALS:+: $DEC_SIGNALS})"
     echo
     printf '%s\n' "$DIFF"
 fi

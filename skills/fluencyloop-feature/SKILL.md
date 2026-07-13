@@ -124,6 +124,15 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    alternative was rejected — from those hunks. Only open a full file when the hunks don't carry
    enough context to judge a decision; re-reading whole files by default is the token waste this
    replaces. Ignore non-decisions.
+
+   **Let the pre-filter gate the expensive pass.** slice-context also emits `likely_decision`
+   (with a `decision_score` and the `decision_signals` that fired — new dep/import, new API,
+   control-flow, size). When it is **false**, don't spend a full teaching pass: glance at the
+   hunks, and unless something is plainly a fork, journal the slice **lightly** (a one-line
+   knowledge-transfer note, no decision block) and move on — this is how trivial slices stay
+   near-zero cost. When it is **true**, run the full teach (step 2). The filter gates, it doesn't
+   gag: a real decision you can plainly see in a low-scored slice still gets taught — but the
+   default on a low score is light-touch, not deliberation.
 2. **Teach the why — live, in the conversation.** This is the *during*, so it happens *here*,
    as an exchange — **not** by writing the journal and telling the user to go read it (that's
    the *after*).
