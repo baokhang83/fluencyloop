@@ -34,7 +34,9 @@ fi
 FEATURE="$(feature_path "$FEATURE_SLUG")"
 [ -d "$FEATURE" ] || { echo "Error: feature '$FEATURE_SLUG' not found." >&2; exit 1; }
 
-# Resolve the base ref for the commit range (best-effort).
+# Resolve the base ref for the commit range (best-effort): explicit --base, else the base the
+# feature recorded in state.json, else the repo's main/master.
+[ -z "$BASE" ] && BASE="$(state_get base_ref)"
 if [ -z "$BASE" ]; then
     for cand in main master; do
         git show-ref --verify --quiet "refs/heads/$cand" && { BASE="$cand"; break; }
@@ -54,7 +56,11 @@ shopt -u nullglob
 
 if $JSON_MODE; then
     files=""
-    for s in "${SESSIONS[@]}"; do files+="${files:+, }\"$(json_escape "$s")\""; done
+    # Guard the expansion: on bash < 4.4 (macOS ships 3.2) "${arr[@]}" errors under `set -u`
+    # when the array is empty — which it is for a feature with no sessions yet.
+    if [ "${#SESSIONS[@]}" -gt 0 ]; then
+        for s in "${SESSIONS[@]}"; do files+="${files:+, }\"$(json_escape "$s")\""; done
+    fi
     printf '{"feature":"%s","feature_dir":"%s","base":"%s","range":"%s","commits":%s,"session_count":%s,"sessions":[%s]}\n' \
         "$(json_escape "$FEATURE_SLUG")" "$(json_escape "$FEATURE")" \
         "$(json_escape "$BASE")" "$(json_escape "$RANGE")" \

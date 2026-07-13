@@ -10,11 +10,15 @@ the feature's sessions into a summary a reviewer can read to get fluent fast.
 
 ## 1. Gather the raw material
 
+**Read `.fluencyloop/state.json` first** if it exists — it is the loop's source of truth for the
+active feature (`feature` slug, `branch`, `base_ref`), so you don't re-derive them from git. Use
+its `base_ref` as the diff base (`--base`) rather than guessing the default branch.
+
 From the feature branch (or pass `--slug`):
 
 ```bash
-.fluencyloop/scripts/assemble-pr-view.sh --json           # paths, commit range, session list
-.fluencyloop/scripts/assemble-pr-view.sh                  # the raw markdown (sessions inlined)
+.fluencyloop/scripts/assemble-pr-view.sh --json                    # paths, commit range, session list
+.fluencyloop/scripts/assemble-pr-view.sh --base "<base_ref>"       # scope the diff to the recorded base
 ```
 
 The `--json` form gives `feature`, `range`, `commits`, and the session files. The plain

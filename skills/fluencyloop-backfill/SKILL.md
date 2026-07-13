@@ -28,6 +28,10 @@ git log --oneline <base>..<ref>
 git diff <base>..<ref>
 ```
 
+If `.fluencyloop/state.json` exists, read it for the `feature` slug and `base_ref` rather than
+guessing. Usually it's **absent** for backfill (the work skipped the loop, so nothing wrote it) —
+derive the base from git as above; §2 writes a fresh state record when it reconstructs the feature.
+
 **Look for a contemporaneous record first.** Work that skipped *FluencyLoop's* loop may still
 have a real-time log — a `SESSION.md`, ADRs, a spec-kit session summary, design notes, a rich PR
 description. If one exists, **reconstruct from it**, cite it as a source, and frame the entries
@@ -57,6 +61,11 @@ Create the feature + session to hold them, then write the drafted blocks into th
 .fluencyloop/scripts/new-feature.sh --json "<inferred feature intent>"
 .fluencyloop/scripts/new-session.sh --json --slug "<feature-slug>" "<inferred slice intent>"
 ```
+
+These also write `.fluencyloop/state.json` (feature, branch, `stage: build`, the session as
+`last_session`, `base_ref`), so the backfilled feature carries the **same committed state record**
+as one built through the loop — commit it with the reconstructed journal. If the work's real base
+wasn't the branch you ran this from, correct `base_ref` to the ref your §1 diff used.
 
 Sketch the feature's `design.md` diagrams (class + sequence) from the code you just read —
 these are what the briefing renders.

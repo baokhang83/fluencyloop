@@ -114,3 +114,38 @@ current_feature_slug() {
         *) printf '' ;;
     esac
 }
+
+# --- loop state -----------------------------------------------------------
+# One source of truth for the active feature's loop state, so a skill reads it instead of
+# re-deriving from git every turn. Machine state, so it lives in .fluencyloop/; committed with
+# the feature branch (part of the journal record). Written by new-feature.sh / new-session.sh.
+
+state_path() { local d; d="$(fluency_dir)"; [ -n "$d" ] && printf '%s/state.json' "$d"; }
+
+# A repo-relative path (state stores paths relative to the repo root, so they survive a move).
+repo_rel() { local root; root="$(repo_root)"; printf '%s' "${1#"$root"/}"; }
+
+# Read one string field from state.json (empty if the file or key is absent). Safe because we
+# control the format write_state emits (one "key": "value" per line, values never contain ").
+state_get() {
+    local f; f="$(state_path)"
+    [ -f "$f" ] || return 0
+    sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" "$f" | head -n1
+}
+
+# Write state.json from alternating key value arguments (all string-valued), creating it.
+#   write_state feature "$SLUG" branch "$BRANCH" stage design ...
+write_state() {
+    local f; f="$(state_path)"
+    [ -n "$f" ] || return 0
+    mkdir -p "$(dirname "$f")"
+    local out="{" first=1 k v
+    while [ "$#" -ge 2 ]; do
+        k="$1"; v="$2"; shift 2
+        [ "$first" -eq 1 ] || out+=","
+        first=0
+        out+=$'\n  '"\"$k\": \"$(json_escape "$v")\""
+    done
+    out+=$'\n}'
+    printf '%s\n' "$out" > "$f"
+}

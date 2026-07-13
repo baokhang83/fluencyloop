@@ -58,14 +58,28 @@ if [ ! -f "$SESSION" ]; then
     CREATED=true
 fi
 
+# Update loop state: opening a session moves the feature to the build stage and points at the
+# current session file. Preserve the base ref recorded when the feature was declared.
+BASE_REF="$(state_get base_ref)"; [ -z "$BASE_REF" ] && BASE_REF="main"
+write_state \
+    feature "$FEATURE_SLUG" \
+    branch "$(branch_for "$FEATURE_SLUG")" \
+    stage "build" \
+    last_session "$(repo_rel "$SESSION")" \
+    base_ref "$BASE_REF" \
+    updated "$(today)"
+STATE="$(state_path)"
+
 if $JSON_MODE; then
     emit_json \
         feature "$FEATURE_SLUG" \
         session_slug "$SESSION_SLUG" \
         intent "$INTENT" \
         session "$SESSION" \
-        created "$CREATED"
+        created "$CREATED" \
+        state "$STATE"
 else
     echo "Session: $INTENT"
-    echo "  file: $SESSION$($CREATED && echo ' (created)')"
+    echo "  file:  $SESSION$($CREATED && echo ' (created)')"
+    echo "  state: $STATE (stage: build)"
 fi
