@@ -23,6 +23,13 @@ fine — you will *build* it (see §3.4); never block on it. This file is per-de
 **never committed** — it is the *only* place person-specific knowledge lives (the repo journal
 stays person-neutral; see Rules).
 
+**Load the learner's preferences.** Also read `~/.fluencyloop/preferences.md` — a sibling to
+`calibration.md` (global, per-developer, **never committed**) that records recurring *workflow*
+choices already settled once, so you never re-ask them. The one you'll meet first is the
+completion hand-off: whether to commit + push + open the PR automatically, or hand off manually
+each feature (see §4). Honor whatever it records without re-asking. If it's missing, that's fine —
+you'll create it the first time a recurring choice comes up.
+
 **Probe before you dive in.** Continuously estimating the learner's knowledge is critical, and it
 starts *before* the first explanation. From the feature's intent and the code, list the domain
 concepts this work will actually require, and for each one the knowledge base doesn't already
@@ -155,11 +162,32 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
 Repeat per slice until the feature is built. The journal accretes as a byproduct — the
 developer never writes it by hand.
 
-## 4. Hand off to review
+## 4. Hand off to review — settle the recurring choice once
 
 When the feature is ready for a PR, tell the user they can run **fluencyloop-review** to
-assemble the reviewer-facing view from the sessions. Do not open the PR yourself unless
-asked.
+assemble the reviewer-facing view from the sessions.
+
+The commit + push + open-PR hand-off is a **behavioral pattern that recurs every feature** — so
+decide it **once**, not once per feature. Check `~/.fluencyloop/preferences.md` (loaded in §0):
+
+- **A preference is already recorded** — honor it silently, and **do not re-ask**. If it says
+  automatic, go ahead and commit + push + open the PR yourself (run fluencyloop-review first) at
+  completion; if manual, just point the user at fluencyloop-review and stop.
+- **No preference yet (this is the first feature)** — ask **exactly once**, via a single
+  `AskUserQuestion` confirmation rather than a per-feature prompt: from now on, should you commit
+  + push + open the PR yourself at feature completion, or keep handing off manually each time?
+  Persist the answer to `~/.fluencyloop/preferences.md` (create it — global, uncommitted, sibling
+  to `calibration.md`) and honor it now and on every later feature. Never pose this per-feature
+  question again. Format:
+
+  ```
+  # FluencyLoop preferences (per-developer, global, uncommitted)
+  feature-handoff: automatic — commit + push + open PR at completion · 2026-07-13
+  ```
+
+More generally, at the end of the first feature: notice any hand-off you would otherwise repeat
+verbatim next time, and settle it with a single confirmation you record — never re-prompt for the
+same choice run after run.
 
 ## Rules
 
@@ -172,4 +200,8 @@ asked.
   Build and maintain the learner's knowledge base in `~/.fluencyloop/calibration.md` so fluency
   compounds across features. Person-specific knowledge lives *only* there (global, uncommitted) —
   never in the repo journal.
+- **Settle recurring hand-offs once.** A workflow choice you'd repeat verbatim every feature
+  (e.g. auto commit + push + open PR vs. manual hand-off) is asked **once**, via a single
+  confirmation, and persisted to `~/.fluencyloop/preferences.md` (global, uncommitted) — then
+  honored silently. Never re-prompt for the same choice feature after feature.
 - **The developer stays the architect.** Teach to keep them fluent; do not take authorship.
