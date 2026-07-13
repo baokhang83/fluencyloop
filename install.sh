@@ -33,6 +33,9 @@ mkdir -p "$LIB"
 rm -rf "$LIB/scripts" "$LIB/templates" "$LIB/skills"
 cp -R "$SRC/scripts" "$SRC/templates" "$SRC/skills" "$LIB/"
 cp "$SRC/fluencyloop" "$LIB/fluencyloop"
+cp "$SRC/VERSION" "$LIB/VERSION"
+# Record where this install came from, so `fluencyloop self upgrade` knows what to pull.
+printf '%s\n' "$SRC" > "$LIB/SOURCE"
 chmod +x "$LIB/fluencyloop" "$LIB/scripts/bash/"*.sh
 
 # 2. Put the CLI on the PATH.
@@ -46,7 +49,8 @@ if $INSTALL_SKILLS; then
     cp -R "$SRC/skills/." "$SKILLS_DEST/"
 fi
 
-echo "FluencyLoop installed."
+VERSION="$(cat "$SRC/VERSION" 2>/dev/null || echo unknown)"
+echo "FluencyLoop $VERSION installed."
 echo "  lib:     $LIB"
 echo "  cli:     $BIN_DIR/fluencyloop  ->  $LIB/fluencyloop"
 $INSTALL_SKILLS && echo "  skills:  $SKILLS_DEST (user-wide)"

@@ -13,6 +13,8 @@
 #   fluencyloop session "<intent>"         open a session in the active feature
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
 #   fluencyloop migrate [--dry-run]        move docs from .fluencyloop/ to docs/fluencyloop/
+#   fluencyloop version                    print the installed version
+#   fluencyloop self upgrade               pull the latest distribution and re-install
 #   fluencyloop help
 
 set -euo pipefail
@@ -29,6 +31,13 @@ resolve_self() {
     cd -P "$(dirname "$src")" && pwd
 }
 SELF="$(resolve_self)"
+
+# Version + upgrade-source markers live next to this script: at the repo root when running from a
+# checkout, or in the install lib when installed (install.sh copies VERSION and writes SOURCE
+# there). SOURCE records the distribution checkout `self upgrade` pulls from.
+VERSION_FILE="$SELF/VERSION"
+SOURCE_FILE="$SELF/SOURCE"
+read_version() { [ -f "$1" ] && cat "$1" || echo "unknown"; }
 
 # Find the scripts dir: the distribution checkout / install lib, or the current repo's
 # vendored copy after `fluencyloop init`.
@@ -54,6 +63,39 @@ case "$cmd" in
     session)  exec bash "$BIN/new-session.sh" "$@" ;;
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
     migrate)  exec bash "$BIN/migrate.sh" "$@" ;;
+    version|--version|-v) read_version "$VERSION_FILE" ;;
+    self)
+        action="${1:-}"; shift || true
+        if [ "$action" != "upgrade" ]; then
+            echo "Unknown command: fluencyloop self ${action:-}" >&2; usage >&2; exit 1
+        fi
+        # Locate the distribution checkout to pull from: the path install.sh recorded, or this
+        # script's own dir if we're running straight from a checkout.
+        if [ -f "$SOURCE_FILE" ]; then
+            SRC="$(cat "$SOURCE_FILE")"
+        elif [ -d "$SELF/.git" ]; then
+            SRC="$SELF"
+        else
+            SRC=""
+        fi
+        if [ -z "$SRC" ] || [ ! -d "$SRC/.git" ]; then
+            echo "Can't find a git checkout to upgrade from (source: ${SRC:-none})." >&2
+            echo "Re-clone and re-install:" >&2
+            echo "  git clone https://github.com/baokhang83/fluencyloop && cd fluencyloop && ./install.sh" >&2
+            exit 1
+        fi
+        OLD="$(read_version "$VERSION_FILE")"
+        echo "Upgrading from $SRC ..."
+        git -C "$SRC" pull --ff-only
+        NEW="$(read_version "$SRC/VERSION")"
+        bash "$SRC/install.sh" "$@"
+        echo
+        if [ "$OLD" = "$NEW" ]; then
+            echo "FluencyLoop is up to date ($NEW)."
+        else
+            echo "FluencyLoop upgraded: $OLD -> $NEW"
+        fi
+        ;;
     help|-h|--help) usage ;;
     *) echo "Unknown command: $cmd" >&2; usage >&2; exit 1 ;;
 esac
