@@ -96,6 +96,7 @@ because a feature *is* its branch. Shipped something without the loop? `fluencyl
 | Stage | Slash command (in your agent) |
 |-------|-------------------------------|
 | 1. Constitution *(maintainer, once)* | `/fluencyloop-constitution` |
+| Plan: architecture + roadmap *(optional, per big chunk)* | `/fluencyloop-plan` |
 | 2–3. Feature: design → build + teach *(per feature)* | `/fluencyloop-feature` |
 | 4. Review *(per feature)* | `/fluencyloop-review` |
 | Safety net *(post-merge)* | `/fluencyloop-backfill` |
@@ -122,7 +123,7 @@ left to the model.
 
 ```
 install.sh                  machine install: CLI on PATH + skills user-wide
-fluency                     CLI dispatcher (init / feature / session / review)
+fluency                     CLI dispatcher (init / plan / feature / session / review)
 scripts/bash/               deterministic plumbing (common, init, new-feature, …)
 templates/                  .fluencyloop state templates (constitution, design, session)
 skills/                     the interactive skills (installed into ~/.claude/skills)

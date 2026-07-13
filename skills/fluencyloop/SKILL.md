@@ -1,6 +1,6 @@
 ---
 name: fluencyloop
-description: 'FluencyLoop — stay fluent in code as AI writes it. Router/overview for the four-stage workflow (constitution → design → build+teach → review) plus post-merge backfill. Use when the user mentions FluencyLoop, "fluency", the .fluencyloop/ directory, or wants to set up / understand the workflow but hasn''t named a specific stage.'
+description: 'FluencyLoop — stay fluent in code as AI writes it. Router/overview for the four-stage workflow (constitution → design → build+teach → review), the optional up-front planning stage for large chunks, plus post-merge backfill. Use when the user mentions FluencyLoop, "fluency", the .fluencyloop/ directory, or wants to set up / understand the workflow but hasn''t named a specific stage.'
 ---
 
 # FluencyLoop
@@ -13,16 +13,22 @@ contributor-driven, once per feature.** Nothing gates a merge — work that skip
 caught after merge by backfill.
 
 ```
-ONCE, PER PROJECT        REPEATS, PER FEATURE (contributor-driven)
-constitution          →  design      →  build (teach)   →  review
-(maintainer)             diagrams        session journal    PR view assembles itself
+ONCE, PER PROJECT      [ PER BIG CHUNK ]     REPEATS, PER FEATURE (contributor-driven)
+constitution        →  ( plan )          →   design      →  build (teach)   →  review
+(maintainer)           architecture +        diagrams        session journal    PR view
+                       roadmap, optional                                        assembles itself
 ```
+
+Planning is **optional** and sits between the constitution and the per-feature loop: reach for it
+only when a chunk of work is too big for one feature/branch and needs an architecture + roadmap
+first. Small work goes straight to **fluencyloop-feature**.
 
 ## Route to the right stage
 
 | The user wants to…                                   | Skill                  |
 |------------------------------------------------------|------------------------|
 | Set up the project / write its principles            | **fluencyloop-constitution** |
+| Plan a large chunk — architecture, task breakdown, roadmap | **fluencyloop-plan**  |
 | Start building something, stay fluent as they go     | **fluencyloop-feature**    |
 | Prepare a PR / summarise a feature for a reviewer     | **fluencyloop-review**     |
 | Document work that shipped without the loop           | **fluencyloop-backfill**   |
