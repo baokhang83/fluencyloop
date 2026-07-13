@@ -54,6 +54,11 @@ This copies the tool into `~/.fluencyloop/lib`, puts the `fluencyloop` CLI on yo
 **user-wide** (`~/.claude/skills`) so your coding agent sees them in every project.
 (`./install.sh --no-skills` skips the last step; `--bin-dir <dir>` changes where the CLI is linked.)
 
+**Upgrading an existing install.** Pull and re-run `./install.sh` once — this is also how a
+pre-versioning install moves onto versioning (the older CLI has no self-upgrade to invoke). After
+that, `fluencyloop self upgrade` pulls the latest distribution and re-installs for you, reporting
+`old → new`; `fluencyloop version` shows what you're on.
+
 **2. Once per project** — inside a repo you want to use FluencyLoop on:
 
 ```bash
