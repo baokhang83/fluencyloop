@@ -27,10 +27,10 @@ ledger (§3.4) into level promotions/demotions and clears it, so this feature st
 *adapted* profile rather than a reset one. Then read the per-developer calibration profile
 *deterministically* via `fluencyloop calibration show --json`: a
 `dimension → level` map, level ∈ {`fluent`, `familiar`, `learning`, `new`}, e.g.
-`{"java":"fluent","reactive":"learning","k8s":"new"}`. Use each level to set the **starting
-depth** for that domain — `fluent` → terse, flag only what's checkable; `familiar` → confirm,
-don't re-derive; `learning` → teach the why and check understanding; `new` → from fundamentals.
-A dimension that isn't listed is unknown — probe it (below) rather than guessing. The profile
+`{"java":"fluent","reactive":"learning","k8s":"new"}`. Each level maps to a **starting teaching
+depth** for that domain via the deterministic **depth policy** in §3 (`fluent` → name it and move
+on … `new` → unpack, slow down, offer to go deeper) — apply it, don't re-derive it. A dimension
+that isn't listed is unknown — probe it (below) rather than guessing. The profile
 lives globally under `~/.fluencyloop/` and is **never committed** — it is the *only* place
 person-specific knowledge lives (the repo journal stays person-neutral; see Rules). Missing
 entirely is fine — you'll *build* it (see §3.4); `fluencyloop calibration init` seeds it. Never
@@ -120,23 +120,45 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    — a genuine fork where a reasonable alternative was rejected. Ignore non-decisions.
 2. **Teach the why — live, in the conversation.** This is the *during*, so it happens *here*,
    as an exchange — **not** by writing the journal and telling the user to go read it (that's
-   the *after*). For each decision:
-   - Explain the why and the rejected alternative in the chat, right now.
+   the *after*).
+
+   **How much you teach is a lookup, not a deliberation.** Depth is a *function of the developer's
+   level in the decision's domain* (from §0's profile) — apply this policy rather than re-deciding
+   each time:
+
+   | level in the domain | teach the decision like this |
+   |---------------------|------------------------------|
+   | `fluent`   | **name it and move on** — state the call in a clause; no *why* unless they ask. |
+   | `familiar` | **one-line why** — the decision plus its single load-bearing reason; don't unpack. |
+   | `learning` | **unpack + check understanding** — the why *and* the rejected alternative, then pause and confirm it landed. |
+   | `new`      | **unpack, slow down, offer to go deeper** — build from fundamentals at a gentler pace, and explicitly offer to dig further. |
+
+   A decision spanning several domains takes the depth of its **least-known** one. This mapping is
+   the payoff of calibration: it stops you *deliberating* about how much to teach (token-cheap) and
+   pitches each decision to their real level (calibrated). The only things that lower depth are the
+   **calibration level** and **demonstrated engagement** — *never* authorship (see below).
+
+   For each decision, at the depth the policy sets:
+   - Explain to that depth — for `learning`/`new` the why *and* the rejected alternative, right
+     now; for `familiar` the one-line why; for `fluent` just name the call.
    - **Anchor it to the rendered design diagram** — point back to the Artifact from §2 and name
      the exact shape the decision concerns, so the *why* lands on something they can see, not
      just prose. If the decision changed the design, re-render and re-check the diagram.
    - When a slice carries several decisions to sign off at once, you may confirm them
      **interactively, one tab per decision** (`AskUserQuestion`) rather than in a wall of text —
      but the live teaching, not the prompt, stays the point.
-   - **Pause and check understanding** — ask if it lands, and explicitly offer to go deeper
-     ("want me to unpack how X works, or is this enough to trust it?"). Then *wait* for the
-     answer before moving on. A monologue that ends in "see the journal" is the failure mode.
-   - **Calibrate continuously (see §0).** Hold a live estimate of what they know and *update it
-     every exchange*: a quick confirmation is evidence of solid ground (go terser next time); a
-     surprised "wait, why?" or a follow-up question is evidence it's shaky (go deeper, now). Set
-     this explanation's depth from that running estimate. Skip only what the knowledge base or
-     their demonstrated engagement says they know — **never** skip because they authored the code.
-     Name where knowledge ends and trust begins.
+   - **Pause and check understanding** *(where the policy calls for it — `learning` / `new`)* —
+     ask if it lands, and explicitly offer to go deeper ("want me to unpack how X works, or is
+     this enough to trust it?"). Then *wait* for the answer before moving on. A monologue that
+     ends in "see the journal" is the failure mode.
+   - **Calibrate continuously (see §0), but let the policy set depth.** Hold a live estimate of
+     what they know and *update it every exchange*: a quick confirmation is evidence of fluency
+     (log a `wave`, §3.4); a surprised "wait, why?" or a follow-up is evidence it's shaky (log a
+     `deeper`). That estimate moves the *level* — the **depth policy** above, not a fresh judgment
+     call, then maps level → how much you teach. A sharp mismatch you may act on mid-slice (they're
+     clearly lost on a `fluent`-tagged domain → drop to unpacking now), but the table is the
+     default. Skip only what the calibration level or demonstrated engagement justifies — **never**
+     skip because they authored the code. Name where knowledge ends and trust begins.
    - Tone: *"This is the right call here — here's the one-line why. If A and B feel shaky,
      that's where to dig, but you don't need to right now to trust this."* Not homework.
 3. **Journal it** *(the byproduct, after the live teaching — not instead of it)*. Open (or
@@ -234,11 +256,13 @@ same choice run after run.
 - **Honesty over polish.** A journaled `why` must be one the developer actually engaged with.
   If they waved a decision through, mark it `trust: ⚠`. Do not manufacture rationale.
 - **Anchor every claim to code** (`where:`) — file/area, so it survives refactoring.
-- **Estimate continuously, adapt depth, and persist it.** Probe the concepts a feature needs
-  *before* diving in, re-estimate every exchange, and set explanation depth from that estimate.
-  Build and maintain the learner's knowledge base in `~/.fluencyloop/calibration.md` so fluency
-  compounds across features. Person-specific knowledge lives *only* there (global, uncommitted) —
-  never in the repo journal.
+- **Depth is a function of level, not whim.** Probe the concepts a feature needs *before* diving
+  in; then teach each decision to the **depth policy** in §3 (`fluent` → name it and move on …
+  `new` → unpack, slow down, offer to go deeper). Your live estimate moves the *level* (logged as
+  signals, §3.4; rolled up by `calibration compact`) — it does not re-decide depth ad hoc. Build
+  and maintain the learner's profile in `~/.fluencyloop/calibration.md` so fluency compounds across
+  features. Person-specific knowledge lives *only* there (global, uncommitted) — never in the repo
+  journal.
 - **Settle recurring hand-offs once.** A workflow choice you'd repeat verbatim every feature
   (e.g. auto commit + push + open PR vs. manual hand-off) is asked **once**, via a single
   confirmation, and persisted to `~/.fluencyloop/preferences.md` (global, uncommitted) — then
