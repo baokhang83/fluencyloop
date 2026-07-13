@@ -96,7 +96,7 @@ because a feature *is* its branch. Shipped something without the loop? `fluencyl
 | Stage | Slash command (in your agent) |
 |-------|-------------------------------|
 | 1. Constitution *(maintainer, once)* | `/fluencyloop-constitution` |
-| Plan: architecture + roadmap *(optional, per big chunk)* | `/fluencyloop-plan` |
+| Plan: architecture + roadmap *(optional, for large chunks)* | `/fluencyloop-plan` |
 | 2–3. Feature: design → build + teach *(per feature)* | `/fluencyloop-feature` |
 | 4. Review *(per feature)* | `/fluencyloop-review` |
 | Safety net *(post-merge)* | `/fluencyloop-backfill` |
