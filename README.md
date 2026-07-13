@@ -108,7 +108,7 @@ because a feature *is* its branch. Shipped something without the loop? `fluencyl
 |  *(optionally)* Plan a big chunk — architecture + roadmap | `/fluencyloop-plan` |
 | Build a feature — design → build + teach *(per feature)* | `/fluencyloop-feature` |
 | Review — the PR view assembles itself *(per feature)* | `/fluencyloop-review` |
-| *(when needed)* Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop-backfill` |
+| Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop-backfill` |
 
 You invoke a stage two ways: **type the slash command** (e.g. `/fluencyloop-feature`), or just
 **describe the task** ("start a feature to add rate limiting") and your agent triggers the
