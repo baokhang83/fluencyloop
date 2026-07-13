@@ -12,6 +12,7 @@
 #   fluencyloop feature "<intent>"         declare a feature (branch + design stub)
 #   fluencyloop session "<intent>"         open a session in the active feature
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
+#   fluencyloop check [--json]             doctor: loop state + un-journaled drift
 #   fluencyloop migrate [--dry-run]        move docs from .fluencyloop/ to docs/fluencyloop/
 #   fluencyloop version                    print the installed version
 #   fluencyloop self upgrade               pull the latest distribution and re-install
@@ -62,6 +63,7 @@ case "$cmd" in
     feature)  exec bash "$BIN/new-feature.sh" "$@" ;;
     session)  exec bash "$BIN/new-session.sh" "$@" ;;
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
+    check)    exec bash "$BIN/check.sh" "$@" ;;
     migrate)  exec bash "$BIN/migrate.sh" "$@" ;;
     version|--version|-v) read_version "$VERSION_FILE" ;;
     self)

@@ -111,7 +111,7 @@ left to the model.
 
 ```
 install.sh                  machine install: CLI on PATH + skills user-wide
-fluency                     CLI dispatcher (init / plan / feature / session / review / version / self upgrade)
+fluency                     CLI dispatcher (init / plan / feature / session / review / check / version / self upgrade)
 VERSION                     the current version (0.2.0); `fluencyloop version` prints it
 scripts/bash/               deterministic plumbing (common, init, new-feature, …)
 templates/                  .fluencyloop state templates (constitution, design, session)

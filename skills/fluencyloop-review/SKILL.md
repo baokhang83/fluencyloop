@@ -38,6 +38,10 @@ Produce a concise, reviewer-facing summary:
   real principles. **Flag** any decision that appears to conflict, or any principle-relevant
   decision that was never checked. Flag as a surfaced note — never a blocker.
 - **Design pointer:** link the feature's `design.md` so the reviewer can see the shape.
+- **Un-journaled drift:** run `fluencyloop check --json` (or `.fluencyloop/scripts/check.sh
+  --json`) and read `unjournaled_commits`. If it's > 0, warn that N commit(s) landed since the
+  last journaled session — the reviewer is looking at code the journal doesn't explain, so nudge
+  the author to journal it or run backfill. Surface it as a note; never block.
 
 ## 3. Output — create the PR, don't hand over text to paste
 
