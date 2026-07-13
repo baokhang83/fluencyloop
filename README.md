@@ -50,10 +50,12 @@ FluencyLoop doesn't lecture at a fixed depth. Before a feature touches unfamilia
 know from how you respond: terse on solid ground, deeper where it's shaky. What it learns is
 persisted to a **per-developer knowledge base** in `~/.fluencyloop/` (global, never committed) —
 a structured `dimension: level` profile (`java: fluent`, `reactive: learning`, `k8s: new`) the
-loop parses to set teaching depth deterministically, so the next feature starts already
-calibrated instead of cold and the fluency compounds. Manage it with `fluencyloop calibration
-init|show|edit`. Your knowledge profile stays private to your machine; the committed journal only
-ever describes the work, never you.
+loop parses to set teaching depth deterministically. It **adapts from how you engage**: as it
+teaches it appends cheap signals (you waved a decision through, asked to go deeper, corrected it),
+and `fluencyloop calibration compact` rolls repeated signals into level promotions/demotions — so
+depth tracks your real fluency across features instead of resetting each session. Manage it with
+`fluencyloop calibration init|show|edit`. Your knowledge profile stays private to your machine;
+the committed journal only ever describes the work, never you.
 
 ## Install
 

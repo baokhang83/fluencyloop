@@ -13,7 +13,7 @@
 #   fluencyloop session "<intent>"         open a session in the active feature
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
 #   fluencyloop check [--json]             doctor: loop state + un-journaled drift
-#   fluencyloop calibration [init|show|edit]  your global, per-developer knowledge profile
+#   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
 #   fluencyloop migrate [--dry-run]        move docs from .fluencyloop/ to docs/fluencyloop/
 #   fluencyloop version                    print the installed version
 #   fluencyloop self upgrade               pull the latest distribution and re-install

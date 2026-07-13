@@ -154,3 +154,7 @@ write_state() {
 # The per-developer knowledge profile: global, never committed. Lives under FLUENCYLOOP_HOME
 # (default ~/.fluencyloop), NOT in the repo — it is the only place person-specific knowledge lives.
 calibration_file() { printf '%s/calibration.md' "${FLUENCYLOOP_HOME:-$HOME/.fluencyloop}"; }
+
+# Append-only ledger of engagement signals (wave/deeper/correct per dimension). Global, never
+# committed. `calibration compact` rolls it into level changes in the profile above.
+signals_file() { printf '%s/signals.log' "${FLUENCYLOOP_HOME:-$HOME/.fluencyloop}"; }

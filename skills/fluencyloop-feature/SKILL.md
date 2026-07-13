@@ -21,8 +21,11 @@ single source of truth for the active feature (`feature` slug, `branch`, `stage`
 it over re-deriving from git each turn: it tells you which stage you're resuming at and which
 session file is open. It's absent only before the feature is declared (§1 creates it).
 
-**Load the learner's knowledge base — parse it, don't eyeball it.** Read the per-developer
-calibration profile *deterministically* via `fluencyloop calibration show --json`: a
+**Load the learner's knowledge base — parse it, don't eyeball it.** First fold in what prior work
+demonstrated: run `fluencyloop calibration compact` — deterministic bash that rolls the engagement
+ledger (§3.4) into level promotions/demotions and clears it, so this feature starts from an
+*adapted* profile rather than a reset one. Then read the per-developer calibration profile
+*deterministically* via `fluencyloop calibration show --json`: a
 `dimension → level` map, level ∈ {`fluent`, `familiar`, `learning`, `new`}, e.g.
 `{"java":"fluent","reactive":"learning","k8s":"new"}`. Use each level to set the **starting
 depth** for that domain — `fluent` → terse, flag only what's checkable; `familiar` → confirm,
@@ -165,21 +168,24 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
 
    Remove the template's example blocks and HTML comment the first time you write real content.
 
-4. **Update the learner's knowledge base** *(theirs, global in `~/.fluencyloop/` — not the
-   repo's)*. Persist what this slice revealed to the calibration profile so the estimate you built
-   survives the conversation. Under its `## Profile` heading, add or adjust one `dimension: level`
-   line per domain that moved — level ∈ {`fluent`, `familiar`, `learning`, `new`}. An optional
-   note and `· <YYYY-MM-DD>` may follow the level; the parser ignores everything after it:
+4. **Log the engagement signal** *(cheap: one append, no level-guessing)*. Levels *adapt from
+   demonstrated engagement* — you don't hand-edit them each slice. For each decision you just
+   taught, judge how the developer engaged and append **one signal per domain dimension** it
+   touched:
 
    ```
-   maven.plugin: learning — @Mojo/AbstractMojo params, plugin.xml binding · 2026-07-13
-   junit5: fluent
+   fluencyloop calibration signal <dimension> wave      # waved it through — evidence of fluency
+   fluencyloop calibration signal <dimension> deeper    # asked you to unpack it — still building it
+   fluencyloop calibration signal <dimension> correct   # corrected you / drove it — keep teaching rich here
    ```
 
-   `fluencyloop calibration init` creates the file if absent (`calibration edit` opens it). This
-   is how the base is *built and maintained* — so the next slice, session, and feature start
-   already calibrated instead of cold. Keep it global and **uncommitted**; never write
-   person-specific knowledge into the repo.
+   Appending is the whole job — trivial, and honest (it records what actually happened, not a
+   guess). The deterministic `fluencyloop calibration compact` (run at the next feature's §0)
+   rolls repeated signals into level changes: promote on repeated wave-throughs, demote on
+   deeper-asks or corrections. This is how calibration adapts across features instead of resetting
+   each session. *(For a brand-new dimension, set its initial level from your §0 probe by editing
+   the profile; ongoing movement comes from signals.)* The ledger is global and **uncommitted** —
+   never write person-specific knowledge into the repo.
 
 5. **Harvest to the constitution** *(the growth beat — now the only ongoing way principles are
    added, so don't let it stay dormant)*. When a decision's *why* is a **repeatable stance** — a

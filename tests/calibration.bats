@@ -62,3 +62,63 @@ assert "bogus" not in d, d                    # invalid level excluded
     run cal frobnicate
     [ "$status" -ne 0 ]
 }
+
+# --- signals + compact (demonstrated-engagement adaptation) ---------------
+
+level_of() { cal show --json | python3 -c "import json,sys;print(json.load(sys.stdin).get('$1',''))"; }
+
+@test "signal appends to the ledger; a bad signal type is rejected" {
+    cal init >/dev/null
+    cal signal java wave
+    [ -f "$FLUENCYLOOP_HOME/signals.log" ]
+    grep -q "java wave" "$FLUENCYLOOP_HOME/signals.log"
+    run cal signal java bogus
+    [ "$status" -ne 0 ]
+}
+
+@test "compact promotes after repeated wave-throughs (threshold 2)" {
+    cal init >/dev/null
+    echo "java: learning" >> "$FLUENCYLOOP_HOME/calibration.md"
+    cal signal java wave; cal signal java wave
+    run cal compact
+    [ "$status" -eq 0 ]
+    [ "$(level_of java)" = "familiar" ]
+}
+
+@test "compact demotes on deeper-asks / corrections" {
+    cal init >/dev/null
+    echo "reactive: familiar" >> "$FLUENCYLOOP_HOME/calibration.md"
+    cal signal reactive deeper; cal signal reactive correct
+    cal compact >/dev/null
+    [ "$(level_of reactive)" = "learning" ]
+}
+
+@test "signals below the threshold don't move the level" {
+    cal init >/dev/null
+    echo "k8s: new" >> "$FLUENCYLOOP_HOME/calibration.md"
+    cal signal k8s wave      # only 1 — below ±2
+    cal compact >/dev/null
+    [ "$(level_of k8s)" = "new" ]
+}
+
+@test "compact consumes the ledger; --dry-run neither applies nor consumes" {
+    cal init >/dev/null
+    echo "java: learning" >> "$FLUENCYLOOP_HOME/calibration.md"
+    cal signal java wave; cal signal java wave
+    run cal compact --dry-run
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"java: learning -> familiar"* ]]
+    [ "$(level_of java)" = "learning" ]                      # not applied
+    grep -q "java wave" "$FLUENCYLOOP_HOME/signals.log"      # not consumed
+    cal compact >/dev/null
+    [ "$(level_of java)" = "familiar" ]                      # applied
+    ! grep -q "java wave" "$FLUENCYLOOP_HOME/signals.log"    # consumed
+}
+
+@test "levels clamp: promoting fluent stays fluent" {
+    cal init >/dev/null
+    echo "java: fluent" >> "$FLUENCYLOOP_HOME/calibration.md"
+    cal signal java wave; cal signal java wave
+    cal compact >/dev/null
+    [ "$(level_of java)" = "fluent" ]
+}
