@@ -49,7 +49,7 @@ if [ -n "$ROOT" ] && [ -n "$FEATURE" ]; then
 fi
 
 # --- per-developer calibration profile (global, never committed) ---
-CAL_FILE="${FLUENCYLOOP_HOME:-$HOME/.fluencyloop}/calibration.md"
+CAL_FILE="$(calibration_file)"
 CAL_PRESENT=false
 [ -f "$CAL_FILE" ] && CAL_PRESENT=true
 

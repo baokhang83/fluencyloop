@@ -149,3 +149,8 @@ write_state() {
     out+=$'\n}'
     printf '%s\n' "$out" > "$f"
 }
+
+# --- calibration ----------------------------------------------------------
+# The per-developer knowledge profile: global, never committed. Lives under FLUENCYLOOP_HOME
+# (default ~/.fluencyloop), NOT in the repo — it is the only place person-specific knowledge lives.
+calibration_file() { printf '%s/calibration.md' "${FLUENCYLOOP_HOME:-$HOME/.fluencyloop}"; }

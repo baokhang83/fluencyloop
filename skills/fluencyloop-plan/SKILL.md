@@ -22,7 +22,8 @@ to run `fluencyloop init` first, and stop.
 *that* file. The architecture you design in §2 is checked against it. If it's still the **empty
 stub**, this plan is where the constitution is born — see §5.
 
-**Load the learner's knowledge base** — `~/.fluencyloop/calibration.md` (per-developer, global,
+**Load the learner's knowledge base** — parse it via `fluencyloop calibration show --json` (a
+`dimension → level` map, level ∈ {`fluent`, `familiar`, `learning`, `new`}; per-developer, global,
 never committed) — to set the depth you explain architectural choices at. Missing is fine.
 Planning is also teaching: the same "teach the why, check understanding, don't lecture" posture
 from `fluencyloop-feature` applies to the architecture decisions here.

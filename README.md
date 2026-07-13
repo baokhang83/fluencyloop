@@ -46,10 +46,12 @@ principles from real decisions. Nothing gates a merge — work that skips the lo
 FluencyLoop doesn't lecture at a fixed depth. Before a feature touches unfamiliar ground it
 **asks** — *"For the new Maven plugin, are you familiar with `plugin.xml` and Mojo objects?"* — then keeps re-estimating what you
 know from how you respond: terse on solid ground, deeper where it's shaky. What it learns is
-persisted to a **per-developer knowledge base** in `~/.fluencyloop/` (global, never committed),
-so the next feature starts already calibrated instead of cold — and the fluency compounds. Your
-knowledge profile stays private to your machine; the committed journal only ever describes the
-work, never you.
+persisted to a **per-developer knowledge base** in `~/.fluencyloop/` (global, never committed) —
+a structured `dimension: level` profile (`java: fluent`, `reactive: learning`, `k8s: new`) the
+loop parses to set teaching depth deterministically, so the next feature starts already
+calibrated instead of cold and the fluency compounds. Manage it with `fluencyloop calibration
+init|show|edit`. Your knowledge profile stays private to your machine; the committed journal only
+ever describes the work, never you.
 
 ## Install
 
@@ -121,7 +123,7 @@ left to the model.
 
 ```
 install.sh                  machine install: CLI on PATH + skills user-wide
-fluency                     CLI dispatcher (init / plan / feature / session / review / check / version / self upgrade)
+fluency                     CLI dispatcher (init / plan / feature / session / review / check / calibration / version / self upgrade)
 VERSION                     the current version (0.2.0); `fluencyloop version` prints it
 scripts/bash/               deterministic plumbing (common, init, new-feature, …)
 templates/                  .fluencyloop state templates (constitution, design, session)

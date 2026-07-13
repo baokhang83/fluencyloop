@@ -21,13 +21,17 @@ single source of truth for the active feature (`feature` slug, `branch`, `stage`
 it over re-deriving from git each turn: it tells you which stage you're resuming at and which
 session file is open. It's absent only before the feature is declared (§1 creates it).
 
-**Load the learner's knowledge base.** Read `~/.fluencyloop/calibration.md` — the persisted,
-per-developer record of what this learner knows solidly, finds shaky, or hasn't met yet. It is
-domain-dimensioned (e.g. "senior Java; Maven plugin internals new"). Use it to set the **starting
-depth** of every explanation: terse on solid ground, deeper on shaky. If it's missing, that's
-fine — you will *build* it (see §3.4); never block on it. This file is per-developer, global, and
-**never committed** — it is the *only* place person-specific knowledge lives (the repo journal
-stays person-neutral; see Rules).
+**Load the learner's knowledge base — parse it, don't eyeball it.** Read the per-developer
+calibration profile *deterministically* via `fluencyloop calibration show --json`: a
+`dimension → level` map, level ∈ {`fluent`, `familiar`, `learning`, `new`}, e.g.
+`{"java":"fluent","reactive":"learning","k8s":"new"}`. Use each level to set the **starting
+depth** for that domain — `fluent` → terse, flag only what's checkable; `familiar` → confirm,
+don't re-derive; `learning` → teach the why and check understanding; `new` → from fundamentals.
+A dimension that isn't listed is unknown — probe it (below) rather than guessing. The profile
+lives globally under `~/.fluencyloop/` and is **never committed** — it is the *only* place
+person-specific knowledge lives (the repo journal stays person-neutral; see Rules). Missing
+entirely is fine — you'll *build* it (see §3.4); `fluencyloop calibration init` seeds it. Never
+block on it.
 
 **Load the learner's preferences.** Also read `~/.fluencyloop/preferences.md` — a sibling to
 `calibration.md` (global, per-developer, **never committed**) that records recurring *workflow*
@@ -161,20 +165,21 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
 
    Remove the template's example blocks and HTML comment the first time you write real content.
 
-4. **Update the learner's knowledge base** *(theirs, in `~/.fluencyloop/` — not the repo's)*.
-   Persist what this slice revealed about the learner to `~/.fluencyloop/calibration.md`, so the
-   estimate you built survives the conversation. Add or adjust one line per concept that moved:
+4. **Update the learner's knowledge base** *(theirs, global in `~/.fluencyloop/` — not the
+   repo's)*. Persist what this slice revealed to the calibration profile so the estimate you built
+   survives the conversation. Under its `## Profile` heading, add or adjust one `dimension: level`
+   line per domain that moved — level ∈ {`fluent`, `familiar`, `learning`, `new`}. An optional
+   note and `· <YYYY-MM-DD>` may follow the level; the parser ignores everything after it:
 
    ```
-   <concept>: <solid | learning | new | unknown> — <one-line note> · <YYYY-MM-DD>
-   maven-mojo: learning — taught @Mojo/AbstractMojo params and plugin.xml binding · 2026-07-12
-   junit5-platform: solid · 2026-07-11
+   maven.plugin: learning — @Mojo/AbstractMojo params, plugin.xml binding · 2026-07-13
+   junit5: fluent
    ```
 
-   Refresh the free-text summary line too. Create the file if absent. This is how the base is
-   *built and maintained* — so the next slice, session, and feature start already calibrated
-   instead of cold. Keep it global and **uncommitted**; never write person-specific knowledge
-   into the repo.
+   `fluencyloop calibration init` creates the file if absent (`calibration edit` opens it). This
+   is how the base is *built and maintained* — so the next slice, session, and feature start
+   already calibrated instead of cold. Keep it global and **uncommitted**; never write
+   person-specific knowledge into the repo.
 
 5. **Harvest to the constitution** *(the growth beat — now the only ongoing way principles are
    added, so don't let it stay dormant)*. When a decision's *why* is a **repeatable stance** — a
