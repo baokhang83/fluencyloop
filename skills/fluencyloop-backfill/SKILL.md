@@ -48,23 +48,31 @@ record (step 3).
 ## 2. Reconstruct — carefully
 
 Read the diff, the history, and the code (plus any ADR/spec/notes the work cites) and infer
-the **decisions that were actually made** — the genuine forks, not every line. For each,
-draft a `## Decision:` block:
+the **decisions that were actually made** — the genuine forks, not every line. For each, the
+field values are:
 
-- `where:` — the file/area it lives in.
-- `why:` — your best reconstruction of the rationale **from the code and its cited sources**.
+- `where` — the file/area it lives in.
+- `why` — your best reconstruction of the rationale **from the code and its cited sources**.
   Do not embellish beyond what they support.
-- `alternative:` — the plausible rejected option, if the code implies one; otherwise say the
+- `alternative` — the plausible rejected option, if the code implies one; otherwise say the
   alternative is unknown rather than inventing a tidy story.
-- `constitution:` — the principle it serves, by the **current** constitution's numbering (if a
+- `constitution` — the principle it serves, by the **current** constitution's numbering (if a
   cited source uses older numbers, map to current and note the drift for the human to confirm).
-- `trust: ⚠ unverified — backfilled` — **always**, with no exceptions, at this stage.
+- `trust` — always **unverified** at this stage, with no exceptions.
 
-Create the feature + session to hold them, then write the drafted blocks into the session file:
+Create the feature + session to hold them:
 
 ```bash
 .fluencyloop/scripts/new-feature.sh --json "<inferred feature intent>"
 .fluencyloop/scripts/new-session.sh --json --slug "<feature-slug>" "<inferred slice intent>"
+```
+
+Then append each block with `fluencyloop decision` (the script formats it — you supply only the
+values), marking every one backfilled and unverified:
+
+```bash
+fluencyloop decision --title "chose X over Y" --where "<file/area>" --why "<reconstructed why>" \
+  --alternative "<rejected — why, or 'unknown'>" [--constitution §N] --trust unverified
 ```
 
 These also write `.fluencyloop/state.json` (feature, branch, `stage: build`, the session as
