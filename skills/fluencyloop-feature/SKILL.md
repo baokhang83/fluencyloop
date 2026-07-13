@@ -183,27 +183,29 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    .fluencyloop/scripts/new-session.sh --json --slug "<feature-slug>" "<slice intent>"
    ```
 
-   Append two things, from the live teaching you just did:
-   - **Knowledge transfer** — under the session's `## Knowledge transfer` heading, record the
-     ground this slice covers: one bullet per component/role/mechanism — the *subject*, *what it
-     does and under what conditions*, and *status:* `documented` / `follow-up`. Make it **rich,
-     not a token list**: capture the roles *and* the non-obvious conditions, gotchas, and hard-won
-     lessons (a bug's root cause, why something is done an odd way, a documented limitation) —
-     that is the highest-value fluency. It is the persistent record of the ground now covered — it
-     does not evaporate with the chat, and it is separate from decisions (a role you explained is
-     knowledge transfer even if no fork was chosen).
-     **Keep it about the work, never the person:** record what the code does, never anyone's
-     competence, prior knowledge, or "who learned what" — these files are committed and name an
-     identifiable author via git (GDPR). The per-developer picture belongs only in the
-     uncommitted global calibration profile.
-   - **Decisions** — one `## Decision:` block per decision, using the schema in the session
-     template. **Each field is a Markdown bullet** (`- **where:** …`, `- **why:** …`,
-     `- **alternative:** …`, optional `- **design:**` / `- **constitution:**`, `- **trust:**`)
-     — plain `key: value` lines collapse into one paragraph when the `.md` is rendered, so
-     always use bullets. `where:` is a file/area, never a line number; `trust:` is `✓` verified
-     / `⚠` not independently verified — about the **decision**, never the person.
+   Then record two things — you supply the *content*; the template's scaffolding is already there
+   (all in comments, nothing to delete):
+   - **Knowledge transfer** *(you write this — it's irreducible)* — under the session's
+     `## Knowledge transfer` headings, one bullet per component/role/mechanism: the *subject*,
+     *what it does and under what conditions*, and *status:* `documented` / `follow-up`. Make it
+     **rich, not a token list**: the roles *and* the non-obvious conditions, gotchas, and hard-won
+     lessons (a bug's root cause, why something is done an odd way, a documented limitation) — the
+     highest-value fluency. Separate from decisions (a role you explained is knowledge transfer
+     even if no fork was chosen). **About the work, never the person** — no competence, prior
+     knowledge, or "who learned what" (committed files, GDPR); the per-developer picture lives only
+     in the calibration profile.
+   - **Decisions** *(the script formats them — you supply only the field values)* — for each, run
+     `fluencyloop decision` so the block is assembled deterministically; never hand-write the
+     bullet schema:
 
-   Remove the template's example blocks and HTML comment the first time you write real content.
+     ```bash
+     fluencyloop decision --title "chose X over Y" --where "<file/area>" --why "<the taught why>" \
+       --alternative "<rejected option> — rejected: <why>" [--constitution §N] \
+       [--design ../design.md#anchor] --trust unverified   # or: verified
+     ```
+
+     `where` is a file/area, never a line number; `trust` is about the **decision**, never the
+     person — `unverified` unless you independently checked it.
 
 4. **Log the engagement signal** *(cheap: one append, no level-guessing)*. Levels *adapt from
    demonstrated engagement* — you don't hand-edit them each slice. For each decision you just

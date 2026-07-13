@@ -52,6 +52,22 @@ This creates `.fluencyloop/` (scripts, templates, constitution stub) and copies 
 the per-developer calibration profile lives globally in `~/.fluencyloop/` and is never
 committed.
 
+## Minimal generation — scripts assemble, the model writes the *why*
+
+FluencyLoop is cheap to run because the deterministic scripts do everything mechanical and the
+model spends tokens only on the irreducible rationale. The split, per stage:
+
+| Stage | The scripts assemble (deterministic) | The model writes (irreducible) |
+|-------|--------------------------------------|--------------------------------|
+| **Declare / design** | feature branch, `design.md` stub, `state.json` (slug / branch / stage / base) | the design diagrams (the shapes), the constitution check |
+| **Build (per slice)** | `slice-context` (diff + metadata + `likely_decision`), the session skeleton, the **decision blocks** (`fluencyloop decision`), `calibration signal` / `compact`, `state.json` updates | the code, the taught **why**, knowledge-transfer prose, the decision field *values* |
+| **Review** | `assemble-pr-view` (sessions inlined, commit range, base), PR creation | the reviewer-facing distillation |
+| **Backfill** | feature + session scaffold, `state.json`, decision blocks, `check` drift | the reconstructed rationale (marked `unverified`) |
+
+The rule: if a stage asks the model to produce something a script could assemble deterministically
+— a file skeleton, a commit range, a formatted block, a state read — that's a bug; move it to a
+script. The model's tokens go to the *why*, never to plumbing.
+
 ## The four standing principles
 
 - **Evidence over pitch** — probe demand cheaply before building.
