@@ -15,6 +15,12 @@ each slice boundary. Never gate; never lecture. Keep the developer the author.
 Confirm `.fluencyloop/` exists (run `.fluencyloop/scripts/common.sh` context). If it does not, tell
 the user to run `fluencyloop-constitution` / `fluencyloop init` first, and stop.
 
+**Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
+single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
+`base_ref`), written by `new-feature.sh` / `new-session.sh` and committed with the branch. Prefer
+it over re-deriving from git each turn: it tells you which stage you're resuming at and which
+session file is open. It's absent only before the feature is declared (§1 creates it).
+
 **Load the learner's knowledge base.** Read `~/.fluencyloop/calibration.md` — the persisted,
 per-developer record of what this learner knows solidly, finds shaky, or hasn't met yet. It is
 domain-dimensioned (e.g. "senior Java; Maven plugin internals new"). Use it to set the **starting
