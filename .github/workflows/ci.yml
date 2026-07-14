@@ -68,3 +68,35 @@ jobs:
         run: git clone --depth 1 https://github.com/bats-core/bats-core.git "$RUNNER_TEMP/bats"
       - name: Run the suite under Git Bash
         run: bash "$RUNNER_TEMP/bats/bin/bats" --print-output-on-failure tests
+
+  # Native-Windows support: lint the PowerShell port with PSScriptAnalyzer and run the Pester
+  # suite (mirrors the bats cases) on a real Windows runner in PowerShell 7.
+  pester-windows:
+    name: PSScriptAnalyzer + Pester (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh          # PowerShell 7 on windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install modules
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.5.0 -Force -Scope CurrentUser
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+      - name: PSScriptAnalyzer
+        run: |
+          $set = 'scripts/powershell/PSScriptAnalyzerSettings.psd1'
+          $r = @()
+          $r += Invoke-ScriptAnalyzer -Path scripts/powershell -Recurse -Settings $set -Severity Warning, Error
+          $r += Invoke-ScriptAnalyzer -Path fluencyloop.ps1 -Settings $set -Severity Warning, Error
+          $r += Invoke-ScriptAnalyzer -Path install.ps1 -Settings $set -Severity Warning, Error
+          if ($r) { $r | Format-Table -AutoSize | Out-String | Write-Host; throw "PSScriptAnalyzer found $($r.Count) issue(s)" }
+          Write-Host 'PSScriptAnalyzer: clean'
+      - name: Pester
+        run: |
+          $c = New-PesterConfiguration
+          $c.Run.Path = 'tests/powershell'
+          $c.Run.Exit = $true
+          $c.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $c
