@@ -61,4 +61,4 @@ jobs:
       - name: Install bats-core
         run: git clone --depth 1 https://github.com/bats-core/bats-core.git "$RUNNER_TEMP/bats"
       - name: Run the suite under Git Bash
-        run: bash "$RUNNER_TEMP/bats/libexec/bats-core/bats" --print-output-on-failure tests
+        run: bash "$RUNNER_TEMP/bats/bin/bats" --print-output-on-failure tests
