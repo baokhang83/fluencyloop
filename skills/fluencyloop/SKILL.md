@@ -7,6 +7,12 @@ description: 'FluencyLoop — stay fluent in code as AI writes it. Router/overvi
 
 *The code and your fluency in it are produced together, or not at all.*
 
+## Question delivery
+
+FluencyLoop's stage skills use **`AskUserQuestion` in Claude Code** and
+**`UserAskQuestion` in Codex** for genuine prompts. If the current surface exposes neither, they
+ask in chat and pause for the answer before continuing.
+
 FluencyLoop keeps the people behind a codebase fluent in it as AI writes more of it. At its core
 is a **per-feature loop** — design → build (teach) → review — driven by whoever is building.
 Nothing gates a merge; work that skips the loop is caught after merge by backfill.

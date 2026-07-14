@@ -12,6 +12,13 @@ with a critical path, (5) offer to open GitHub tickets under a milestone, (6) ha
 off to `fluencyloop-feature`. The plan is a **map you build against, not a spec to ratify** —
 do not over-invest. Keep the developer the architect.
 
+## Question delivery — preserve the pause
+
+For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code** and
+**`UserAskQuestion` in Codex**. If neither is available in the current surface, ask in chat and
+stop; do not create issues, write a settled choice, or advance the workflow until the developer
+answers.
+
 ## 0. Preconditions
 
 Confirm `.fluencyloop/` exists (`fluencyloop check` reports it). If not, tell the user
@@ -118,7 +125,7 @@ Check `gh auth status` **first**:
 
 - **`gh` is missing or unauthed** — this is worth a **one-time** setup offer, because `gh` unlocks
   real automation. Check `~/.fluencyloop/preferences.md` for a settled `gh-setup` choice:
-  - **Not settled yet** — offer **once** via `AskUserQuestion`, and *sell what it unlocks*: with
+  - **Not settled yet** — offer **once** via the native question form, and *sell what it unlocks*: with
     `gh`, FluencyLoop files your whole task breakdown as GitHub issues under a milestone **for you**,
     and opens prepopulated PRs at review — instead of you running commands by hand. Frame it so
     **yes** is the easy call, e.g. *"Want me to set up `gh` so I can file these N tasks as issues +

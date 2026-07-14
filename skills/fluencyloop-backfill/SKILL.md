@@ -18,6 +18,12 @@ components the work touched — the fluency the missing real-time loop never gav
 don't just draft and ask "ok?"; you *show them the shapes, rendered,* map each decision onto
 them, and confirm decision-by-decision.
 
+## Question delivery — preserve the pause
+
+For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code** and
+**`UserAskQuestion` in Codex**. If neither is available in the current surface, ask in chat and
+stop; do not update an entry's trust marker until the developer answers.
+
 ## 1. Scope the work
 
 Identify what to backfill — a merged PR, a commit range, or the current branch's diff vs
@@ -142,7 +148,7 @@ Give the user the rendered URL and let them read before you ask anything.
 ## 4. Confirm — interactively, one decision at a time
 
 Do **not** ask for a blanket "looks good." Confirm **decision by decision**, using an
-interactive prompt with **one tab per decision** (the `AskUserQuestion` tool — up to 4 per
+interactive prompt with **one tab per decision** (the native question form — up to 4 per
 call; batch further decisions in follow-up calls). For each decision offer:
 
 - **Confirm → ✓** — they can vouch for it firsthand; upgrade `trust: ⚠` to `✓`.

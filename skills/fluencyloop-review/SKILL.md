@@ -8,6 +8,12 @@ description: 'FluencyLoop Stage 4. Assemble the reviewer-facing PR view from a f
 A **feature is a branch**, so the review view assembles itself: no manual linking. You turn
 the feature's sessions into a summary a reviewer can read to get fluent fast.
 
+## Question delivery — preserve the pause
+
+For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code** and
+**`UserAskQuestion` in Codex**. If neither is available in the current surface, ask in chat and
+stop; do not create a PR or persist a preference until the developer answers.
+
 ## 1. Gather the raw material
 
 **Read `.fluencyloop/state.json` first** if it exists — it is the loop's source of truth for the
@@ -62,7 +68,7 @@ to copy-paste into GitHub.
    `https://github.com/<owner>/<repo>/compare/<base>...<branch>?expand=1&title=<t>&body=<url-encoded>`
    (mind the URL length limit; fall back to the pasteable body if it's too long). Then check
    `~/.fluencyloop/preferences.md` for a settled `gh-setup` choice:
-   - **Not settled yet** — offer **once** via `AskUserQuestion`, selling it: *"Want me to set up
+   - **Not settled yet** — offer **once** via the native question form, selling it: *"Want me to set up
      `gh` so I open your PRs (and file your plan's issues) automatically from here on? One-time —
      I won't ask again."* Options **Yes, set it up** *(recommended, list first)* / **Not now**.
      Record `gh-setup: done` / `gh-setup: declined` to `preferences.md`; never ask again. On **yes**,

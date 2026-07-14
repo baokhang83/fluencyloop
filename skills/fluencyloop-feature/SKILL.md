@@ -10,6 +10,14 @@ the design diagrams and the session journals. You will: (1) declare the feature,
 its design, (3) build it in slices — teaching and journaling one or two real decisions at
 each slice boundary. Never gate; never lecture. Keep the developer the author.
 
+## Question delivery — preserve the pause
+
+When this workflow needs a real answer, choice, confirmation, or knowledge probe, use the host's
+native structured-question form: **`AskUserQuestion` in Claude Code** and
+**`UserAskQuestion` in Codex**. If the current surface exposes neither, ask in ordinary chat and
+**stop**; do not implement, write the decision, or move to the next step until the developer has
+answered. This is a portability fallback, not permission to bury a real question in prose.
+
 ## 0. Preconditions
 
 Confirm `.fluencyloop/` exists (`fluencyloop check` reports it). If it does not, tell
@@ -47,7 +55,7 @@ choice comes up.
 **Probe before you dive in.** Continuously estimating the learner's knowledge is critical, and it
 starts *before* the first explanation. From the feature's intent and the code, list the domain
 concepts this work will actually require, and for each one the knowledge base doesn't already
-settle, **ask** — concisely and batched (one tab per concept via `AskUserQuestion` when there are
+settle, **ask** — concisely and batched (one tab per concept via the native question form when there are
 several). For example, before building a Maven plugin: *"Are you familiar with `plugin.xml` and
 Mojo objects (`@Mojo` / `AbstractMojo`)?"* — rather than silently guessing and either boring or
 losing them. Record the answers into the knowledge base and let them set your opening depth.
@@ -176,7 +184,7 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
      just prose. If the decision changed the design, re-render and re-check the diagram.
    - **Real questions go through a form, never buried in prose.** Any genuine question you put to
      the developer — a decision to sign off, a fork to choose, "which way do you want this?" —
-     **must** use `AskUserQuestion` (one tab per decision/question), not a plain-text question in
+     **must** use the native question form (one tab per decision/question), not a plain-text question in
      the middle of an explanation. (A rhetorical aside — *"if that feels shaky, say so"* — is not
      a real question; those stay inline.) The live teaching, not the prompt, stays the point, but
      every actual choice is a form so it's unmistakable and easy to answer.
@@ -252,7 +260,7 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    rule you'd apply again, not a one-off (*"no synchronous cross-service calls in the request
    path"*, *"config is validated at load, never at use"*) — **offer to promote it to a
    constitution principle**. Be **assertive**, and ask it as a form: put the candidate to the
-   developer via `AskUserQuestion` — name the proposed principle and offer **Promote to §N** vs
+   developer via the native question form — name the proposed principle and offer **Promote to §N** vs
    **Leave as a one-off** — rather than a plain-text question they might skim past. Don't wait to
    be asked. On **promote**, append it to `docs/fluencyloop/constitution.md` under `## Principles`
    as the next `§N` (short title + the non-negotiable + the why), and cite that `§N` in the
@@ -270,7 +278,7 @@ assemble the reviewer-facing view from the sessions.
 **Check what's actually possible here first** — run `gh auth status`. If `gh` isn't installed or
 authed, opening a PR isn't available *yet*. Don't just drop it: if `preferences.md` has no settled
 `gh-setup` choice, make the **one-time** offer to set `gh` up — sold on the fact that it lets you
-open the PR (and file plan issues) for them — via `AskUserQuestion` (**Yes, set it up**
+open the PR (and file plan issues) for them — via the native question form (**Yes, set it up**
 *(recommended)* / **Not now**), recording `gh-setup: done` / `gh-setup: declined`. On **yes**,
 install from <https://cli.github.com> (pick the command that fits their OS — don't work from a
 hardcoded package-manager list) then `gh auth login`. If `gh` stays unavailable (declined or
@@ -284,7 +292,7 @@ once per feature. Check `~/.fluencyloop/preferences.md` (loaded in §0):
   automatic, go ahead and commit + push + open the PR yourself (run fluencyloop-review first) at
   completion; if manual, just point the user at fluencyloop-review and stop.
 - **No preference yet (this is the first feature)** — ask **exactly once**, via a single
-  `AskUserQuestion` confirmation rather than a per-feature prompt: from now on, should you commit
+  native-question-form confirmation rather than a per-feature prompt: from now on, should you commit
   + push **(+ open the PR, when `gh` is available)** yourself at feature completion, or keep
   handing off manually each time? (Drop the PR clause entirely if `gh` isn't available here.)
   Persist the answer to `~/.fluencyloop/preferences.md` (create it — global, uncommitted, sibling
