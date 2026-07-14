@@ -40,8 +40,9 @@ author cold: it's **born from your first plan or feature** and grows as later fe
 principles from real decisions. Nothing gates a merge — work that skips the loop is caught
 **after** merge by `backfill`.
 
-**Requires:** a coding agent ([Claude Code](https://claude.com/claude-code)) plus `bash` and
-`git`. The `fluencyloop` CLI runs standalone; the interactive skills need the agent.
+**Requires:** a coding agent ([Claude Code](https://claude.com/claude-code)) plus `git`, and a
+shell to run the CLI — `bash` (macOS/Linux/Git Bash/WSL) or **PowerShell 7** (Windows). The
+`fluencyloop` CLI runs standalone; the interactive skills need the agent.
 
 ## Teaches to your level
 
@@ -87,12 +88,22 @@ fluencyloop init --vendor-skills   # commits the skills into the repo's .claude/
 
 ### On Windows
 
-FluencyLoop is bash, so run it from a bash shell — **Git Bash** (bundled with
-[Git for Windows](https://git-scm.com/download/win)) or **WSL**. Both give you `bash`, `git`, and
-the Unix tools the scripts use; the install and usage steps above are identical inside them.
-Native PowerShell isn't supported yet — that port is tracked in
-[#37](https://github.com/baokhang83/fluencyloop/issues/37). The bash suite runs in CI on a Windows
-runner (via Git Bash) so this path stays green.
+Two ways to run it:
+
+**Native PowerShell** (recommended — [PowerShell 7](https://aka.ms/powershell)). From a clone:
+
+```powershell
+./install.ps1
+```
+
+This copies the tool into `%USERPROFILE%\.fluencyloop\lib`, adds it to your user PATH, and installs
+the skills. Then `fluencyloop <verb>` works from PowerShell **and** cmd (via a `.cmd` shim), with
+the same verbs and `--json` output as the bash CLI — `fluencyloop version` and
+`fluencyloop self upgrade` included.
+
+**Git Bash / WSL.** The bash tool also runs unchanged in **Git Bash** (bundled with
+[Git for Windows](https://git-scm.com/download/win)) or **WSL** — use `./install.sh` there. The
+bash suite runs in CI on a Windows runner (via Git Bash) so that path stays green.
 
 ## Quickstart
 
@@ -135,10 +146,11 @@ left to the model.
 ## Layout
 
 ```
-install.sh                  machine install: CLI on PATH + skills user-wide
-fluency                     CLI dispatcher (init / plan / feature / session / decision / review / check / slice-context / calibration / version / self upgrade)
+install.sh / install.ps1    machine install (bash / PowerShell): CLI on PATH + skills user-wide
+fluencyloop{,.ps1,.cmd}     CLI dispatcher — verbs: init / plan / feature / session / decision / review / check / slice-context / calibration / version / self upgrade
 VERSION                     the current version (0.2.0); `fluencyloop version` prints it
-scripts/bash/               deterministic plumbing (common, init, new-feature, …)
+scripts/bash/               deterministic plumbing — bash (the reference implementation)
+scripts/powershell/         the same plumbing, ported to PowerShell (Windows-native)
 templates/                  .fluencyloop state templates (constitution, design, session)
 skills/                     the interactive skills (installed into ~/.claude/skills)
 tests/                      bats suite for the scripts (run: bats tests)

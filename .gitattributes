@@ -1,8 +1,12 @@
 # FluencyLoop is bash. Executable shell and the templates it processes MUST stay LF on every
 # platform: a CRLF checkout (Windows `core.autocrlf=true`) puts a stray \r into the shebang and
 # into every value read from a file, which breaks the tool under Git Bash / WSL. Pin them to LF.
-*.sh          text eol=lf
-*.bats        text eol=lf
-fluencyloop   text eol=lf
-install.sh    text eol=lf
-templates/**  text eol=lf
+*.sh           text eol=lf
+*.bats         text eol=lf
+*.ps1          text eol=lf
+fluencyloop    text eol=lf
+install.sh     text eol=lf
+templates/**   text eol=lf
+
+# Windows batch shim keeps CRLF (cmd.exe is happiest with it).
+*.cmd          text eol=crlf
