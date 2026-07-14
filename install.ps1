@@ -8,6 +8,10 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# $IsWindows is a read-only automatic var in PowerShell 7 but undefined in Windows PowerShell 5.x,
+# so derive a portable flag (don't assign to the automatic var).
+$onWindows = if (Test-Path variable:IsWindows) { $IsWindows } else { $env:OS -eq 'Windows_NT' }
+
 $SRC = $PSScriptRoot
 $installSkills = $true
 foreach ($a in $args) { if ($a -eq '-NoSkills' -or $a -eq '--no-skills') { $installSkills = $false } }
@@ -37,7 +41,7 @@ WriteTextLf (Join-Path $LIB 'SOURCE') "$SRC`n"   # where `fluencyloop self upgra
 
 # 2. Put the CLI on the PATH (Windows: add lib to the user PATH; the .cmd shim resolves the verb).
 $pathAdded = $false
-if ($IsWindows) {
+if ($onWindows) {
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User'); if (-not $userPath) { $userPath = '' }
     if (($userPath -split ';') -notcontains $LIB) {
         [Environment]::SetEnvironmentVariable('Path', ($LIB + ';' + $userPath), 'User')
@@ -58,8 +62,8 @@ Write-Output "  lib:     $LIB"
 Write-Output "  cli:     $(Join-Path $LIB 'fluencyloop.cmd')  (run as: fluencyloop)"
 if ($installSkills) { Write-Output "  skills:  $skillsDest (user-wide)" }
 Write-Output ''
-if ($IsWindows) {
-    if ($pathAdded) { Write-Output "Added $LIB to your user PATH — open a new terminal for fluencyloop to resolve." }
+if ($onWindows) {
+    if ($pathAdded) { Write-Output "Added $LIB to your user PATH - open a new terminal for fluencyloop to resolve." }
 } else {
     Write-Output "Non-Windows shell: add $LIB to your PATH to run fluencyloop (or use the bash install.sh)."
 }
