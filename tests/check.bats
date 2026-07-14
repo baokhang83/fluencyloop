@@ -19,7 +19,7 @@ load test_helper
     [ "$(echo "$output" | json_field constitution)" = "empty" ]
 }
 
-@test "check: constitution states — present / pointer" {
+@test "check: constitution states - present and pointer" {
     setup_initialized_repo
     printf '# Constitution\n\n## Principles\n\n### §1 — no sync calls in the request path\n' \
         > "$TESTREPO/docs/fluencyloop/constitution.md"

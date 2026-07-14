@@ -85,6 +85,15 @@ copied into the repo — unless you want contributors to get them on clone, in w
 fluencyloop init --vendor-skills   # commits the skills into the repo's .claude/skills
 ```
 
+### On Windows
+
+FluencyLoop is bash, so run it from a bash shell — **Git Bash** (bundled with
+[Git for Windows](https://git-scm.com/download/win)) or **WSL**. Both give you `bash`, `git`, and
+the Unix tools the scripts use; the install and usage steps above are identical inside them.
+Native PowerShell isn't supported yet — that port is tracked in
+[#37](https://github.com/baokhang83/fluencyloop/issues/37). The bash suite runs in CI on a Windows
+runner (via Git Bash) so this path stays green.
+
 ## Quickstart
 
 From inside an `init`-ed project, start a feature:

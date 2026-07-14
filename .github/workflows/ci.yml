@@ -24,9 +24,15 @@ jobs:
             echo "::error::eval is banned in FluencyLoop shell — it runs arbitrary strings as code."
             exit 1
           fi
+      - name: bats test names must be ASCII (Windows/Git Bash mangles multibyte names)
+        run: |
+          if grep -rnP '@test .*[^\x00-\x7F]' tests; then
+            echo "::error::bats @test names must be ASCII — a multibyte char breaks the Git Bash runner."
+            exit 1
+          fi
 
   bats:
-    name: bats tests
+    name: bats tests (Linux)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,3 +42,29 @@ jobs:
           sudo "$RUNNER_TEMP/bats/install.sh" /usr/local
       - name: Run the suite
         run: bats --print-output-on-failure tests
+
+  # Tier-1 Windows support: the bash scripts run under Git Bash (bundled with Git for Windows),
+  # so we run the same suite there on a real Windows runner to catch path/CRLF/tool snags.
+  bats-windows:
+    name: bats tests (Git Bash on Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash          # Git Bash on windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Ensure python3 is callable from Git Bash
+        run: |
+          if ! command -v python3 >/dev/null 2>&1; then
+            mkdir -p "$RUNNER_TEMP/bin"
+            printf '#!/usr/bin/env bash\nexec python "$@"\n' > "$RUNNER_TEMP/bin/python3"
+            chmod +x "$RUNNER_TEMP/bin/python3"
+            echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Install bats-core
+        run: git clone --depth 1 https://github.com/bats-core/bats-core.git "$RUNNER_TEMP/bats"
+      - name: Run the suite under Git Bash
+        run: bash "$RUNNER_TEMP/bats/bin/bats" --print-output-on-failure tests
