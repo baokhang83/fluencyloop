@@ -106,20 +106,33 @@ calls in the request path"*), not platitudes. Show them, confirm, and write them
 - After birth it **grows** as features harvest principles from decisions (fluencyloop-feature §3)
   — you don't need to make it complete here.
 
-## 6. GitHub tickets — only offer when `gh` can do it
+## 6. GitHub tickets — create them live, or offer a one-time `gh` setup
 
-Check `gh auth status` **first**, and let that decide the flow — an unavailable `gh` must not
-become friction:
+Check `gh auth status` **first**:
 
 - **`gh` is available and authed** — offer to turn the task breakdown into **GitHub issues under a
   milestone** (one issue per task item; the milestone is the initiative), confirmed **per plan**:
   *"Create these N issues + the '<initiative>' milestone now?"* On yes, create the milestone then
   the issues (title = task intent, body = intent + dependencies, `--milestone` set) and record the
-  links back into `plan.md` under `## Tickets`. On no, fall to the next bullet.
-- **`gh` is missing or unauthed** — **don't offer it, don't nag the user to install it, don't
-  frame it as a problem.** Just write the runnable `gh issue create …` / `gh api …` commands into
-  `plan.md` under `## Tickets` as a normal part of the plan, and note in **one line** that they're
-  there to run whenever `gh` is set up. The plan is complete either way — no friction.
+  links back into `plan.md` under `## Tickets`.
+
+- **`gh` is missing or unauthed** — this is worth a **one-time** setup offer, because `gh` unlocks
+  real automation. Check `~/.fluencyloop/preferences.md` for a settled `gh-setup` choice:
+  - **Not settled yet** — offer **once** via `AskUserQuestion`, and *sell what it unlocks*: with
+    `gh`, FluencyLoop files your whole task breakdown as GitHub issues under a milestone **for you**,
+    and opens prepopulated PRs at review — instead of you running commands by hand. Frame it so
+    **yes** is the easy call, e.g. *"Want me to set up `gh` so I can file these N tasks as issues +
+    a milestone for you? One-time — I won't ask again."* Options: **Yes, set it up** *(recommended,
+    list first)* / **Not now**. Record the answer to `preferences.md` as `gh-setup: done` or
+    `gh-setup: declined`, and **never ask again**.
+    - On **yes** — install `gh` the way that fits **their** OS. Don't work from a hardcoded list of
+      package managers (it rots); the canonical, always-current installer for every platform is
+      <https://cli.github.com> — point there and pick the obvious command for their environment.
+      Then `gh auth login` (uniform everywhere), and create the issues + milestone.
+    - On **not now** — write the runnable `gh issue create …` commands into `## Tickets` and move on.
+  - **Already `declined`** — don't re-offer; just save the runnable commands to `## Tickets`.
+
+The plan is complete either way — no friction.
 
 ## 7. Hand off to the build loop
 

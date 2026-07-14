@@ -38,10 +38,11 @@ block on it.
 
 **Load the learner's preferences.** Also read `~/.fluencyloop/preferences.md` — a sibling to
 `calibration.md` (global, per-developer, **never committed**) that records recurring *workflow*
-choices already settled once, so you never re-ask them. The one you'll meet first is the
-completion hand-off: whether to commit + push + open the PR automatically, or hand off manually
-each feature (see §4). Honor whatever it records without re-asking. If it's missing, that's fine —
-you'll create it the first time a recurring choice comes up.
+choices already settled once, so you never re-ask them — e.g. the completion hand-off (commit +
+push + open the PR vs. hand off manually, §4) and `gh-setup` (whether to set up the `gh` CLI,
+offered once when `gh` is missing so the loop can automate PRs/issues). Honor whatever it records
+without re-asking. If it's missing, that's fine — you'll create it the first time a recurring
+choice comes up.
 
 **Probe before you dive in.** Continuously estimating the learner's knowledge is critical, and it
 starts *before* the first explanation. From the feature's intent and the code, list the domain
@@ -264,11 +265,14 @@ When the feature is ready for a PR, tell the user they can run **fluencyloop-rev
 assemble the reviewer-facing view from the sessions.
 
 **Check what's actually possible here first** — run `gh auth status`. If `gh` isn't installed or
-authed, **opening a PR isn't available on this machine**, so don't offer it or make the user weigh
-it. The hand-off is then at most *commit + push*: default to a manual hand-off (or ask only the
-simpler *commit + push* vs *manual* choice), and mention a PR can be opened later — via
-`fluencyloop-review` — once `gh` is set up. Only offer the full **commit + push + open-PR**
-automation where `gh` actually works.
+authed, opening a PR isn't available *yet*. Don't just drop it: if `preferences.md` has no settled
+`gh-setup` choice, make the **one-time** offer to set `gh` up — sold on the fact that it lets you
+open the PR (and file plan issues) for them — via `AskUserQuestion` (**Yes, set it up**
+*(recommended)* / **Not now**), recording `gh-setup: done` / `gh-setup: declined`. On **yes**,
+install from <https://cli.github.com> (pick the command that fits their OS — don't work from a
+hardcoded package-manager list) then `gh auth login`. If `gh` stays unavailable (declined or
+deferred), the hand-off is at most *commit + push*, and a PR can be opened later via
+`fluencyloop-review`. Only run the full **commit + push + open-PR** automation where `gh` works.
 
 The hand-off is a **behavioral pattern that recurs every feature** — so decide it **once**, not
 once per feature. Check `~/.fluencyloop/preferences.md` (loaded in §0):
