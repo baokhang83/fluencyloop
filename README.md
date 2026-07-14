@@ -102,8 +102,10 @@ the same verbs and `--json` output as the bash CLI — `fluencyloop version` and
 `fluencyloop self upgrade` included.
 
 **Git Bash / WSL.** The bash tool also runs unchanged in **Git Bash** (bundled with
-[Git for Windows](https://git-scm.com/download/win)) or **WSL** — use `./install.sh` there. The
-bash suite runs in CI on a Windows runner (via Git Bash) so that path stays green.
+[Git for Windows](https://git-scm.com/download/win)) or **WSL** — use `./install.sh` there.
+
+Both shells are verified on a Windows CI runner: the bash suite via Git Bash, and the PowerShell
+port via `PSScriptAnalyzer` + a `Pester` suite that mirrors the bash tests.
 
 ## Quickstart
 
@@ -153,7 +155,7 @@ scripts/bash/               deterministic plumbing — bash (the reference imple
 scripts/powershell/         the same plumbing, ported to PowerShell (Windows-native)
 templates/                  .fluencyloop state templates (constitution, design, session)
 skills/                     the interactive skills (installed into ~/.claude/skills)
-tests/                      bats suite for the scripts (run: bats tests)
+tests/                      bats suite (bash) + tests/powershell Pester suite (mirror)
 MANIFESTO.md                the why
 ```
 
