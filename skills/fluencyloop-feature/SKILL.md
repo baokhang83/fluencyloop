@@ -12,12 +12,12 @@ each slice boundary. Never gate; never lecture. Keep the developer the author.
 
 ## 0. Preconditions
 
-Confirm `.fluencyloop/` exists (run `.fluencyloop/scripts/common.sh` context). If it does not, tell
+Confirm `.fluencyloop/` exists (`fluencyloop check` reports it). If it does not, tell
 the user to run `fluencyloop init` first, and stop.
 
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
-`base_ref`), written by `new-feature.sh` / `new-session.sh` and committed with the branch. Prefer
+`base_ref`), written by `fluencyloop feature` / `fluencyloop session` and committed with the branch. Prefer
 it over re-deriving from git each turn: it tells you which stage you're resuming at and which
 session file is open. It's absent only before the feature is declared (§1 creates it).
 
@@ -65,7 +65,7 @@ engagement — never authorship — justifies skipping.
 Take the user's one-line intent. Run:
 
 ```bash
-.fluencyloop/scripts/new-feature.sh --json "<intent>"
+fluencyloop feature --json "<intent>"
 ```
 
 This creates the `feature/<slug>` branch (switching to it), the feature dir, and a
@@ -117,8 +117,8 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
 **not** interrupt mid-thought. At each slice boundary:
 
 1. **Review what you just built — from the slice, not the whole files.** Run `fluencyloop
-   slice-context` (or `.fluencyloop/scripts/slice-context.sh`; add `--json` for the structured
-   form) to get *just this slice's* changed hunks + metadata — the diff since the last journaled
+   slice-context` (add `--json` for the structured form) to get *just this slice's* changed hunks
+   + metadata — the diff since the last journaled
    session, or the feature's base if none yet, with FluencyLoop's own files filtered out.
    Identify the **one or two real decisions** in it — a genuine fork where a reasonable
    alternative was rejected — from those hunks. Only open a full file when the hunks don't carry
@@ -180,7 +180,7 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    create) the slice's session file:
 
    ```bash
-   .fluencyloop/scripts/new-session.sh --json --slug "<feature-slug>" "<slice intent>"
+   fluencyloop session --json --slug "<feature-slug>" "<slice intent>"
    ```
 
    Then record two things — you supply the *content*; the template's scaffolding is already there

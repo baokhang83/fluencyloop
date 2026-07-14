@@ -14,7 +14,7 @@ do not over-invest. Keep the developer the architect.
 
 ## 0. Preconditions
 
-Confirm `.fluencyloop/` exists (`.fluencyloop/scripts/common.sh` context). If not, tell the user
+Confirm `.fluencyloop/` exists (`fluencyloop check` reports it). If not, tell the user
 to run `fluencyloop init` first, and stop.
 
 **Read the constitution up front** — `docs/fluencyloop/constitution.md`, and **if it's a pointer**
@@ -37,7 +37,7 @@ features.
 Take the user's initiative intent and scaffold the plan doc:
 
 ```bash
-.fluencyloop/scripts/new-plan.sh --json "<intent>"
+fluencyloop plan --json "<intent>"
 ```
 
 This creates `docs/fluencyloop/plans/<slug>/plan.md` from the template **on the current branch**

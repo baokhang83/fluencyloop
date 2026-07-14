@@ -44,7 +44,7 @@ in from there.
 ## Initialise a project
 
 ```bash
-<fluencyloop-dist>/scripts/bash/init.sh   # scaffolds .fluencyloop/ and installs these skills
+fluencyloop init   # scaffolds .fluencyloop/ in the current repo
 ```
 
 This creates `.fluencyloop/` (scripts, templates, constitution stub) and copies the skills into

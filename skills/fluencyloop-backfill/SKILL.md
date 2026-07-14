@@ -32,9 +32,8 @@ If `.fluencyloop/state.json` exists, read it for the `feature` slug and `base_re
 guessing. Usually it's **absent** for backfill (the work skipped the loop, so nothing wrote it) —
 derive the base from git as above; §2 writes a fresh state record when it reconstructs the feature.
 
-**Quantify the drift deterministically** with `fluencyloop check --json` (or
-`.fluencyloop/scripts/check.sh --json`): its `unjournaled_commits` counts commits since the last
-journaled session. A non-zero count with no matching sessions is exactly the skipped-loop work
+**Quantify the drift deterministically** with `fluencyloop check --json`: its `unjournaled_commits`
+counts commits since the last journaled session. A non-zero count with no matching sessions is exactly the skipped-loop work
 backfill exists to catch — let it scope how much there is to reconstruct.
 
 **Look for a contemporaneous record first.** Work that skipped *FluencyLoop's* loop may still
@@ -63,8 +62,8 @@ field values are:
 Create the feature + session to hold them:
 
 ```bash
-.fluencyloop/scripts/new-feature.sh --json "<inferred feature intent>"
-.fluencyloop/scripts/new-session.sh --json --slug "<feature-slug>" "<inferred slice intent>"
+fluencyloop feature --json "<inferred feature intent>"
+fluencyloop session --json --slug "<feature-slug>" "<inferred slice intent>"
 ```
 
 Then append each block with `fluencyloop decision` (the script formats it — you supply only the
