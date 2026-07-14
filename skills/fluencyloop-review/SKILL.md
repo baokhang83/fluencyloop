@@ -56,11 +56,16 @@ to copy-paste into GitHub.
 
    Confirm the title/base with the user first; show them the body you're about to use. On
    success, give them the PR URL.
-3. If `gh` is **not** installed, don't dead-end into copy-paste silently — say so, and offer
-   the two fast paths: (a) `brew install gh && gh auth login`, then step 2; or (b) a
-   prepopulated compare URL, e.g.
-   `https://github.com/<owner>/<repo>/compare/main...<branch>?expand=1&title=<t>&body=<url-encoded>`
-   (note the URL length limit; fall back to pasting the body if it's too long).
+3. If `gh` is **not** available, **don't nag the user to install it** and don't dead-end into
+   copy-paste. The reviewer view you assembled *is* the deliverable, so:
+   - hand it over **rendered**, ready to read or paste; and
+   - give them a **prepopulated compare URL** that opens a ready-to-file PR in the browser — no
+     `gh` needed, works on any OS:
+     `https://github.com/<owner>/<repo>/compare/<base>...<branch>?expand=1&title=<t>&body=<url-encoded>`
+     (mind the URL length limit; fall back to the pasteable body if it's too long).
+
+   Mention in **one line** that `fluencyloop-review` will open the PR automatically once `gh` is
+   installed — but don't turn setup into homework.
 
 Put any external link in the PR's first comment, not the body. Do **not** merge the PR unless
 explicitly asked.

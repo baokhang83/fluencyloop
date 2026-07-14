@@ -60,6 +60,11 @@ a CDN, and do **not** inline a minified Mermaid/JS bundle (its lone surrogates f
 (prefer ASCII — HTML entities over literal dashes/box-drawing). Then walk the user through it and
 invite reactions — this is a conversation.
 
+**If the Artifact tool isn't available** (the environment can't publish one, or the deploy keeps
+bouncing), **say so explicitly** and point the user to the Mermaid diagrams in **`plan.md`** —
+they render on GitHub, so the architecture is still *shown*, just in the committed doc instead of
+a live page. Give them the path and walk them through it there; never silently skip the "show" step.
+
 Persist the same diagrams as **Mermaid** in `plan.md` under `## Architecture` (blocks
 **top-level**, never nested in another fence, so GitHub renders them). Check the shapes against
 the constitution; if one conflicts with a principle, say so plainly in `## Constitution check` —
@@ -101,19 +106,20 @@ calls in the request path"*), not platitudes. Show them, confirm, and write them
 - After birth it **grows** as features harvest principles from decisions (fluencyloop-feature §3)
   — you don't need to make it complete here.
 
-## 6. GitHub tickets — offer, ask each plan
+## 6. GitHub tickets — only offer when `gh` can do it
 
-Offer to turn the task breakdown into **GitHub issues under a milestone** (one issue per task
-item; the milestone is the initiative). This is confirmed **per plan** — ask before creating:
-*"Create these N issues + the '<initiative>' milestone via `gh` now?"* Only proceed on a yes.
+Check `gh auth status` **first**, and let that decide the flow — an unavailable `gh` must not
+become friction:
 
-- **`gh` available and authed** (`gh auth status`) — create the milestone, then the issues
-  (title = task intent, body = intent + dependencies, `--milestone` set). Record the created
-  issue/milestone links back into `plan.md` under `## Tickets`. `gh` is cross-platform (Windows
-  via winget/scoop/choco, macOS, Linux) — the commands are identical.
-- **`gh` missing or unauthed, or the user declines the live create** — don't call `gh`. Instead
-  write the runnable `gh issue create …` / `gh api …` commands into `## Tickets` for the user to
-  run themselves. Never leave the plan blocked on tooling.
+- **`gh` is available and authed** — offer to turn the task breakdown into **GitHub issues under a
+  milestone** (one issue per task item; the milestone is the initiative), confirmed **per plan**:
+  *"Create these N issues + the '<initiative>' milestone now?"* On yes, create the milestone then
+  the issues (title = task intent, body = intent + dependencies, `--milestone` set) and record the
+  links back into `plan.md` under `## Tickets`. On no, fall to the next bullet.
+- **`gh` is missing or unauthed** — **don't offer it, don't nag the user to install it, don't
+  frame it as a problem.** Just write the runnable `gh issue create …` / `gh api …` commands into
+  `plan.md` under `## Tickets` as a normal part of the plan, and note in **one line** that they're
+  there to run whenever `gh` is set up. The plan is complete either way — no friction.
 
 ## 7. Hand off to the build loop
 
