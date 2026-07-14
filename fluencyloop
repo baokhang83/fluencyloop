@@ -2,7 +2,8 @@
 # fluencyloop — the FluencyLoop CLI dispatcher.
 #
 # Deterministic commands run directly; the interactive stages (constitution, feature,
-# review, backfill) are driven by the skills your coding agent loads from .claude/skills.
+# review, backfill) are driven by the skills your coding agent loads from .claude/skills or
+# .codex/skills.
 # This dispatcher scaffolds a project and exposes the plumbing so the skills — or you — can
 # call it.
 #

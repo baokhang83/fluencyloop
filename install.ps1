@@ -1,9 +1,9 @@
 #!/usr/bin/env pwsh
 # install.ps1 — install FluencyLoop onto a Windows machine (the PowerShell twin of install.sh).
 # Copies the tool into %USERPROFILE%\.fluencyloop\lib, puts the `fluencyloop` CLI on PATH, installs
-# the interactive skills user-wide (~/.claude/skills), and records VERSION/SOURCE for self upgrade.
+# the interactive skills user-wide for the selected coding agent, and records VERSION/SOURCE for self upgrade.
 #
-# Usage: ./install.ps1 [-NoSkills]
+# Usage: ./install.ps1 [-Agent claude|codex|both] [-NoSkills]
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -14,7 +14,14 @@ $onWindows = if (Test-Path variable:IsWindows) { $IsWindows } else { $env:OS -eq
 
 $SRC = $PSScriptRoot
 $installSkills = $true
-foreach ($a in $args) { if ($a -eq '-NoSkills' -or $a -eq '--no-skills') { $installSkills = $false } }
+$skillsAgent = 'claude'
+for ($i = 0; $i -lt $args.Count; $i++) {
+    if ($args[$i] -eq '-NoSkills' -or $args[$i] -eq '--no-skills') { $installSkills = $false }
+    elseif ($args[$i] -eq '-Agent' -or $args[$i] -eq '--agent') {
+        $i++; if ($i -ge $args.Count) { throw '-Agent needs claude, codex, or both' }; $skillsAgent = [string]$args[$i]
+    }
+}
+if ($skillsAgent -notin @('claude', 'codex', 'both')) { throw "-Agent must be claude, codex, or both (got '$skillsAgent')" }
 
 $base = if ($env:FLUENCYLOOP_HOME) { $env:FLUENCYLOOP_HOME } else { Join-Path $HOME '.fluencyloop' }
 $LIB = Join-Path $base 'lib'
@@ -49,18 +56,29 @@ if ($onWindows) {
     }
 }
 
-# 3. Install skills user-wide so the agent sees them in every project.
-$skillsDest = Join-Path $HOME '.claude/skills'
+# 3. Install skills for the selected agent. Claude remains the default for backwards compatibility.
+$claudeSkillsDest = Join-Path $HOME '.claude/skills'
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
+$codexSkillsDest = Join-Path $codexHome 'skills'
 if ($installSkills) {
-    New-Item -ItemType Directory -Force -Path $skillsDest | Out-Null
-    Copy-Item -Recurse -Force -Path (Join-Path $SRC 'skills/*') -Destination $skillsDest
+    $skillsDests = switch ($skillsAgent) {
+        'claude' { @($claudeSkillsDest) }
+        'codex' { @($codexSkillsDest) }
+        'both' { @($claudeSkillsDest, $codexSkillsDest) }
+    }
+    foreach ($skillsDest in $skillsDests) {
+        New-Item -ItemType Directory -Force -Path $skillsDest | Out-Null
+        Copy-Item -Recurse -Force -Path (Join-Path $SRC 'skills/*') -Destination $skillsDest
+    }
 }
 
 $version = (Get-Content -LiteralPath (Join-Path $SRC 'VERSION') -Raw).Trim()
 Write-Output "FluencyLoop $version installed."
 Write-Output "  lib:     $LIB"
 Write-Output "  cli:     $(Join-Path $LIB 'fluencyloop.cmd')  (run as: fluencyloop)"
-if ($installSkills) { Write-Output "  skills:  $skillsDest (user-wide)" }
+if ($installSkills) {
+    Write-Output "  skills:  $skillsAgent ($($skillsDests -join ', '))"
+}
 Write-Output ''
 if ($onWindows) {
     if ($pathAdded) { Write-Output "Added $LIB to your user PATH - open a new terminal for fluencyloop to resolve." }

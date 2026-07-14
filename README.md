@@ -40,7 +40,8 @@ author cold: it's **born from your first plan or feature** and grows as later fe
 principles from real decisions. Nothing gates a merge — work that skips the loop is caught
 **after** merge by `backfill`.
 
-**Requires:** a coding agent ([Claude Code](https://claude.com/claude-code)) plus `git`, and a
+**Requires:** a coding agent ([Claude Code](https://claude.com/claude-code) or
+[Codex](https://developers.openai.com/codex/)) plus `git`, and a
 shell to run the CLI — `bash` (macOS/Linux/Git Bash/WSL) or **PowerShell 7** (Windows). The
 `fluencyloop` CLI runs standalone; the interactive skills need the agent.
 
@@ -69,8 +70,15 @@ git clone https://github.com/baokhang83/fluencyloop && cd fluencyloop
 
 This copies the tool into `~/.fluencyloop/lib`, puts the `fluencyloop` CLI on your PATH
 (`~/.local/bin` — make sure that's on your `$PATH`), and installs the interactive skills
-**user-wide** (`~/.claude/skills`) so your coding agent sees them in every project.
+**user-wide** for Claude Code by default (`~/.claude/skills`). To activate FluencyLoop for Codex
+instead, install with `--agent codex`; use `--agent both` only if you deliberately use both agents.
 (`./install.sh --no-skills` skips the last step; `--bin-dir <dir>` changes where the CLI is linked.)
+
+For Codex, run:
+
+```bash
+./install.sh --agent codex
+```
 
 **2. Once per project** — inside a repo you want to use FluencyLoop on:
 
@@ -83,7 +91,8 @@ adds the calibration `.gitignore` guard. Skills are already user-wide, so they a
 copied into the repo — unless you want contributors to get them on clone, in which case:
 
 ```bash
-fluencyloop init --vendor-skills   # commits the skills into the repo's .claude/skills
+fluencyloop init --vendor-skills                 # Claude Code (default): .claude/skills
+fluencyloop init --vendor-skills --agent codex   # Codex: .codex/skills
 ```
 
 ### On Windows
@@ -100,6 +109,8 @@ This copies the tool into `%USERPROFILE%\.fluencyloop\lib`, adds it to your user
 the skills. Then `fluencyloop <verb>` works from PowerShell **and** cmd (via a `.cmd` shim), with
 the same verbs and `--json` output as the bash CLI — `fluencyloop version` and
 `fluencyloop self upgrade` included.
+
+To activate the skills for Codex instead of Claude Code, run `./install.ps1 -Agent codex`.
 
 **Git Bash / WSL.** The bash tool also runs unchanged in **Git Bash** (bundled with
 [Git for Windows](https://git-scm.com/download/win)) or **WSL** — use `./install.sh` there.
@@ -154,7 +165,7 @@ VERSION                     the current version (0.2.0); `fluencyloop version` p
 scripts/bash/               deterministic plumbing — bash (the reference implementation)
 scripts/powershell/         the same plumbing, ported to PowerShell (Windows-native)
 templates/                  .fluencyloop state templates (constitution, design, session)
-skills/                     the interactive skills (installed into ~/.claude/skills)
+skills/                     the interactive skills (activated for Claude Code or Codex)
 tests/                      bats suite (bash) + tests/powershell Pester suite (mirror)
 MANIFESTO.md                the why
 ```

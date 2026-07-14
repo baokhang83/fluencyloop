@@ -43,6 +43,20 @@ setup() { setup_repo; }
     [ "$(grep -cxF 'docs/fluencyloop/** text eol=lf' "$TESTREPO/.gitattributes")" -eq 1 ]
 }
 
+@test "init --vendor-skills defaults to Claude Code" {
+    run bash "$BIN/init.sh" --vendor-skills
+    [ "$status" -eq 0 ]
+    [ -f "$TESTREPO/.claude/skills/fluencyloop/SKILL.md" ]
+    [ ! -e "$TESTREPO/.codex/skills" ]
+}
+
+@test "init --vendor-skills can target Codex" {
+    run bash "$BIN/init.sh" --vendor-skills --agent codex
+    [ "$status" -eq 0 ]
+    [ -f "$TESTREPO/.codex/skills/fluencyloop/SKILL.md" ]
+    [ ! -e "$TESTREPO/.claude/skills" ]
+}
+
 @test "init sets push.autoSetupRemote for frictionless feature-branch pushes" {
     bash "$BIN/init.sh" >/dev/null
     [ "$(git -C "$TESTREPO" config --local push.autoSetupRemote)" = "true" ]

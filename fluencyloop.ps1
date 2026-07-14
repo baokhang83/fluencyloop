@@ -27,7 +27,7 @@ $usage = @'
 fluencyloop — the FluencyLoop CLI dispatcher.
 
 Deterministic commands run directly; the interactive stages (constitution, feature, review,
-backfill) are driven by the skills your coding agent loads from .claude/skills.
+backfill) are driven by the skills your coding agent loads from .claude/skills or .codex/skills.
 
 Usage:
   fluencyloop init                       scaffold .fluencyloop/ state + docs/fluencyloop/

@@ -4,12 +4,12 @@
 # It does three things:
 #   1. copies the tool into ~/.fluencyloop/lib          (scripts, templates, skills, CLI)
 #   2. symlinks the `fluencyloop` CLI onto your PATH          (~/.local/bin by default)
-#   3. installs the interactive skills user-wide          (~/.claude/skills)
+#   3. installs the interactive skills user-wide for the selected coding agent
 #
 # After this, `fluencyloop init` works in any repo, and your coding agent sees the skills
 # everywhere. Per-project state still lives in each repo's .fluencyloop/ (via `fluencyloop init`).
 #
-# Usage: ./install.sh [--bin-dir <dir>] [--no-skills]
+# Usage: ./install.sh [--bin-dir <dir>] [--agent <claude|codex|both>] [--no-skills]
 
 set -euo pipefail
 
@@ -17,16 +17,22 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB="${FLUENCYLOOP_HOME:-$HOME/.fluencyloop}/lib"
 BIN_DIR="$HOME/.local/bin"
 INSTALL_SKILLS=true
+SKILLS_AGENT="claude"
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --bin-dir) shift; BIN_DIR="${1:?--bin-dir needs a value}" ;;
+        --agent) shift; SKILLS_AGENT="${1:?--agent needs claude, codex, or both}" ;;
         --no-skills) INSTALL_SKILLS=false ;;
-        -h|--help) sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
     shift
 done
+
+case "$SKILLS_AGENT" in claude|codex|both) ;; *)
+    echo "--agent must be claude, codex, or both (got '$SKILLS_AGENT')" >&2; exit 1 ;;
+esac
 
 # 1. Copy the tool into the lib dir (idempotent: refresh in place).
 mkdir -p "$LIB"
@@ -42,18 +48,26 @@ chmod +x "$LIB/fluencyloop" "$LIB/scripts/bash/"*.sh
 mkdir -p "$BIN_DIR"
 ln -sf "$LIB/fluencyloop" "$BIN_DIR/fluencyloop"
 
-# 3. Install skills user-wide so the agent sees them in every project.
-SKILLS_DEST="$HOME/.claude/skills"
+# 3. Install skills for the selected coding agent. Claude remains the default for backwards
+# compatibility; `--agent both` is explicit for people who use both tools.
+CLAUDE_SKILLS_DEST="$HOME/.claude/skills"
+CODEX_SKILLS_DEST="${CODEX_HOME:-$HOME/.codex}/skills"
 if $INSTALL_SKILLS; then
-    mkdir -p "$SKILLS_DEST"
-    cp -R "$SRC/skills/." "$SKILLS_DEST/"
+    install_skills() { mkdir -p "$1"; cp -R "$SRC/skills/." "$1/"; }
+    case "$SKILLS_AGENT" in
+        claude) SKILLS_DESTS="$CLAUDE_SKILLS_DEST"; install_skills "$CLAUDE_SKILLS_DEST" ;;
+        codex)  SKILLS_DESTS="$CODEX_SKILLS_DEST"; install_skills "$CODEX_SKILLS_DEST" ;;
+        both)   SKILLS_DESTS="$CLAUDE_SKILLS_DEST, $CODEX_SKILLS_DEST"; install_skills "$CLAUDE_SKILLS_DEST"; install_skills "$CODEX_SKILLS_DEST" ;;
+    esac
 fi
 
 VERSION="$(cat "$SRC/VERSION" 2>/dev/null || echo unknown)"
 echo "FluencyLoop $VERSION installed."
 echo "  lib:     $LIB"
 echo "  cli:     $BIN_DIR/fluencyloop  ->  $LIB/fluencyloop"
-$INSTALL_SKILLS && echo "  skills:  $SKILLS_DEST (user-wide)"
+if $INSTALL_SKILLS; then
+    echo "  skills:  $SKILLS_AGENT ($SKILLS_DESTS)"
+fi
 echo
 if ! command -v fluencyloop >/dev/null 2>&1; then
     echo "Add the CLI to your PATH (then restart your shell):"

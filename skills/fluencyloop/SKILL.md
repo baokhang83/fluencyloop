@@ -47,8 +47,8 @@ in from there.
 fluencyloop init   # scaffolds .fluencyloop/ in the current repo
 ```
 
-This creates `.fluencyloop/` (scripts, templates, constitution stub) and copies the skills into
-`.claude/skills`. A feature is a branch (`feature/<slug>`); sessions are committed journals;
+This creates `.fluencyloop/` (scripts, templates, constitution stub). With `--vendor-skills`, it
+copies skills into `.claude/skills` by default, or `.codex/skills` with `--agent codex`. A feature is a branch (`feature/<slug>`); sessions are committed journals;
 the per-developer calibration profile lives globally in `~/.fluencyloop/` and is never
 committed.
 

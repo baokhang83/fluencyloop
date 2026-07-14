@@ -4,9 +4,8 @@
 # human-facing artifacts (constitution stub; per-feature design + sessions land here later).
 # Skills are installed user-wide by install.sh, so they are NOT vendored per-project unless you ask.
 #
-# Usage: init.sh [--json] [--vendor-skills]
-#   --vendor-skills   also copy the skills into this repo's .claude/skills (commit them so
-#                     contributors get them on clone — the OSS/team case)
+# Usage: init.sh [--json] [--vendor-skills] [--agent <claude|codex|both>]
+#   --vendor-skills   copy skills into the selected agent's repo directory
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,12 +14,20 @@ source "$SCRIPT_DIR/common.sh"
 
 JSON_MODE=false
 VENDOR_SKILLS=false
-for arg in "$@"; do
+SKILLS_AGENT="claude"
+while [ "$#" -gt 0 ]; do
+    arg="$1"
     case "$arg" in
         --json) JSON_MODE=true ;;
         --vendor-skills) VENDOR_SKILLS=true ;;
+        --agent) shift; SKILLS_AGENT="${1:?--agent needs claude, codex, or both}" ;;
     esac
+    shift
 done
+
+case "$SKILLS_AGENT" in claude|codex|both) ;; *)
+    echo "--agent must be claude, codex, or both (got '$SKILLS_AGENT')" >&2; exit 1 ;;
+esac
 
 ROOT="$(repo_root)"
 if [ -z "$ROOT" ]; then
@@ -47,13 +54,16 @@ if [ ! -f "$CONSTITUTION" ]; then
     CREATED_CONSTITUTION=true
 fi
 
-# Skills are user-wide (install.sh -> ~/.claude/skills). Only vendor them into the repo when
-# explicitly asked (so an OSS project can commit them for contributors).
+# Skills are user-wide after install. Only vendor them into the repo when explicitly asked, for
+# the agent the project chooses to support.
 SKILLS_DEST=""
 if $VENDOR_SKILLS && [ -d "$DIST_ROOT/skills" ]; then
-    SKILLS_DEST="$ROOT/.claude/skills"
-    mkdir -p "$SKILLS_DEST"
-    cp -R "$DIST_ROOT/skills/." "$SKILLS_DEST/"
+    vendor_skills() { mkdir -p "$1"; cp -R "$DIST_ROOT/skills/." "$1/"; }
+    case "$SKILLS_AGENT" in
+        claude) SKILLS_DEST="$ROOT/.claude/skills"; vendor_skills "$SKILLS_DEST" ;;
+        codex) SKILLS_DEST="$ROOT/.codex/skills"; vendor_skills "$SKILLS_DEST" ;;
+        both) SKILLS_DEST="$ROOT/.claude/skills, $ROOT/.codex/skills"; vendor_skills "$ROOT/.claude/skills"; vendor_skills "$ROOT/.codex/skills" ;;
+    esac
 fi
 
 # A feature is a branch, and session journals are committed — but the per-developer
@@ -88,6 +98,7 @@ if $JSON_MODE; then
         constitution "$CONSTITUTION" \
         constitution_created "$CREATED_CONSTITUTION" \
         skills_vendored "$VENDOR_SKILLS" \
+        skills_agent "$SKILLS_AGENT" \
         skills_dir "$SKILLS_DEST" \
         push_autoremote_set "$AUTO_REMOTE_SET"
 else
@@ -97,8 +108,8 @@ else
     $AUTO_REMOTE_SET && echo "  git:          push.autoSetupRemote=true (feature branches push without --set-upstream)"
     $CREATED_CONSTITUTION && echo "  constitution: $CONSTITUTION (empty — written from your first plan or feature)"
     if [ -n "$SKILLS_DEST" ]; then
-        echo "  skills:       $SKILLS_DEST (vendored into repo)"
+        echo "  skills:       $SKILLS_DEST (vendored for $SKILLS_AGENT)"
     else
-        echo "  skills:       user-wide (~/.claude/skills); pass --vendor-skills to commit them here"
+        echo "  skills:       user-wide for $SKILLS_AGENT; pass --vendor-skills to commit them here"
     fi
 fi
