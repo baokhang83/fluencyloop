@@ -107,10 +107,11 @@ dashes/box-drawing); publish only if the check is clean, or the deploy bounces. 
 user through what they're looking at and invite reactions — this is a conversation, not a handoff.
 
 **If the Artifact tool isn't available** (the environment can't publish one, or the deploy keeps
-bouncing), **say so explicitly** — don't silently skip the "show" step — and point the user to the
-Mermaid diagrams in the feature's **`design.md`**: those render on GitHub, so the design is still
-*shown*, just in the committed doc instead of a live page. Give them the path and walk them through
-it there.
+bouncing), **say so explicitly** — don't silently skip the visual-design step. **Never attempt to
+render Mermaid in the terminal or paste a Mermaid fence into chat as a visual substitute.** Mermaid
+is durable source only. If this surface can show a local self-contained inline-SVG/HTML preview,
+use that; otherwise point the user to the feature's **`design.md`** for GitHub/browser rendering
+without echoing the diagram source, and say that no live visual preview is available here.
 
 Persist the same diagrams as **Mermaid** in `design.md` (blocks **top-level**, never nested
 in another fence, so GitHub renders them) — that's the durable, committed copy. The Artifact
