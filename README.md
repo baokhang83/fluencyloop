@@ -120,13 +120,18 @@ From inside the repository you want to work on:
 # Scaffold the project once.
 fluencyloop init
 
-# Start a feature: this creates its branch, design stub, and session journal.
+# Choose one path. For a large initiative, make its architecture and roadmap first.
+fluencyloop plan "revamp the checkout flow"
+
+# For a normal-sized change, start a feature: this creates its branch, design stub, and session journal.
 fluencyloop feature "add rate limiting to the API"
 ```
 
-This creates the `feature/add-rate-limiting` branch and drops a design doc + session journal under
-`docs/fluencyloop/`. As you build, your agent teaches the *why* of each real decision at the slice
-boundary and records it in the journal. When you're ready to open a PR:
+Use **one** of the last two commands: `plan` is optional and is for work too large for one
+feature; it creates an architecture + roadmap under `docs/fluencyloop/plans/`. Build each roadmap
+item as a feature. `feature` creates the `feature/add-rate-limiting` branch and drops a design doc
+and a session journal under `docs/fluencyloop/`. As you build, your agent teaches the *why* of each
+real decision at the slice boundary and records it in the journal. When you're ready to open a PR:
 
 ```bash
 fluencyloop review
