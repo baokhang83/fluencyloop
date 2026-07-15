@@ -9,6 +9,8 @@ All notable changes to FluencyLoop are documented here.
 - Codex startup refresh hooks now use only Codex's `PLUGIN_ROOT` and no-op safely when it is
   absent, preventing a session-start failure with exit code 127. The Windows hook follows the
   same guard.
+- Plugin package tests now read repository text as UTF-8, keeping them reliable on Windows
+  code-page defaults.
 
 ## 0.2.4
 
@@ -20,8 +22,6 @@ All notable changes to FluencyLoop are documented here.
   marketplace refresh reaches the current snapshot layout.
 - The Claude and Codex plan/feature stages now initialise Git automatically in a project directory
   that does not already have a repository, without prompting the developer.
-- The plugin package test now reads repository text as UTF-8, so it runs on Windows code-page
-  defaults.
 - Claude installation guidance now distinguishes slash commands from Bash-tool commands and
   documents third-party marketplace update behaviour accurately.
 
