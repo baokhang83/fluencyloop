@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "fluencyloop",
+  "displayName": "FluencyLoop",
+  "version": "0.2.0",
+  "description": "Stay fluent in the code your AI agent writes with a per-feature design, build, teaching, and review loop.",
+  "author": {
+    "name": "baokhang83",
+    "url": "https://github.com/baokhang83"
+  },
+  "homepage": "https://github.com/baokhang83/fluencyloop#readme",
+  "repository": "https://github.com/baokhang83/fluencyloop",
+  "license": "Apache-2.0",
+  "keywords": [
+    "developer-education",
+    "documentation",
+    "planning",
+    "code-review",
+    "workflow"
+  ]
+}

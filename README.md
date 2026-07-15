@@ -61,26 +61,35 @@ the committed journal only ever describes the work, never you.
 
 ## Install
 
-**1. Once per machine** — from a clone of this repo:
+### Claude Code
+
+Install FluencyLoop through its marketplace — this is the standard Claude Code installation:
+
+```
+/plugin marketplace add baokhang83/fluencyloop
+/plugin install fluencyloop@fluencyloop
+```
+
+The plugin includes the interactive skills and a bundled `fluencyloop` command for Claude Code's
+Bash tool. Its skills are intentionally namespaced, for example
+`/fluencyloop:fluencyloop-feature`, so they cannot collide with another plugin's skills.
+
+### Codex or a standalone terminal CLI
+
+Clone and install the CLI. Use `--agent codex` to install the current Codex skills as well; omit
+that flag (or pass `--no-skills`) when you only want the terminal command.
 
 ```bash
 git clone https://github.com/baokhang83/fluencyloop && cd fluencyloop
-./install.sh
-```
-
-This copies the tool into `~/.fluencyloop/lib`, puts the `fluencyloop` CLI on your PATH
-(`~/.local/bin` — make sure that's on your `$PATH`), and installs the interactive skills
-**user-wide** for Claude Code by default (`~/.claude/skills`). To activate FluencyLoop for Codex
-instead, install with `--agent codex`; use `--agent both` only if you deliberately use both agents.
-(`./install.sh --no-skills` skips the last step; `--bin-dir <dir>` changes where the CLI is linked.)
-
-For Codex, run:
-
-```bash
 ./install.sh --agent codex
 ```
 
-**2. Once per project** — inside a repo you want to use FluencyLoop on:
+This copies the tool into `~/.fluencyloop/lib` and puts `fluencyloop` on your PATH
+(`~/.local/bin` — make sure that's on your `$PATH`).
+
+### Initialise a project
+
+Inside a repository you want to use FluencyLoop on:
 
 ```bash
 fluencyloop init
@@ -93,18 +102,18 @@ adds the calibration `.gitignore` guard.
 
 Two ways to run it:
 
-**Native PowerShell** (recommended — [PowerShell 7](https://aka.ms/powershell)). From a clone:
+**Native PowerShell CLI** ([PowerShell 7](https://aka.ms/powershell)). Use this when you want the
+CLI outside Claude Code. From a clone:
 
 ```powershell
-./install.ps1
+./install.ps1 -NoSkills
 ```
 
-This copies the tool into `%USERPROFILE%\.fluencyloop\lib`, adds it to your user PATH, and installs
-the skills. Then `fluencyloop <verb>` works from PowerShell **and** cmd (via a `.cmd` shim), with
-the same verbs and `--json` output as the bash CLI — `fluencyloop version` and
-`fluencyloop self upgrade` included.
-
-To activate the skills for Codex instead of Claude Code, run `./install.ps1 -Agent codex`.
+This copies the tool into `%USERPROFILE%\.fluencyloop\lib` and adds it to your user PATH. Then
+`fluencyloop <verb>` works from PowerShell **and** cmd (via a `.cmd` shim), with the same verbs
+and `--json` output as the bash CLI — `fluencyloop version` and `fluencyloop self upgrade`
+included. Use `./install.ps1 -Agent codex` for Codex; install Claude Code through the marketplace
+above.
 
 **Git Bash / WSL.** The bash tool also runs unchanged in **Git Bash** (bundled with
 [Git for Windows](https://git-scm.com/download/win)) or **WSL** — use `./install.sh` there.
@@ -172,10 +181,10 @@ principle](MANIFESTO.md#efficiency-is-a-product-principle).
 
 | Step | Claude Code | Codex |
 |------|-------------|-------|
-| *(optionally)* Plan a big chunk — architecture + roadmap | `/fluencyloop-plan` | `$fluencyloop-plan` |
-| Build a feature — design → build + teach *(per feature)* | `/fluencyloop-feature` | `$fluencyloop-feature` |
-| Review — the PR view assembles itself *(per feature)* | `/fluencyloop-review` | `$fluencyloop-review` |
-| Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop-backfill` | `$fluencyloop-backfill` |
+| *(optionally)* Plan a big chunk — architecture + roadmap | `/fluencyloop:fluencyloop-plan` | `$fluencyloop-plan` |
+| Build a feature — design → build + teach *(per feature)* | `/fluencyloop:fluencyloop-feature` | `$fluencyloop-feature` |
+| Review — the PR view assembles itself *(per feature)* | `/fluencyloop:fluencyloop-review` | `$fluencyloop-review` |
+| Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop:fluencyloop-backfill` | `$fluencyloop-backfill` |
 
 You can also describe the task naturally, but invoking the stage skill explicitly makes the
 workflow unmistakable.
@@ -188,7 +197,9 @@ left to the model.
 ## Layout
 
 ```
-install.sh / install.ps1    machine install (bash / PowerShell): CLI on PATH + skills user-wide
+install.sh / install.ps1    machine install (bash / PowerShell): CLI on PATH; `--agent codex` adds Codex skills
+.claude-plugin/             Claude Code plugin manifest + self-hosted marketplace catalog
+bin/                        the plugin's bundled `fluencyloop` launchers
 fluencyloop{,.ps1,.cmd}     CLI dispatcher — verbs: init / plan / feature / session / decision / review / check / slice-context / calibration / version / self upgrade
 VERSION                     the current version (0.2.0); `fluencyloop version` prints it
 scripts/bash/               deterministic plumbing — bash (the reference implementation)
