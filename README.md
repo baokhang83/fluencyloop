@@ -165,16 +165,15 @@ principle](MANIFESTO.md#efficiency-is-a-product-principle).
 
 ## Use it
 
-| Step | Ask your agent to… |
-|------|-------------------|
-| *(optionally)* Plan a big chunk — architecture + roadmap | plan this initiative with FluencyLoop |
-| Build a feature — design → build + teach *(per feature)* | start a FluencyLoop feature for this change |
-| Review — the PR view assembles itself *(per feature)* | prepare the FluencyLoop review view |
-| Backfill — document work that skipped the loop *(post-merge)* | backfill this shipped work with FluencyLoop |
+| Step | Claude Code | Codex |
+|------|-------------|-------|
+| *(optionally)* Plan a big chunk — architecture + roadmap | `/fluencyloop-plan` | `$fluencyloop-plan` |
+| Build a feature — design → build + teach *(per feature)* | `/fluencyloop-feature` | `$fluencyloop-feature` |
+| Review — the PR view assembles itself *(per feature)* | `/fluencyloop-review` | `$fluencyloop-review` |
+| Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop-backfill` | `$fluencyloop-backfill` |
 
-Describe the task naturally (for example, "start a feature to add rate limiting") and the agent
-uses the matching FluencyLoop skill. Agent-specific command shortcuts are optional; the workflow
-does not depend on a particular slash-command surface.
+You can also describe the task naturally, but invoking the stage skill explicitly makes the
+workflow unmistakable.
 
 The **skills** carry the interactive, calibrated behaviour (teaching at slice boundaries,
 one-question-at-a-time constitution authoring). The **scripts** carry the deterministic
