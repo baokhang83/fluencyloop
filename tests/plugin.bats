@@ -68,6 +68,29 @@ feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
 assert "must be paths under `docs/fluencyloop/`" in feature_text
+codex_feature_text = read_text(dist / "skills" / "feature" / "SKILL.md")
+assert "### Codex teaching gate - visible before the journal" in codex_feature_text
+assert "before any `fluencyloop decision`" in codex_feature_text
+assert "No reply is not a `wave`" in codex_feature_text
+assert "without a teaching turn" in codex_feature_text
+assert "### Codex design teaching gate - before implementation" in codex_feature_text
+assert "conversation pause, not a build or merge gate" in codex_feature_text
+assert "request sandbox elevation before its first" in codex_feature_text
+codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
+assert "### Codex architecture teaching gate - before decomposition" in codex_plan_text
+assert "before writing the task breakdown, roadmap" in codex_plan_text
+assert "Do not decompose the work" in codex_plan_text
+assert "without explaining the architecture in the conversation" in codex_plan_text
+assert "request sandbox elevation before its first" in codex_plan_text
+assert "conversation pause, not a build or merge gate" in codex_plan_text
+codex_backfill_text = read_text(dist / "skills" / "backfill" / "SKILL.md")
+assert "## 0. Preconditions" in codex_backfill_text
+assert "state required by `fluencyloop feature`" in codex_backfill_text
+assert "request sandbox elevation before its first" in codex_backfill_text
+codex_review_text = read_text(dist / "skills" / "review" / "SKILL.md")
+assert "feature-handoff: automatic" in codex_review_text
+assert "without a second" in codex_review_text
+assert 'gh pr create --base "<base_ref>"' in codex_review_text
 for path in [
     dist / "skills" / "feature" / "SKILL.md",
     dist / "skills" / "plan" / "SKILL.md",
@@ -91,6 +114,8 @@ router_text = read_text(dist / "skills" / "fluencyloop" / "SKILL.md")
 assert "## Literal CLI Fast Path (Codex)" in router_text
 assert "Do not send an interim update" in router_text
 assert "must not automatically start a feature or plan" in router_text
+assert "request sandbox elevation for that exact command before its first" in router_text
+assert "do not first attempt it in the" in router_text
 assert "~/.local/bin/fluencyloop" in router_text
 assert "Invoke `fluencyloop …` directly" in router_text
 assert claude_entry["skills"] == [

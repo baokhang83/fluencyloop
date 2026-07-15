@@ -35,6 +35,16 @@ For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Co
 no equivalent question-form tool, so ask a concise standalone question in chat and stop; do not
 update an entry's trust marker until the developer answers.
 
+## 0. Preconditions
+
+Run `fluencyloop check --json`. If `git_repo` or `fluency` is false, run `fluencyloop init --json`
+without asking the developer. Backfill commonly starts in a repository that skipped FluencyLoop,
+so this creates the state required by `fluencyloop feature` and `fluencyloop session` below.
+
+For that `fluencyloop init --json` command in Codex, request sandbox elevation before its first
+execution. It may create or update Codex-protected `.git` metadata; do not first attempt it in the
+standard sandbox.
+
 ## 1. Scope the work
 
 Identify what to backfill — a merged PR, a commit range, or the current branch's diff vs

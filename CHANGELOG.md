@@ -2,6 +2,41 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.13
+
+### Fixed
+
+- Codex stage skills now request elevation for their own initialization, including backfill's
+  skipped-loop setup path. Feature design has a visible teaching gate before implementation, and
+  planning and feature gates distinguish a learning pause from a build or merge block.
+- Codex review now honors the settled `feature-handoff: automatic` preference instead of asking
+  again before opening the PR, and uses the feature's recorded base when it creates that PR.
+  Claude Code workflows are unchanged.
+
+## 0.2.12
+
+### Fixed
+
+- Codex planning now requires a visible architecture teaching turn before task decomposition,
+  roadmap, constitution, or ticket work. Unknown, `learning`, and `new` domains pause for the
+  developer's response. Claude Code's planning workflow is unchanged.
+
+## 0.2.11
+
+### Fixed
+
+- Codex feature runs now require a user-visible teaching turn before decisions are journaled.
+  Unknown, `learning`, and `new` domains pause for the developer's response; calibration signals
+  require actual engagement. Claude Code's workflow is unchanged.
+
+## 0.2.10
+
+### Fixed
+
+- For literal `fluencyloop init` requests, the Codex router now requests sandbox elevation before
+  its first execution. This avoids a denied first attempt when the initializer creates protected
+  Git metadata. Claude Code's workflow is unchanged.
+
 ## 0.2.9
 
 ### Fixed

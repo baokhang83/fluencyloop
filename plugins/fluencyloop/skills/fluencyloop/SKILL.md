@@ -13,13 +13,16 @@ This section takes priority over every later workflow instruction. If the develo
 literal `fluencyloop` CLI command, such as `fluencyloop init`, `fluencyloop -v`, or
 `fluencyloop check`, they requested **only that command**.
 
-1. Invoke `fluencyloop` immediately.
-2. Do not send an interim update, inspect the workspace, read state, search the web, check PATH,
+1. For `fluencyloop init`, request sandbox elevation for that exact command before its first
+   execution. It may create Codex-protected `.git` metadata; do not first attempt it in the
+   standard sandbox.
+2. Invoke `fluencyloop` immediately.
+3. Do not send an interim update, inspect the workspace, read state, search the web, check PATH,
    or explain what the command will do.
-3. Do not route to a stage or run a follow-up command after it succeeds. In particular,
+4. Do not route to a stage or run a follow-up command after it succeeds. In particular,
    `fluencyloop init` must not automatically start a feature or plan.
-4. Return the command's result concisely. If Codex requires approval for a write, request that
-   approval and retry the same command; do not add setup narration.
+5. Return the command's result concisely. If Codex requires approval for another write, request
+   it before running the command; do not add setup narration.
 
 ## Bundled CLI (Codex)
 

@@ -8,7 +8,8 @@ description: 'FluencyLoop Stage 2–3. Declare a feature and build it while stay
 This is the contributor's entry point. A **feature is a branch** (`feature/<slug>`); it owns
 the design diagrams and the session journals. You will: (1) declare the feature, (2) sketch
 its design, (3) build it in slices — teaching and journaling one or two real decisions at
-each slice boundary. Never gate; never lecture. Keep the developer the author.
+each slice boundary. Never block a build or merge; pause only for a required learning response.
+Never lecture. Keep the developer the author.
 
 ## Bundled CLI (Codex)
 
@@ -34,6 +35,10 @@ permission to bury a real question in prose.
 Run `fluencyloop check --json`. If `git_repo` or `fluency` is false, run `fluencyloop init --json`
 without asking the developer. It initialises Git in the current project directory when needed,
 then creates FluencyLoop's state. Only stop if `init` itself fails.
+
+For that `fluencyloop init --json` command in Codex, request sandbox elevation before its first
+execution. It may create or update Codex-protected `.git` metadata; do not first attempt it in the
+standard sandbox.
 
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
@@ -127,6 +132,26 @@ visual sketch derived from the diagram, not Mermaid source. If the full diagram 
 text, show the core topology and say what was omitted. Never paste a Mermaid fence as the
 substitute. Then point the user to the feature's **`design.md`** for GitHub/browser rendering.
 
+### Codex design teaching gate - before implementation
+
+After the design is rendered or sketched and before writing feature code, constitution principles,
+or a build session, send a **user-visible design teaching turn**. This is a hard ordering rule for
+Codex, not a status update:
+
+1. Walk through the main shapes, their relationships, and the load-bearing flow. Explain the key
+   design choice and rejected alternative, anchored to the rendered diagram or ASCII sketch.
+   "The design is ready" is not teaching.
+2. Set depth from calibration. If the relevant domain is absent from calibration, it is
+   **unknown**: ask a concise standalone probe and stop. For `learning` and `new`, explain the
+   tradeoff, ask whether it lands or they want to go deeper, then wait. Do not implement, birth the
+   constitution, or open a build session until the developer replies.
+3. For `fluent` or `familiar` domains, the explanation may be brief, but it must still be visible
+   before implementation. Persist the same rationale in `design.md` only after that teaching turn.
+
+This is a conversation pause, not a build or merge gate. The forbidden sequence is: draft diagrams
+in tools, then write code or constitution principles without explaining the design in the
+conversation. The durable design records the teaching; it does not replace it.
+
 Persist the same diagrams as **Mermaid** in `design.md` (blocks **top-level**, never nested
 in another fence, so GitHub renders them) — that's the durable, committed copy. The Artifact
 is the "see it now" view; `design.md` is the record.
@@ -153,6 +178,28 @@ Do not over-invest here: the design is a shape to build against, not a spec to r
 
 Build the feature one **meaningful slice** at a time (a logical, commit-worthy chunk). Do
 **not** interrupt mid-thought. At each slice boundary:
+
+### Codex teaching gate - visible before the journal
+
+When `slice-context --json` reports `likely_decision: true`, the next action is a **user-visible
+teaching message**, not a `fluencyloop decision` command. This is a hard ordering rule for Codex:
+
+1. Send a standalone teaching turn before any `fluencyloop decision`, decision-related session
+   edit, `fluencyloop calibration signal`, or completion summary. State the call, why it fits this
+   code, and the rejected alternative. Anchor it to the changed code and the design shape. A status
+   update such as "I am recording the decisions" is not teaching.
+2. Use the depth policy below. If the relevant domain is absent from calibration, it is **unknown**:
+   probe it in a concise standalone chat question and stop. Treat `learning` and `new` the same
+   way: explain, ask whether it lands or they want to go deeper, then wait. Do not journal the
+   decision or continue building until the developer replies.
+3. After a `fluent` or `familiar` teaching turn, journal the same rationale. Never write the
+   journal first and substitute it for the conversation.
+4. Log a calibration signal only from a real developer response. No reply is not a `wave`; omit
+   the signal until there is evidence of engagement.
+
+The forbidden sequence is: identify a decision in tools, then immediately run `fluencyloop
+decision` and write the session without a teaching turn. The transcript must make the teaching
+visible; the journal is its durable byproduct.
 
 1. **Review what you just built — from the slice, not the whole files.** Run `fluencyloop
    slice-context` (add `--json` for the structured form) to get *just this slice's* changed hunks
@@ -337,7 +384,8 @@ Read loop state through the deterministic commands — `slice-context --json`, `
 
 ## Rules
 
-- **Never gate.** You flag exposure and unverified trust; you never block building or merging.
+- **Do not block builds or merges.** Pause only for a required learning response; flag exposure
+  and unverified trust without turning them into delivery gates.
 - **Honesty over polish.** A journaled `why` must be one the developer actually engaged with.
   If they waved a decision through, mark it `trust: ⚠`. Do not manufacture rationale.
 - **Anchor every claim to code** (`where:`) — file/area, so it survives refactoring.

@@ -23,7 +23,8 @@ dispatcher from the loaded skill path as a silent fallback. On native Windows, i
 
 For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has
 no equivalent question-form tool, so ask a concise standalone question in chat and stop; do not
-create a PR or persist a preference until the developer answers.
+create a PR or persist a preference until the developer answers. A settled `feature-handoff:
+automatic` preference is already that answer; honor it without asking again.
 
 ## 1. Gather the raw material
 
@@ -69,11 +70,14 @@ to copy-paste into GitHub.
    elsewhere), create the PR with the assembled view as the body:
 
    ```bash
-   gh pr create --title "<feature intent>" --body-file <tmpfile>   # base defaults to main
+   gh pr create --base "<base_ref>" --title "<feature intent>" --body-file <tmpfile>
    ```
 
-   Confirm the title/base with the user first; show them the body you're about to use. On
-   success, give them the PR URL.
+   Read `~/.fluencyloop/preferences.md` before asking. If `feature-handoff: automatic` is
+   settled, create the PR with the assembled title, recorded base, and body without a second
+   confirmation; show the completed PR URL and summary afterwards. Otherwise, confirm the
+   title/base with the user first and show them the body you're about to use. On success, give
+   them the PR URL.
 3. If `gh` is **not** available, still deliver — and make a **one-time** setup offer, because `gh`
    is what lets FluencyLoop open the PR for you. First hand over the reviewer view **rendered**, and
    a **prepopulated compare URL** that opens a ready-to-file PR in the browser (no `gh`, any OS):
