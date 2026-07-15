@@ -81,11 +81,13 @@ a CDN, and do **not** inline a minified Mermaid/JS bundle (its lone surrogates f
 invite reactions — this is a conversation.
 
 **If the Artifact tool isn't available** (the environment can't publish one, or the deploy keeps
-bouncing), **say so explicitly** — never silently skip the visual-design step. **Never attempt to
-render Mermaid in the terminal or paste a Mermaid fence into chat as a visual substitute.** Mermaid
-is durable source only. If this surface can show a local self-contained inline-SVG/HTML preview,
-use that; otherwise point the user to **`plan.md`** for GitHub/browser rendering without echoing
-the diagram source, and say that no live visual preview is available here.
+bouncing), **say so explicitly** — never silently skip the visual-design step. If this surface can
+show a local self-contained inline-SVG/HTML preview, use that. Otherwise, **attempt an ASCII
+rendering directly in chat** before linking the durable document: use a fenced `text` block, only
+ASCII characters, and show the important components plus their relationships or flow. This is a
+visual sketch derived from the diagram, not Mermaid source. If the full diagram is too complex for
+text, show the core topology and say what was omitted. Never paste a Mermaid fence as the
+substitute. Then point the user to **`plan.md`** for GitHub/browser rendering.
 
 Persist the same diagrams as **Mermaid** in `plan.md` under `## Architecture` (blocks
 **top-level**, never nested in another fence, so GitHub renders them). Check the shapes against

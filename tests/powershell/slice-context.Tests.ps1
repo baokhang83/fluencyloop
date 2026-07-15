@@ -54,6 +54,24 @@ Describe 'slice-context.ps1' {
         $out | Should -Match 'b changed'
     }
 
+    It 'handles an unborn repository with staged and untracked first files' {
+        Remove-Item -Recurse -Force -LiteralPath "$script:repo/.git"
+        Set-Location -LiteralPath $script:repo
+        [System.IO.File]::WriteAllText("$script:repo/main.go", "package main`n")
+        [System.IO.File]::WriteAllText("$script:repo/go.mod", "module example.com/hello`n")
+        & $script:PwshExe -NoProfile -File "$script:Bin/init.ps1" | Out-Null
+        git add main.go 2>&1 | Out-Null
+
+        $j = Get-FlJson 'slice-context.ps1' '--json'
+        $j.base_kind | Should -Be 'unborn'
+        $j.base | Should -Be 'unborn'
+        $j.files_changed | Should -BeGreaterOrEqual 2
+        $j.diff | Should -Match 'package main'
+        $j.diff | Should -Match 'module example.com/hello'
+        ($j.files | ForEach-Object { $_.path }) | Should -Contain 'main.go'
+        $j.untracked | Should -Contain 'go.mod'
+    }
+
     It 'pre-filter: JSON carries likely_decision / decision_score / decision_signals' {
         [System.IO.File]::WriteAllText("$script:repo/app.txt", "a`nb changed`n")
         $j = Get-FlJson 'slice-context.ps1' '--json'

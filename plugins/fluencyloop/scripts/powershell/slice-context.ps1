@@ -21,7 +21,8 @@ $feature = FlStateGet 'feature'
 if (-not $feature) { $feature = FlCurrentFeatureSlug }
 $baseRef = FlStateGet 'base_ref'; if (-not $baseRef) { $baseRef = 'main' }
 
-# Where the slice starts: last journaled session, else base ref, else HEAD.
+# Where the slice starts: last journaled session, else base ref, else HEAD. A repository made by
+# `fluencyloop init` can have no first commit, so an unborn branch needs an empty-tree baseline.
 $since = ''; $baseKind = 'base-ref'
 if ($feature) {
     $sdir = "$(FlFeaturePath $feature)/sessions"
@@ -30,28 +31,55 @@ if ($feature) {
 }
 if (-not $since) { $since = $baseRef }
 & git rev-parse --verify --quiet $since *> $null
-if ($LASTEXITCODE -ne 0) { $since = 'HEAD'; $baseKind = 'head' }
+if ($LASTEXITCODE -ne 0) {
+    & git rev-parse --verify --quiet HEAD *> $null
+    if ($LASTEXITCODE -eq 0) { $since = 'HEAD'; $baseKind = 'head' }
+    else { $since = ''; $baseKind = 'unborn' }
+}
 
 $untrackedFiles = @(& git ls-files --others --exclude-standard @exclude 2>$null)
-$diffLines = @(& git diff $since @exclude 2>$null)
-foreach ($f in $untrackedFiles) {
-    $ud = @(& git diff --no-index -- /dev/null $f 2>$null)
-    $diffLines += $ud
+$ins = 0; $del = 0; $tracked = 0
+$diffLines = @()
+if ($since) {
+    $diffLines = @(& git diff $since @exclude 2>$null)
+    foreach ($f in $untrackedFiles) {
+        $ud = @(& git diff --no-index -- /dev/null $f 2>$null)
+        $diffLines += $ud
+    }
+    foreach ($line in @(& git diff --numstat $since @exclude 2>$null)) {
+        $p = $line -split "`t"
+        if ($p.Count -ge 2) {
+            if ($p[0] -ne '-') { $ins += [int]$p[0] }
+            if ($p[1] -ne '-') { $del += [int]$p[1] }
+            $tracked++
+        }
+    }
+} else {
+    # HEAD is invalid before the first commit. Render every index/worktree file as an addition,
+    # which also preserves staged source files in the first slice.
+    $unbornFiles = @(& git ls-files --cached --others --exclude-standard @exclude 2>$null)
+    foreach ($f in $unbornFiles) {
+        if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { continue }
+        $diffLines += @(& git diff --no-index -- /dev/null $f 2>$null)
+        foreach ($line in @(& git diff --no-index --numstat -- /dev/null $f 2>$null)) {
+            $p = $line -split "`t"
+            if ($p.Count -ge 2) {
+                if ($p[0] -ne '-') { $ins += [int]$p[0] }
+                if ($p[1] -ne '-') { $del += [int]$p[1] }
+            }
+        }
+    }
+    $tracked = @(& git diff --cached --name-status @exclude 2>$null).Count
 }
 $diff = $diffLines -join "`n"
 
-$ins = 0; $del = 0; $tracked = 0
-foreach ($line in @(& git diff --numstat $since @exclude 2>$null)) {
-    $p = $line -split "`t"
-    if ($p.Count -ge 2) {
-        if ($p[0] -ne '-') { $ins += [int]$p[0] }
-        if ($p[1] -ne '-') { $del += [int]$p[1] }
-        $tracked++
-    }
-}
 $filesChanged = $tracked + $untrackedFiles.Count
-$short = & git rev-parse --short $since 2>$null
-if ($LASTEXITCODE -ne 0 -or -not $short) { $short = $since } else { $short = ($short | Select-Object -First 1) }
+if ($since) {
+    $short = & git rev-parse --short $since 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $short) { $short = $since } else { $short = ($short | Select-Object -First 1) }
+} else {
+    $short = 'unborn'
+}
 
 # --- decision pre-filter: cheap heuristics over ADDED lines ---
 $manifest = $false; $code = 0; $imp = 0; $dep = 0; $api = 0; $ctl = 0
@@ -89,7 +117,12 @@ $likely = if ($score -ge 2) { 'true' } else { 'false' }
 
 if ($jsonMode) {
     $files = @()
-    foreach ($line in @(& git diff --name-status $since @exclude 2>$null)) {
+    $fileStatus = if ($since) {
+        @(& git diff --name-status $since @exclude 2>$null)
+    } else {
+        @(& git diff --cached --name-status @exclude 2>$null)
+    }
+    foreach ($line in $fileStatus) {
         $p = $line -split "`t"
         if ($p.Count -ge 2) {
             $path = ($p[-1]).Replace('\', '\\').Replace('"', '\"')

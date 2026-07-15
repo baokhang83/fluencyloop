@@ -62,6 +62,30 @@ assert not any(".fluencyloop" in p or "docs/fluencyloop" in p for p in paths+d["
     [[ "$output" == *"b changed"* ]]
 }
 
+@test "an unborn repository returns its staged and untracked first files without using HEAD" {
+    rm -rf "$TESTREPO/.git"
+    printf 'package main\n' > main.go
+    printf 'module example.com/hello\n' > go.mod
+
+    run bash "$DIST/fluencyloop" init --json
+    [ "$status" -eq 0 ]
+    git add main.go
+
+    run bash "$DIST/fluencyloop" slice-context --json
+    [ "$status" -eq 0 ]
+    printf '%s\n' "$output" | python3 -c '
+import json,sys
+d=json.load(sys.stdin)
+assert d["base_kind"] == "unborn", d
+assert d["base"] == "unborn", d
+assert d["files_changed"] >= 2, d
+assert "package main" in d["diff"], d["diff"]
+assert "module example.com/hello" in d["diff"], d["diff"]
+assert "main.go" in {f["path"] for f in d["files"]}, d["files"]
+assert "go.mod" in d["untracked"], d["untracked"]
+'
+}
+
 # --- decision pre-filter -------------------------------------------------
 
 likely() { json | python3 -c "import json,sys;d=json.load(sys.stdin);print(d['likely_decision'], d['decision_signals'])"; }

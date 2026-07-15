@@ -29,6 +29,8 @@ FEATURE="$(state_get feature)"; [ -z "$FEATURE" ] && FEATURE="$(current_feature_
 BASE_REF="$(state_get base_ref)"; [ -z "$BASE_REF" ] && BASE_REF="main"
 
 # Where the slice starts: the last journaled session, else the feature's base ref, else HEAD.
+# A repository created by `fluencyloop init` may not have its first commit yet. In that unborn
+# state there is no HEAD to diff against, so every project file is part of the first slice.
 SINCE=""; BASE_KIND="base-ref"
 if [ -n "$FEATURE" ]; then
     SDIR="$(feature_path "$FEATURE")/sessions"
@@ -37,24 +39,64 @@ if [ -n "$FEATURE" ]; then
 fi
 [ -z "$SINCE" ] && SINCE="$BASE_REF"
 if ! git rev-parse --verify --quiet "$SINCE" >/dev/null 2>&1; then
-    SINCE="HEAD"; BASE_KIND="head"
+    if git rev-parse --verify --quiet HEAD >/dev/null 2>&1; then
+        SINCE="HEAD"; BASE_KIND="head"
+    else
+        SINCE=""; BASE_KIND="unborn"
+    fi
 fi
 
 # Untracked files are part of the slice — render each as an added-file diff (no index changes).
+untracked_files() {
+    git ls-files --others --exclude-standard -z "${EXCLUDE[@]}"
+}
+
 untracked_diff() {
-    git ls-files --others --exclude-standard -z "${EXCLUDE[@]}" | while IFS= read -r -d '' f; do
+    untracked_files | while IFS= read -r -d '' f; do
         git diff --no-index -- /dev/null "$f" 2>/dev/null || true
     done
 }
 
-DIFF="$( git diff "$SINCE" "${EXCLUDE[@]}"; untracked_diff )"
+# On an unborn branch, `git diff HEAD` is invalid. Build the same initial slice from every file
+# known to the index or working tree instead. This includes a developer's staged first commit.
+unborn_files() {
+    git ls-files --cached --others --exclude-standard -z "${EXCLUDE[@]}"
+}
 
-read -r INS DEL TRACKED_FILES <<EOF
+unborn_diff() {
+    unborn_files | while IFS= read -r -d '' f; do
+        [ -f "$f" ] || continue
+        git diff --no-index -- /dev/null "$f" 2>/dev/null || true
+    done
+}
+
+unborn_numstat() {
+    unborn_files | while IFS= read -r -d '' f; do
+        [ -f "$f" ] || continue
+        git diff --no-index --numstat -- /dev/null "$f" 2>/dev/null || true
+    done
+}
+
+if [ -n "$SINCE" ]; then
+    DIFF="$( git diff "$SINCE" "${EXCLUDE[@]}"; untracked_diff )"
+    read -r INS DEL TRACKED_FILES <<EOF
 $(git diff --numstat "$SINCE" "${EXCLUDE[@]}" | awk '{i+=($1=="-"?0:$1); d+=($2=="-"?0:$2); n++} END{print i+0, d+0, n+0}')
 EOF
-UNTRACKED_COUNT="$(git ls-files --others --exclude-standard "${EXCLUDE[@]}" | awk 'END{print NR+0}')"
+else
+    DIFF="$(unborn_diff)"
+    read -r INS DEL _ <<EOF
+$(unborn_numstat | awk '{i+=($1=="-"?0:$1); d+=($2=="-"?0:$2)} END{print i+0, d+0, 0}')
+EOF
+    TRACKED_FILES="$(git diff --cached --name-status "${EXCLUDE[@]}" | awk 'END{print NR+0}')"
+fi
+
+UNTRACKED_COUNT="$(untracked_files | tr '\0' '\n' | awk 'END{print NR+0}')"
 FILES_CHANGED=$((TRACKED_FILES + UNTRACKED_COUNT))
-SHORT="$(git rev-parse --short "$SINCE" 2>/dev/null || printf '%s' "$SINCE")"
+if [ -n "$SINCE" ]; then
+    SHORT="$(git rev-parse --short "$SINCE" 2>/dev/null || printf '%s' "$SINCE")"
+else
+    SHORT="unborn"
+fi
 
 # --- decision pre-filter: cheap heuristics over the slice's ADDED lines, so the model only spends
 # a full teaching pass where a real decision probably lives. New imports/deps, new public API /
@@ -96,10 +138,15 @@ read -r DEC_SCORE DEC_LIKELY DEC_SIGNALS <<<"$HEUR" || true
 DEC_SIGNALS_JSON="$(printf '%s' "${DEC_SIGNALS:-}" | awk '{for(i=1;i<=NF;i++) printf "%s\"%s\"",(i>1?",":""),$i}')"
 
 if $JSON_MODE; then
-    files="$(git diff --name-status "$SINCE" "${EXCLUDE[@]}" | awk -F'\t' '
+    if [ -n "$SINCE" ]; then
+        file_status="$(git diff --name-status "$SINCE" "${EXCLUDE[@]}")"
+    else
+        file_status="$(git diff --cached --name-status "${EXCLUDE[@]}")"
+    fi
+    files="$(printf '%s\n' "$file_status" | awk -F'\t' '
         NF>=2 { p=$NF; gsub(/\\/,"\\\\",p); gsub(/"/,"\\\"",p)
                 printf "%s{\"status\":\"%s\",\"path\":\"%s\"}", (n++?",":""), $1, p }')"
-    untracked="$(git ls-files --others --exclude-standard "${EXCLUDE[@]}" | awk '
+    untracked="$(untracked_files | tr '\0' '\n' | awk '
         { p=$0; gsub(/\\/,"\\\\",p); gsub(/"/,"\\\"",p); printf "%s\"%s\"", (n++?",":""), p }')"
     # JSON-escape the diff text (backslash, quote, tab, CR; newlines join records).
     diff_esc="$(printf '%s' "$DIFF" | awk '

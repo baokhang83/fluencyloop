@@ -41,7 +41,9 @@ hooks = json.loads(read_text(dist / "hooks" / "hooks.json"))
 handler, = hooks["hooks"]["SessionStart"][0]["hooks"]
 assert hooks["hooks"]["SessionStart"][0]["matcher"] == "startup"
 assert handler["type"] == "command"
-assert "${PLUGIN_ROOT}/hooks/refresh-marketplace.sh" in handler["command"]
+assert 'plugin_root="${PLUGIN_ROOT:-}"' in handler["command"]
+assert "CLAUDE_PLUGIN_ROOT" not in handler["command"]
+assert "refresh-marketplace.sh" in handler["command"]
 assert "refresh-marketplace.ps1" in handler["commandWindows"]
 assert (dist / "hooks" / "refresh-marketplace.sh").is_file()
 assert (dist / "hooks" / "refresh-marketplace.ps1").is_file()
@@ -66,6 +68,17 @@ feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
 assert "must be paths under `docs/fluencyloop/`" in feature_text
+for path in [
+    dist / "skills" / "fluencyloop-feature" / "SKILL.md",
+    dist / "skills" / "fluencyloop-plan" / "SKILL.md",
+    dist / "skills" / "fluencyloop-backfill" / "SKILL.md",
+    root / "claude-skills" / "feature" / "SKILL.md",
+    root / "claude-skills" / "plan" / "SKILL.md",
+    root / "claude-skills" / "backfill" / "SKILL.md",
+]:
+    text = read_text(path)
+    assert "ASCII" in text
+    assert "Mermaid source" in text
 readme = read_text(root / "README.md")
 assert "**Enable auto-update**" in readme
 assert "`/reload-plugins` to activate it in the current session" in readme
@@ -114,6 +127,25 @@ PY
 
 @test "Codex startup refresh hook is safe outside an installed plugin root" {
     run env PLUGIN_ROOT="$DIST" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "Codex startup command ignores a Claude root and no-ops without a Codex root" {
+    local hook_command
+
+    run python3 - "$DIST/hooks/hooks.json" <<'PY'
+import json
+import pathlib
+import sys
+
+hooks = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(hooks["hooks"]["SessionStart"][0]["hooks"][0]["command"])
+PY
+    [ "$status" -eq 0 ]
+    hook_command="$output"
+
+    run env -i PATH="$PATH" CLAUDE_PLUGIN_ROOT="$BATS_TEST_TMPDIR/not-a-codex-plugin" bash -c "$hook_command"
     [ "$status" -eq 0 ]
     [ -z "$output" ]
 }
