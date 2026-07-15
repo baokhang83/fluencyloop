@@ -32,9 +32,9 @@ create issues, write a settled choice, or advance the workflow until the develop
 
 ## 0. Preconditions
 
-Confirm `.fluencyloop/` exists (`fluencyloop check --json` reports it). If it is absent, run
-`fluencyloop init` yourself, say that the repository is now initialised, and continue. Only stop
-if `init` itself fails (for example, because the directory is not a Git repository).
+Run `fluencyloop check --json`. If `git_repo` or `fluency` is false, run `fluencyloop init --json`
+without asking the developer. It initialises Git in the current project directory when needed,
+then creates FluencyLoop's state. Only stop if `init` itself fails.
 
 **Read the constitution up front** — `docs/fluencyloop/constitution.md`, and **if it's a pointer**
 (a `Source of truth:` line naming another file, e.g. `.specify/memory/constitution.md`), read

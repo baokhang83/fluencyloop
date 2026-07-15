@@ -12,6 +12,16 @@ with a critical path, (5) offer to open GitHub tickets under a milestone, (6) ha
 off to `fluencyloop-feature`. The plan is a **map you build against, not a spec to ratify** —
 do not over-invest. Keep the developer the architect.
 
+## Bundled CLI (Claude Code)
+
+Before invoking a deterministic command, use this plugin's bundled launcher:
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" <arguments>`. Every `fluencyloop …` command below
+means that exact Bash-tool command; it is never a chat instruction or a globally installed
+command.
+
+Do not hand-scaffold `.fluencyloop/`, `.claude/skills/`, designs, sessions, state, or helper
+scripts. The bundled CLI creates the deterministic files and returns their paths.
+
 ## Question delivery — preserve the pause
 
 For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has
@@ -20,9 +30,12 @@ create issues, write a settled choice, or advance the workflow until the develop
 
 ## 0. Preconditions
 
-Confirm `.fluencyloop/` exists (`fluencyloop check --json` reports it). If it is absent, run
-`fluencyloop init` yourself, say that the repository is now initialised, and continue. Only stop
-if `init` itself fails (for example, because the directory is not a Git repository).
+Run the bundled `fluencyloop check --json` and parse its output. If `git_repo` or `fluency` is
+false, run the bundled `fluencyloop init --json` without asking the developer. It initialises Git
+in the current project directory when needed, then creates FluencyLoop's state. Parse its
+`docs_dir`, and verify that it is the repository's `docs/fluencyloop` directory before
+continuing. Only stop if `init` itself fails. Do not hand-create `.fluencyloop`, `docs`, or
+`.claude/skills`.
 
 **Read the constitution up front** — `docs/fluencyloop/constitution.md`, and **if it's a pointer**
 (a `Source of truth:` line naming another file, e.g. `.specify/memory/constitution.md`), read

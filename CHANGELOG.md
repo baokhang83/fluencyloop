@@ -2,6 +2,21 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.4
+
+### Fixed
+
+- Claude Code skills now invoke the plugin's bundled launcher explicitly, validate the paths it
+  returns, and refuse to hand-scaffold legacy `.fluencyloop` session files.
+- Codex's startup hook now recognises both supported installed-plugin root layouts, so its
+  marketplace refresh reaches the current snapshot layout.
+- The Claude and Codex plan/feature stages now initialise Git automatically in a project directory
+  that does not already have a repository, without prompting the developer.
+- The plugin package test now reads repository text as UTF-8, so it runs on Windows code-page
+  defaults.
+- Claude installation guidance now distinguishes slash commands from Bash-tool commands and
+  documents third-party marketplace update behaviour accurately.
+
 ## 0.2.3
 
 ### Fixed

@@ -23,9 +23,18 @@ while [ "$#" -gt 0 ]; do
 done
 
 ROOT="$(repo_root)"
+GIT_INITIALIZED=false
 if [ -z "$ROOT" ]; then
-    echo "Error: 'fluencyloop init' must be run inside a git repository." >&2
-    exit 1
+    if ! git init >/dev/null 2>&1; then
+        echo "Error: unable to initialise a Git repository in the current directory." >&2
+        exit 1
+    fi
+    ROOT="$(repo_root)"
+    if [ -z "$ROOT" ]; then
+        echo "Error: Git initialisation did not produce a repository root." >&2
+        exit 1
+    fi
+    GIT_INITIALIZED=true
 fi
 
 # The distribution root is two levels up from scripts/bash.
@@ -78,9 +87,13 @@ if $JSON_MODE; then
         docs_dir "$DOCS" \
         constitution "$CONSTITUTION" \
         constitution_created "$CREATED_CONSTITUTION" \
+        git_initialized "$GIT_INITIALIZED" \
         push_autoremote_set "$AUTO_REMOTE_SET"
 else
     echo "Initialised FluencyLoop"
+    if $GIT_INITIALIZED; then
+        echo "  git:          initialised a repository in $ROOT"
+    fi
     echo "  state:        $FLUENCY (scripts + templates)"
     echo "  docs:         $DOCS (constitution, designs, session journals)"
     if $AUTO_REMOTE_SET; then

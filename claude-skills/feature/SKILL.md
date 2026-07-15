@@ -10,6 +10,16 @@ the design diagrams and the session journals. You will: (1) declare the feature,
 its design, (3) build it in slices — teaching and journaling one or two real decisions at
 each slice boundary. Never gate; never lecture. Keep the developer the author.
 
+## Bundled CLI (Claude Code)
+
+Before invoking a deterministic command, use this plugin's bundled launcher:
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" <arguments>`. Every `fluencyloop …` command below
+means that exact Bash-tool command; it is never a chat instruction or a globally installed
+command.
+
+Do not hand-scaffold `.fluencyloop/`, `.claude/skills/`, designs, sessions, state, or helper
+scripts. The bundled CLI creates the deterministic files and returns their paths.
+
 ## Question delivery — preserve the pause
 
 When this workflow needs a real answer, choice, confirmation, or knowledge probe, use
@@ -20,9 +30,12 @@ permission to bury a real question in prose.
 
 ## 0. Preconditions
 
-Confirm `.fluencyloop/` exists (`fluencyloop check --json` reports it). If it is absent, run
-`fluencyloop init` yourself, say that the repository is now initialised, and continue. Only stop
-if `init` itself fails (for example, because the directory is not a Git repository).
+Run the bundled `fluencyloop check --json` and parse its output. If `git_repo` or `fluency` is
+false, run the bundled `fluencyloop init --json` without asking the developer. It initialises Git
+in the current project directory when needed, then creates FluencyLoop's state. Parse its
+`docs_dir`, and verify that it is the repository's `docs/fluencyloop` directory before
+continuing. Only stop if `init` itself fails. Do not hand-create `.fluencyloop`, `docs`, or
+`.claude/skills`.
 
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
@@ -88,6 +101,9 @@ fluencyloop feature --json "<intent>"
 
 This creates the `feature/<slug>` branch (switching to it), the feature dir, and a
 `design.md` stub. Parse the JSON for `slug`, `branch`, `design`, `sessions_dir`.
+`design` and `sessions_dir` must be paths under `docs/fluencyloop/`; if either is not, stop and
+surface the runtime/path mismatch rather than writing fallback files. Never write `design.md`
+under `.fluencyloop/`.
 
 ## 2. Design (Stage 2) — diagrams first, *shown* not filed
 

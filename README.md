@@ -71,8 +71,16 @@ Install FluencyLoop through its marketplace — this is the standard Claude Code
 The plugin includes the interactive skills and a bundled `fluencyloop` command for Claude Code's
 Bash tool. Its skills are intentionally namespaced, for example `/fluencyloop:feature`, so they cannot collide with another plugin's skills.
 
-Claude Code checks enabled marketplace plugins during normal startup and applies available
-FluencyLoop updates through its native plugin updater. 
+Use the slash commands in chat: the bundled `fluencyloop` command is for Claude's Bash tool, so
+a bare `fluencyloop …` chat message can collide with a personal skill of the same name.
+
+Claude Code leaves third-party marketplace updates off by default. To opt in once, open
+`/plugin`, choose **Marketplaces**, select **fluencyloop**, then choose **Enable auto-update**.
+Claude Code will subsequently refresh the marketplace and update the installed plugin at startup;
+when it reports an update, run `/reload-plugins` to activate it in the current session.
+
+Without that opt-in, update manually with `/plugin marketplace update fluencyloop`, then
+`/plugin update fluencyloop@fluencyloop`, and finally `/reload-plugins`.
 
 ### Codex
 
@@ -93,8 +101,9 @@ never changes FluencyLoop while you are working, and it never updates another pl
 
 ## Quickstart
 
-Inside the repository you want to work on, invoke the workflow stage in your installed agent.
-The plan and feature stages initialise `.fluencyloop/` automatically when needed.
+Inside the project directory you want to work on, invoke the workflow stage in your installed
+agent. The plan and feature stages initialise Git and `.fluencyloop/` automatically when needed;
+they do not create an initial commit.
 
 | Goal | Claude Code | Codex |
 |------|-------------|-------|

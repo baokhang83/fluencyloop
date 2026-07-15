@@ -18,6 +18,16 @@ components the work touched — the fluency the missing real-time loop never gav
 don't just draft and ask "ok?"; you *show them the shapes, rendered,* map each decision onto
 them, and confirm decision-by-decision.
 
+## Bundled CLI (Claude Code)
+
+Before invoking a deterministic command, use this plugin's bundled launcher:
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" <arguments>`. Every `fluencyloop …` command below
+means that exact Bash-tool command; it is never a chat instruction or a globally installed
+command.
+
+Do not hand-scaffold `.fluencyloop/`, `.claude/skills/`, designs, sessions, state, or helper
+scripts. The bundled CLI creates the deterministic files and returns their paths.
+
 ## Question delivery — preserve the pause
 
 For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has

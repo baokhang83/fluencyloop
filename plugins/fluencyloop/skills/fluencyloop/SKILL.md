@@ -56,14 +56,15 @@ repeatable stances from real decisions. Same law as the journal and the calibrat
 | Document work that shipped without the loop           | **fluencyloop-backfill**   |
 
 If the user just says "fluency" or "set up FluencyLoop" and `.fluencyloop/` does not exist yet,
-run the bundled `fluencyloop init` (it scaffolds the state + an **empty** constitution stub), then go to
+run the bundled `fluencyloop init` without asking (it initialises Git when needed and scaffolds the
+state + an **empty** constitution stub), then go to
 **fluencyloop-feature** (or **fluencyloop-plan** for a big chunk) — the constitution fills itself
 in from there.
 
 ## Initialise a project
 
 ```bash
-fluencyloop init   # scaffolds .fluencyloop/ in the current repo
+fluencyloop init   # initialises Git if needed, then scaffolds .fluencyloop/
 ```
 
 This creates `.fluencyloop/` (scripts, templates, constitution stub). Agent skills are activated

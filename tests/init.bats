@@ -13,6 +13,23 @@ setup() { setup_repo; }
     [ -d "$TESTREPO/docs/fluencyloop" ]
 }
 
+@test "init initialises Git in a project directory that has none" {
+    rm -rf "$TESTREPO/.git"
+    printf 'existing project file\n' > "$TESTREPO/app.txt"
+
+    run bash "$DIST/fluencyloop" init --json
+    [ "$status" -eq 0 ]
+    [ "$(git -C "$TESTREPO" rev-parse --is-inside-work-tree)" = "true" ]
+    [ "$(echo "$output" | json_field git_initialized)" = "true" ]
+    [ -d "$TESTREPO/docs/fluencyloop" ]
+
+    run bash "$BIN/new-feature.sh" --json "first feature"
+    [ "$status" -eq 0 ]
+    [ "$(git -C "$TESTREPO" branch --show-current)" = "feature/first-feature" ]
+    [ -f "$TESTREPO/docs/fluencyloop/features/first-feature/design.md" ]
+    [ "$(cat "$TESTREPO/app.txt")" = "existing project file" ]
+}
+
 @test "init seeds an EMPTY constitution stub, not the authoring scaffold" {
     bash "$BIN/init.sh" >/dev/null
     run cat "$TESTREPO/docs/fluencyloop/constitution.md"
@@ -58,5 +75,6 @@ setup() { setup_repo; }
     run bash "$BIN/init.sh" --json
     [ "$status" -eq 0 ]
     [ "$(echo "$output" | json_field constitution_created)" = "true" ]
+    [ "$(echo "$output" | json_field git_initialized)" = "false" ]
     [ -n "$(echo "$output" | json_field docs_dir)" ]
 }

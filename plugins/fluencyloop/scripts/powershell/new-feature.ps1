@@ -33,13 +33,24 @@ $baseRef = ''
 if ($LASTEXITCODE -eq 0) {
     & git checkout $branch *> $null
 } else {
-    $cur = & git rev-parse --abbrev-ref HEAD 2>$null
-    if ($LASTEXITCODE -ne 0 -or -not $cur) { $baseRef = 'main' } else { $baseRef = ($cur | Select-Object -First 1) }
-    & git checkout -b $branch *> $null
+    & git rev-parse --verify --quiet HEAD *> $null
+    if ($LASTEXITCODE -eq 0) {
+        $baseRef = (& git branch --show-current | Select-Object -First 1)
+        & git checkout -b $branch *> $null
+    } else {
+        # `git init` leaves an unborn branch. Start this feature as the first branch without
+        # creating an empty commit or requiring the developer's Git identity.
+        & git checkout --orphan $branch *> $null
+    }
     $createdBranch = 'true'
 }
 if (-not $baseRef) { $baseRef = FlStateGet 'base_ref' }
-if (-not $baseRef) { $baseRef = 'main' }
+if (-not $baseRef) {
+    foreach ($candidate in @('main', 'master')) {
+        & git show-ref --verify --quiet "refs/heads/$candidate" 2>$null
+        if ($LASTEXITCODE -eq 0) { $baseRef = $candidate; break }
+    }
+}
 
 New-Item -ItemType Directory -Force -Path "$feature/sessions" | Out-Null
 

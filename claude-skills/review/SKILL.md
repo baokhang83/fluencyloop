@@ -8,6 +8,16 @@ description: 'FluencyLoop Stage 4. Assemble the reviewer-facing PR view from a f
 A **feature is a branch**, so the review view assembles itself: no manual linking. You turn
 the feature's sessions into a summary a reviewer can read to get fluent fast.
 
+## Bundled CLI (Claude Code)
+
+Before invoking a deterministic command, use this plugin's bundled launcher:
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" <arguments>`. Every `fluencyloop …` command below
+means that exact Bash-tool command; it is never a chat instruction or a globally installed
+command.
+
+Do not hand-scaffold `.fluencyloop/`, `.claude/skills/`, designs, sessions, state, or helper
+scripts. The bundled CLI creates the deterministic files and returns their paths.
+
 ## Question delivery — preserve the pause
 
 For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has

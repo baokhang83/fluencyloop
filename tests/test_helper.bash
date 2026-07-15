@@ -30,7 +30,7 @@ setup_initialized_repo() {
 }
 
 # A plain directory that is NOT a git repository at all (no `.git`, no parent repo). Regression
-# fixture: scripts must fail with a clear message (or degrade gracefully), never crash silently.
+# fixture: `check` must degrade gracefully, while `init` creates the repository before scaffolding.
 setup_no_repo() {
     TESTREPO="$(mktemp -d "${BATS_TMPDIR:-/tmp}/flnorepo.XXXXXX")"
     cd "$TESTREPO" || return 1

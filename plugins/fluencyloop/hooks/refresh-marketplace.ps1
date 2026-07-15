@@ -13,18 +13,21 @@ if ([string]::IsNullOrWhiteSpace($pluginDir)) {
 }
 
 $parts = [IO.Path]::GetFullPath($pluginDir) -split '[\\/]'
-$cacheIndex = -1
+$marketplace = $null
 for ($i = 0; $i -lt ($parts.Length - 2); $i++) {
     if ($parts[$i] -eq 'plugins' -and $parts[$i + 1] -eq 'cache') {
-        $cacheIndex = $i
+        $marketplace = $parts[$i + 2]
+        break
+    }
+    if ($parts[$i] -eq 'marketplaces' -and $parts[$i + 2] -eq 'plugins') {
+        $marketplace = $parts[$i + 1]
         break
     }
 }
-if ($cacheIndex -lt 0 -or [string]::IsNullOrWhiteSpace($parts[$cacheIndex + 2])) {
+if ([string]::IsNullOrWhiteSpace($marketplace)) {
     exit 0
 }
 
-$marketplace = $parts[$cacheIndex + 2]
 if ($null -eq (Get-Command codex -ErrorAction SilentlyContinue)) {
     exit 0
 }

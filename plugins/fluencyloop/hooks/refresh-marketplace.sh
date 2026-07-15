@@ -7,13 +7,17 @@ set -euo pipefail
 PLUGIN_DIR="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
 [ -n "$PLUGIN_DIR" ] || exit 0
 
-# Installed packages live at $CODEX_HOME/plugins/cache/<marketplace>/fluencyloop/<version>.
-# Derive the marketplace instead of assuming the self-hosted catalog name: the same package can
-# later be distributed through another Codex marketplace.
+# Codex has used both a versioned cache root and a marketplace-snapshot root. Derive the
+# marketplace instead of assuming the self-hosted catalog name: the same package can later be
+# distributed through another Codex marketplace.
 case "$PLUGIN_DIR" in
     */plugins/cache/*/*/*)
         CACHE_TAIL="${PLUGIN_DIR#*/plugins/cache/}"
         MARKETPLACE="${CACHE_TAIL%%/*}"
+        ;;
+    */marketplaces/*/plugins/*)
+        MARKETPLACE_TAIL="${PLUGIN_DIR#*/marketplaces/}"
+        MARKETPLACE="${MARKETPLACE_TAIL%%/plugins/*}"
         ;;
     *) exit 0 ;;
 esac

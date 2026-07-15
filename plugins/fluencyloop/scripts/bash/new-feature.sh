@@ -42,13 +42,26 @@ BASE_REF=""
 if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
     git checkout "$BRANCH" >/dev/null 2>&1
 else
-    BASE_REF="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
-    git checkout -b "$BRANCH" >/dev/null 2>&1
+    if git rev-parse --verify --quiet HEAD >/dev/null; then
+        BASE_REF="$(git branch --show-current)"
+        git checkout -b "$BRANCH" >/dev/null 2>&1
+    else
+        # `git init` leaves an unborn branch. Start this feature as the first branch without
+        # creating an empty commit or requiring the developer's Git identity.
+        git checkout --orphan "$BRANCH" >/dev/null 2>&1
+    fi
     CREATED_BRANCH=true
 fi
 # On a re-run the branch already existed: keep the base ref state already recorded.
 [ -z "$BASE_REF" ] && BASE_REF="$(state_get base_ref)"
-[ -z "$BASE_REF" ] && BASE_REF="main"
+if [ -z "$BASE_REF" ]; then
+    for candidate in main master; do
+        if git show-ref --verify --quiet "refs/heads/$candidate"; then
+            BASE_REF="$candidate"
+            break
+        fi
+    done
+fi
 
 mkdir -p "$FEATURE/sessions"
 

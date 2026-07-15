@@ -13,9 +13,19 @@ for ($i = 0; $i -lt $args.Count; $i++) {
 }
 
 $root = FlRepoRoot
+$gitInitialized = 'false'
 if (-not $root) {
-    [Console]::Error.WriteLine("Error: 'fluencyloop init' must be run inside a git repository.")
-    exit 1
+    & git init *> $null
+    if ($LASTEXITCODE -ne 0) {
+        [Console]::Error.WriteLine('Error: unable to initialise a Git repository in the current directory.')
+        exit 1
+    }
+    $root = FlRepoRoot
+    if (-not $root) {
+        [Console]::Error.WriteLine('Error: Git initialisation did not produce a repository root.')
+        exit 1
+    }
+    $gitInitialized = 'true'
 }
 
 $distRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
@@ -58,9 +68,11 @@ if ($cur -ne 'true') { & git -C $root config --local push.autoSetupRemote true; 
 if ($jsonMode) {
     FlOut (FlEmitJson @(
         'fluency_dir', $fluency, 'docs_dir', $docs, 'constitution', $constitution,
-        'constitution_created', $createdConstitution, 'push_autoremote_set', $autoRemoteSet))
+        'constitution_created', $createdConstitution, 'git_initialized', $gitInitialized,
+        'push_autoremote_set', $autoRemoteSet))
 } else {
     FlOut 'Initialised FluencyLoop'
+    if ($gitInitialized -eq 'true') { FlOut "  git:          initialised a repository in $root" }
     FlOut "  state:        $fluency (scripts + templates)"
     FlOut "  docs:         $docs (constitution, designs, session journals)"
     if ($autoRemoteSet -eq 'true') { FlOut '  git:          push.autoSetupRemote=true (feature branches push without --set-upstream)' }
