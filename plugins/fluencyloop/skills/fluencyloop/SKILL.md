@@ -38,7 +38,7 @@ architecture + roadmap       diagrams     session journal    PR view assembles i
 
 Planning is **optional** — reach for it only when a chunk of work is too big for one
 feature/branch and needs an architecture + roadmap first. Small work goes straight to
-**fluencyloop-feature**.
+**`$fluencyloop:feature`**.
 
 The **constitution** (the project's checkable principles) is load-bearing — plan and feature both
 check designs against it — but it is **not a stage you sit down and author**. It's born from your
@@ -50,15 +50,15 @@ repeatable stances from real decisions. Same law as the journal and the calibrat
 
 | The user wants to…                                   | Skill                  |
 |------------------------------------------------------|------------------------|
-| Plan a large chunk — architecture, task breakdown, roadmap | **fluencyloop-plan**  |
-| Start building something, stay fluent as they go     | **fluencyloop-feature**    |
-| Prepare a PR / summarise a feature for a reviewer     | **fluencyloop-review**     |
-| Document work that shipped without the loop           | **fluencyloop-backfill**   |
+| Plan a large chunk — architecture, task breakdown, roadmap | **`$fluencyloop:plan`**  |
+| Start building something, stay fluent as they go     | **`$fluencyloop:feature`**    |
+| Prepare a PR / summarise a feature for a reviewer     | **`$fluencyloop:review`**     |
+| Document work that shipped without the loop           | **`$fluencyloop:backfill`**   |
 
 If the user just says "fluency" or "set up FluencyLoop" and `.fluencyloop/` does not exist yet,
 run the bundled `fluencyloop init` without asking (it initialises Git when needed and scaffolds the
 state + an **empty** constitution stub), then go to
-**fluencyloop-feature** (or **fluencyloop-plan** for a big chunk) — the constitution fills itself
+**`$fluencyloop:feature`** (or **`$fluencyloop:plan`** for a big chunk) — the constitution fills itself
 in from there.
 
 ## Initialise a project

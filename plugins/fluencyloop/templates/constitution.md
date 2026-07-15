@@ -2,7 +2,7 @@
 
 <!--
 The project's principles — the short set of hard constraints every feature's design is checked
-against (fluencyloop-plan and fluencyloop-feature do the checking). It is NOT authored cold as a
+against (the plan and feature stages do the checking). It is NOT authored cold as a
 ceremony. It starts empty and is *written from your first plan or feature*, then grows as later
 features harvest repeatable stances from real decisions. Same law as the journal: it accretes
 from building. Delete this comment once real principles land.

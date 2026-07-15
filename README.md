@@ -91,7 +91,7 @@ codex plugin marketplace add baokhang83/fluencyloop
 codex plugin add fluencyloop@fluencyloop
 ```
 
-The plugin makes the `$fluencyloop-*` skills available. Its bundled CLI stays private to the
+The plugin makes the `$fluencyloop:<stage>` skills available. Its bundled CLI stays private to the
 plugin and is run by those skills, so it never needs to be copied onto your PATH.
 
 Codex will ask you to review FluencyLoop's startup hook once. Approve it from `/hooks` to enable
@@ -107,10 +107,10 @@ they do not create an initial commit.
 
 | Goal | Claude Code | Codex |
 |------|-------------|-------|
-| Plan a large initiative — architecture + roadmap | `/fluencyloop:plan <what to plan>` | `$fluencyloop-plan <what to plan>` |
-| Build a normal-sized feature — design → build + teach | `/fluencyloop:feature <what to build>` | `$fluencyloop-feature <what to build>` |
-| Assemble the feature's PR view | `/fluencyloop:review` | `$fluencyloop-review` |
-| Document merged work that skipped the loop | `/fluencyloop:backfill` | `$fluencyloop-backfill` |
+| Plan a large initiative — architecture + roadmap | `/fluencyloop:plan <what to plan>` | `$fluencyloop:plan <what to plan>` |
+| Build a normal-sized feature — design → build + teach | `/fluencyloop:feature <what to build>` | `$fluencyloop:feature <what to build>` |
+| Assemble the feature's PR view | `/fluencyloop:review` | `$fluencyloop:review` |
+| Document merged work that skipped the loop | `/fluencyloop:backfill` | `$fluencyloop:backfill` |
 
 Use **plan** only for work too large for one feature branch. It creates an architecture + roadmap
 under `docs/fluencyloop/plans/`; build each roadmap item as a feature. A feature creates its

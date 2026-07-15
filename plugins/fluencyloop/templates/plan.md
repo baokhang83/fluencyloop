@@ -33,7 +33,7 @@ sequenceDiagram
 
 ## Task breakdown
 
-<!-- Decompose the initiative into task items. Each item is a future `fluencyloop-feature`:
+<!-- Decompose the initiative into task items. Each item is a future feature:
 give it a slug-able intent, a rough size, and its dependencies (by id). Order does not matter
 here — the roadmap below sequences them. -->
 
