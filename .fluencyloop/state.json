@@ -1,0 +1,8 @@
+{
+  "feature": "refresh-fluencyloop-marketplace-packages-automatically-when",
+  "branch": "feature/refresh-fluencyloop-marketplace-packages-automatically-when",
+  "stage": "build",
+  "last_session": "docs/fluencyloop/features/refresh-fluencyloop-marketplace-packages-automatically-when/sessions/add-a-trusted-codex-startup-hook-that-refreshes-fluencyloop.md",
+  "base_ref": "origin/main",
+  "updated": "2026-07-15"
+}

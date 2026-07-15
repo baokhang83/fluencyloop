@@ -33,6 +33,15 @@ assert codex_entry["policy"] == {"installation": "AVAILABLE", "authentication": 
 assert codex_entry["category"] == "Productivity"
 assert codex_plugin["skills"] == "./skills/"
 
+hooks = json.loads((dist / "hooks" / "hooks.json").read_text())
+handler, = hooks["hooks"]["SessionStart"][0]["hooks"]
+assert hooks["hooks"]["SessionStart"][0]["matcher"] == "startup"
+assert handler["type"] == "command"
+assert "${PLUGIN_ROOT}/hooks/refresh-marketplace.sh" in handler["command"]
+assert "refresh-marketplace.ps1" in handler["commandWindows"]
+assert (dist / "hooks" / "refresh-marketplace.sh").is_file()
+assert (dist / "hooks" / "refresh-marketplace.ps1").is_file()
+
 for alias, source in {
     "plan": "fluencyloop-plan",
     "feature": "fluencyloop-feature",
@@ -67,4 +76,30 @@ PY
     run bash "$DIST/fluencyloop" version
     [ "$status" -eq 0 ]
     [ "$output" = "$(cat "$DIST/VERSION")" ]
+}
+
+@test "Codex startup refresh hook is safe outside an installed plugin cache" {
+    run env PLUGIN_ROOT="$DIST" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "Codex startup refresh hook updates only its supplying marketplace" {
+    local plugin_root="$BATS_TEST_TMPDIR/plugins/cache/fluencyloop/fluencyloop/0.2.1"
+    local calls="$BATS_TEST_TMPDIR/codex-calls"
+    mkdir -p "$plugin_root"
+
+    codex() {
+        printf '%s\n' "$*" >> "$CODEX_CALLS"
+    }
+    export -f codex
+    export CODEX_CALLS="$calls"
+
+    run env PLUGIN_ROOT="$plugin_root" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+
+    run cat "$calls"
+    [ "$status" -eq 0 ]
+    [ "$output" = $'plugin marketplace upgrade fluencyloop --json\nplugin add fluencyloop@fluencyloop --json' ]
 }

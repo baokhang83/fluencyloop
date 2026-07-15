@@ -2,6 +2,17 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.2
+
+### Added
+
+- Codex now checks FluencyLoop's supplying marketplace at every session startup through a trusted,
+  plugin-bundled hook, and installs an available update for the following session.
+
+### Changed
+
+- Documented the host-native automatic update behaviour for both Claude Code and Codex.
+
 ## 0.2.1
 
 ### Changed

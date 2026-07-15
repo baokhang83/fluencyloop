@@ -74,6 +74,10 @@ The plugin includes the interactive skills and a bundled `fluencyloop` command f
 Bash tool. Its skills are intentionally namespaced, for example
 `/fluencyloop:feature`, so they cannot collide with another plugin's skills.
 
+Claude Code checks enabled marketplace plugins during normal startup and applies available
+FluencyLoop updates through its native plugin updater. If a developer has disabled marketplace
+auto-updates in Claude Code, they can re-enable them in the marketplace settings.
+
 ### Codex
 
 Install FluencyLoop from the same repository marketplace:
@@ -85,6 +89,19 @@ codex plugin add fluencyloop@fluencyloop
 
 The plugin makes the `$fluencyloop-*` skills available. Its bundled CLI stays private to the
 plugin and is run by those skills, so it never needs to be copied onto your PATH.
+
+After the first startup-hook release is installed and trusted, Codex checks FluencyLoop's own
+marketplace every time a new session starts and installs an available update automatically. Codex
+activates that update in the following session, not part-way through the one already running.
+The hook never refreshes another plugin. Codex will ask for a one-time hook review; approve it
+from `/hooks` to enable this behaviour.
+
+Existing Codex installations need this one final manual refresh to receive the startup hook:
+
+```bash
+codex plugin marketplace upgrade fluencyloop
+codex plugin add fluencyloop@fluencyloop
+```
 
 ## Quickstart
 
