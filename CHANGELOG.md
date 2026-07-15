@@ -12,6 +12,8 @@ All notable changes to FluencyLoop are documented here.
   marketplace refresh reaches the current snapshot layout.
 - The Claude and Codex plan/feature stages now initialise Git automatically in a project directory
   that does not already have a repository, without prompting the developer.
+- The plugin package test now reads repository text as UTF-8, so it runs on Windows code-page
+  defaults.
 - Claude installation guidance now distinguishes slash commands from Bash-tool commands and
   documents third-party marketplace update behaviour accurately.
 

@@ -12,11 +12,15 @@ import sys
 
 root = pathlib.Path(sys.argv[1])
 dist = pathlib.Path(sys.argv[2])
-version = (dist / "VERSION").read_text().strip()
-claude_plugin = json.loads((root / ".claude-plugin" / "plugin.json").read_text())
-claude_marketplace = json.loads((root / ".claude-plugin" / "marketplace.json").read_text())
-codex_plugin = json.loads((dist / ".codex-plugin" / "plugin.json").read_text())
-codex_marketplace = json.loads((root / ".agents" / "plugins" / "marketplace.json").read_text())
+
+def read_text(path):
+    return path.read_text(encoding="utf-8")
+
+version = read_text(dist / "VERSION").strip()
+claude_plugin = json.loads(read_text(root / ".claude-plugin" / "plugin.json"))
+claude_marketplace = json.loads(read_text(root / ".claude-plugin" / "marketplace.json"))
+codex_plugin = json.loads(read_text(dist / ".codex-plugin" / "plugin.json"))
+codex_marketplace = json.loads(read_text(root / ".agents" / "plugins" / "marketplace.json"))
 
 assert claude_plugin["name"] == codex_plugin["name"] == "fluencyloop"
 assert claude_plugin["version"] == codex_plugin["version"] == version
@@ -33,7 +37,7 @@ assert codex_entry["policy"] == {"installation": "AVAILABLE", "authentication": 
 assert codex_entry["category"] == "Productivity"
 assert codex_plugin["skills"] == "./skills/"
 
-hooks = json.loads((dist / "hooks" / "hooks.json").read_text())
+hooks = json.loads(read_text(dist / "hooks" / "hooks.json"))
 handler, = hooks["hooks"]["SessionStart"][0]["hooks"]
 assert hooks["hooks"]["SessionStart"][0]["matcher"] == "startup"
 assert handler["type"] == "command"
@@ -48,8 +52,8 @@ for alias, source in {
     "review": "fluencyloop-review",
     "backfill": "fluencyloop-backfill",
 }.items():
-    alias_text = (root / "claude-skills" / alias / "SKILL.md").read_text()
-    source_text = (dist / "skills" / source / "SKILL.md").read_text()
+    alias_text = read_text(root / "claude-skills" / alias / "SKILL.md")
+    source_text = read_text(dist / "skills" / source / "SKILL.md")
     assert f"name: {alias}" in alias_text
     assert f"name: {source}" in source_text
     assert '"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" <arguments>' in alias_text
@@ -58,14 +62,14 @@ for alias, source in {
     assert "## Bundled CLI (Codex)" in source_text
     assert '"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop" <arguments>' in source_text
     assert 'pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:FLUENCYLOOP_SKILL_DIR/../../fluencyloop.ps1" <arguments>' in source_text
-feature_text = (root / "claude-skills" / "feature" / "SKILL.md").read_text()
+feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
 assert "must be paths under `docs/fluencyloop/`" in feature_text
-readme = (root / "README.md").read_text()
+readme = read_text(root / "README.md")
 assert "**Enable auto-update**" in readme
 assert "`/reload-plugins` to activate it in the current session" in readme
-router_text = (dist / "skills" / "fluencyloop" / "SKILL.md").read_text()
+router_text = read_text(dist / "skills" / "fluencyloop" / "SKILL.md")
 assert '"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop" <arguments>' in router_text
 assert 'pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:FLUENCYLOOP_SKILL_DIR/../../fluencyloop.ps1" <arguments>' in router_text
 assert claude_entry["skills"] == [
