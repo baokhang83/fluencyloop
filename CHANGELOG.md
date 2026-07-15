@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.10
+
+### Fixed
+
+- For literal `fluencyloop init` requests, the Codex router now requests sandbox elevation before
+  its first execution. This avoids a denied first attempt when the initializer creates protected
+  Git metadata. Claude Code's workflow is unchanged.
+
 ## 0.2.9
 
 ### Fixed
