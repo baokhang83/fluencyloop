@@ -5,7 +5,8 @@
 # Scripts are invoked as `pwsh -File` subprocesses (like bats runs bash): they write to OS stdout
 # via [Console]::Out.Write, which the call operator would not otherwise capture.
 
-$script:Bin = (Resolve-Path "$PSScriptRoot/../../scripts/powershell").Path
+$script:Dist = (Resolve-Path "$PSScriptRoot/../../plugins/fluencyloop").Path
+$script:Bin = (Resolve-Path "$script:Dist/scripts/powershell").Path
 $script:PwshExe = (Get-Process -Id $PID).Path
 if (-not $script:PwshExe) { $script:PwshExe = 'pwsh' }
 

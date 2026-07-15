@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: ShellCheck (scripts, CLI, installer, plugin launcher)
+      - name: ShellCheck (bundled runtime and Claude launcher)
         # shellcheck is preinstalled on the ubuntu runner. -P SCRIPTDIR lets it follow the
         # `# shellcheck source=common.sh` directives so sourced helpers are analysed too.
-        run: shellcheck -x -P SCRIPTDIR scripts/bash/*.sh fluencyloop install.sh bin/fluencyloop
+        run: shellcheck -x -P SCRIPTDIR plugins/fluencyloop/scripts/bash/*.sh plugins/fluencyloop/fluencyloop bin/fluencyloop
       - name: Ban eval (shell=True-equivalent footgun)
         run: |
-          if grep -rnE '(^|[^[:alnum:]_])eval[[:space:]]' scripts/bash fluencyloop install.sh bin/fluencyloop; then
+          if grep -rnE '(^|[^[:alnum:]_])eval[[:space:]]' plugins/fluencyloop/scripts/bash plugins/fluencyloop/fluencyloop bin/fluencyloop; then
             echo "::error::eval is banned in FluencyLoop shell — it runs arbitrary strings as code."
             exit 1
           fi
@@ -86,11 +86,10 @@ jobs:
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
       - name: PSScriptAnalyzer
         run: |
-          $set = 'scripts/powershell/PSScriptAnalyzerSettings.psd1'
+          $set = 'plugins/fluencyloop/scripts/powershell/PSScriptAnalyzerSettings.psd1'
           $r = @()
-          $r += Invoke-ScriptAnalyzer -Path scripts/powershell -Recurse -Settings $set -Severity Warning, Error
-          $r += Invoke-ScriptAnalyzer -Path fluencyloop.ps1 -Settings $set -Severity Warning, Error
-          $r += Invoke-ScriptAnalyzer -Path install.ps1 -Settings $set -Severity Warning, Error
+          $r += Invoke-ScriptAnalyzer -Path plugins/fluencyloop/scripts/powershell -Recurse -Settings $set -Severity Warning, Error
+          $r += Invoke-ScriptAnalyzer -Path plugins/fluencyloop/fluencyloop.ps1 -Settings $set -Severity Warning, Error
           if ($r) { $r | Format-Table -AutoSize | Out-String | Write-Host; throw "PSScriptAnalyzer found $($r.Count) issue(s)" }
           Write-Host 'PSScriptAnalyzer: clean'
       - name: Pester

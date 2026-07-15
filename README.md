@@ -41,9 +41,9 @@ principles from real decisions. Nothing gates a merge — work that skips the lo
 **after** merge by `backfill`.
 
 **Requires:** a coding agent ([Claude Code](https://claude.com/claude-code) or
-[Codex](https://developers.openai.com/codex/)) plus `git`, and a
-shell to run the CLI — `bash` (macOS/Linux/Git Bash/WSL) or **PowerShell 7** (Windows). The
-`fluencyloop` CLI runs standalone; the interactive skills need the agent.
+[Codex](https://developers.openai.com/codex/)), `git`, and `bash` (macOS/Linux/Git Bash/WSL).
+The deterministic CLI is bundled inside the agent plugins; there is no separate machine-wide
+installer or project skill vendoring step.
 
 ## Teaches to your level
 
@@ -74,91 +74,35 @@ The plugin includes the interactive skills and a bundled `fluencyloop` command f
 Bash tool. Its skills are intentionally namespaced, for example
 `/fluencyloop:feature`, so they cannot collide with another plugin's skills.
 
-### Codex or a standalone terminal CLI
+### Codex
 
-Clone and install the CLI. Use `--agent codex` to install the current Codex skills as well; omit
-that flag (or pass `--no-skills`) when you only want the terminal command.
-
-```bash
-git clone https://github.com/baokhang83/fluencyloop && cd fluencyloop
-./install.sh --agent codex
-```
-
-This copies the tool into `~/.fluencyloop/lib` and puts `fluencyloop` on your PATH
-(`~/.local/bin` — make sure that's on your `$PATH`).
-
-### Initialise a project
-
-Inside a repository you want to use FluencyLoop on:
+Install FluencyLoop from the same repository marketplace:
 
 ```bash
-fluencyloop init
+codex plugin marketplace add baokhang83/fluencyloop
+codex plugin add fluencyloop@fluencyloop
 ```
 
-This scaffolds that repo's `.fluencyloop/` state (scripts, templates, a constitution stub) and
-adds the calibration `.gitignore` guard.
-
-### On Windows
-
-Two ways to run it:
-
-**Native PowerShell CLI** ([PowerShell 7](https://aka.ms/powershell)). Use this when you want the
-CLI outside Claude Code. From a clone:
-
-```powershell
-./install.ps1 -NoSkills
-```
-
-This copies the tool into `%USERPROFILE%\.fluencyloop\lib` and adds it to your user PATH. Then
-`fluencyloop <verb>` works from PowerShell **and** cmd (via a `.cmd` shim), with the same verbs
-and `--json` output as the bash CLI — `fluencyloop version` and `fluencyloop self upgrade`
-included. Use `./install.ps1 -Agent codex` for Codex; install Claude Code through the marketplace
-above.
-
-**Git Bash / WSL.** The bash tool also runs unchanged in **Git Bash** (bundled with
-[Git for Windows](https://git-scm.com/download/win)) or **WSL** — use `./install.sh` there.
-
-Both shells are verified on a Windows CI runner: the bash suite via Git Bash, and the PowerShell
-port via `PSScriptAnalyzer` + a `Pester` suite that mirrors the bash tests.
+The plugin makes the `$fluencyloop-*` skills available. Its bundled CLI stays private to the
+plugin and is run by those skills, so it never needs to be copied onto your PATH.
 
 ## Quickstart
 
-From inside the repository you want to work on:
+Inside the repository you want to work on, invoke the workflow stage in your installed agent.
+The plan and feature stages initialise `.fluencyloop/` automatically when needed.
 
-```bash
-# Scaffold the project once.
-fluencyloop init
+| Goal | Claude Code | Codex |
+|------|-------------|-------|
+| Plan a large initiative — architecture + roadmap | `/fluencyloop:plan revamp the checkout flow` | `$fluencyloop-plan revamp the checkout flow` |
+| Build a normal-sized feature — design → build + teach | `/fluencyloop:feature add rate limiting to the API` | `$fluencyloop-feature add rate limiting to the API` |
+| Assemble the feature's PR view | `/fluencyloop:review` | `$fluencyloop-review` |
+| Document merged work that skipped the loop | `/fluencyloop:backfill` | `$fluencyloop-backfill` |
 
-# Choose one path. For a large initiative, make its architecture and roadmap first.
-fluencyloop plan "revamp the checkout flow"
-
-# For a normal-sized change, start a feature: this creates its branch, design stub, and session journal.
-fluencyloop feature "add rate limiting to the API"
-```
-
-Use **one** of the last two commands: `plan` is optional and is for work too large for one
-feature; it creates an architecture + roadmap under `docs/fluencyloop/plans/`. Build each roadmap
-item as a feature. `feature` creates the `feature/add-rate-limiting` branch and drops a design doc
-and a session journal under `docs/fluencyloop/`. As you build, your agent teaches the *why* of each
-real decision at the slice boundary and records it in the journal. When you're ready to open a PR:
-
-```bash
-fluencyloop review
-```
-
-…assembles the reviewer-facing PR view straight from those journals — no manual linking,
-because a feature *is* its branch. Shipped something without the loop? `fluencyloop backfill`
-reconstructs the journal after merge.
-
-### Useful commands
-
-```bash
-fluencyloop check              # inspect the active feature and un-journaled drift
-fluencyloop version            # print the installed release
-fluencyloop self upgrade       # refresh an installed copy from its source checkout
-fluencyloop calibration show   # inspect your private teaching profile
-fluencyloop calibration edit   # adjust it yourself, if you want to
-```
+Use **plan** only for work too large for one feature branch. It creates an architecture + roadmap
+under `docs/fluencyloop/plans/`; build each roadmap item as a feature. A feature creates its
+branch, design, and session journal under `docs/fluencyloop/`, teaches the *why* of each real
+decision at the slice boundary, and records it. Review assembles the reviewer-facing view from
+those journals, because a feature *is* its branch.
 
 ### Calibration
 
@@ -177,18 +121,6 @@ slice diff rather than whole files, asks only what the calibration profile does 
 records rationale at the moment it is still grounded in the change. See [the efficiency
 principle](MANIFESTO.md#efficiency-is-a-product-principle).
 
-## Use it
-
-| Step | Claude Code | Codex |
-|------|-------------|-------|
-| *(optionally)* Plan a big chunk — architecture + roadmap | `/fluencyloop:plan` | `$fluencyloop-plan` |
-| Build a feature — design → build + teach *(per feature)* | `/fluencyloop:feature` | `$fluencyloop-feature` |
-| Review — the PR view assembles itself *(per feature)* | `/fluencyloop:review` | `$fluencyloop-review` |
-| Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop:backfill` | `$fluencyloop-backfill` |
-
-You can also describe the task naturally, but invoking the stage skill explicitly makes the
-workflow unmistakable.
-
 The **skills** carry the interactive, calibrated behaviour (teaching at slice boundaries,
 one-question-at-a-time constitution authoring). The **scripts** carry the deterministic
 plumbing (branches, files, PR-view assembly) so the journal is reliable rather than
@@ -197,16 +129,11 @@ left to the model.
 ## Layout
 
 ```
-install.sh / install.ps1    machine install (bash / PowerShell): CLI on PATH; `--agent codex` adds Codex skills
 .claude-plugin/             Claude Code plugin manifest + self-hosted marketplace catalog
+.agents/plugins/            Codex marketplace catalog
 claude-skills/              Claude-only aliases: `plan`, `feature`, `review`, `backfill`
 bin/                        the plugin's bundled `fluencyloop` launchers
-fluencyloop{,.ps1,.cmd}     CLI dispatcher — verbs: init / plan / feature / session / decision / review / check / slice-context / calibration / version / self upgrade
-VERSION                     the current version (0.2.0); `fluencyloop version` prints it
-scripts/bash/               deterministic plumbing — bash (the reference implementation)
-scripts/powershell/         the same plumbing, ported to PowerShell (Windows-native)
-templates/                  .fluencyloop state templates (constitution, design, session)
-skills/                     the interactive skills (activated for Claude Code or Codex)
+plugins/fluencyloop/        Codex plugin and canonical runtime: CLI, skills, scripts, templates
 tests/                      bats suite (bash) + tests/powershell Pester suite (mirror)
 MANIFESTO.md                the why
 ```

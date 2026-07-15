@@ -2,8 +2,9 @@
 # Each test runs in a throwaway git repo with an isolated FLUENCYLOOP_HOME, so nothing touches
 # the developer's real repo, branches, or calibration profile.
 
-# The distribution under test = the repo this tests/ dir lives in.
-DIST="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+# The distribution under test = the Codex plugin package in this repo.
+REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+DIST="$REPO_ROOT/plugins/fluencyloop"
 BIN="$DIST/scripts/bash"
 
 # Make a fresh git repo on `main` with one commit. Does NOT run init (some tests want a

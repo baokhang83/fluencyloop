@@ -2,8 +2,8 @@
 # fluencyloop — the FluencyLoop CLI dispatcher.
 #
 # Deterministic commands run directly; the interactive stages (constitution, feature,
-# review, backfill) are driven by the skills your coding agent loads from .claude/skills or
-# .codex/skills.
+# review, backfill) are driven by the skills supplied by the installed Claude Code or Codex
+# plugin.
 # This dispatcher scaffolds a project and exposes the plumbing so the skills — or you — can
 # call it.
 #
@@ -19,13 +19,11 @@
 #   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
 #   fluencyloop migrate [--dry-run]        move docs from .fluencyloop/ to docs/fluencyloop/
 #   fluencyloop version                    print the installed version
-#   fluencyloop self upgrade               pull the latest distribution and re-install
 #   fluencyloop help
 
 set -euo pipefail
 
-# Resolve this script's real location, following symlinks (so a symlinked `fluencyloop` on the
-# PATH still finds its own scripts). Portable: macOS `readlink` has no -f.
+# Resolve this script's real location, following symlinks. Portable: macOS `readlink` has no -f.
 resolve_self() {
     local src="${BASH_SOURCE[0]}" dir
     while [ -h "$src" ]; do
@@ -37,17 +35,13 @@ resolve_self() {
 }
 SELF="$(resolve_self)"
 
-# Version + upgrade-source markers live next to this script: at the repo root when running from a
-# checkout, or in the install lib when installed (install.sh copies VERSION and writes SOURCE
-# there). SOURCE records the distribution checkout `self upgrade` pulls from.
+# Version lives beside the bundled CLI.
 VERSION_FILE="$SELF/VERSION"
-SOURCE_FILE="$SELF/SOURCE"
 read_version() { [ -f "$1" ] && cat "$1" || echo "unknown"; }
 
-# Find the scripts dir: the distribution checkout / install lib, or the current repo's
-# vendored copy after `fluencyloop init`.
+# Find the bundled scripts dir, or the current project's vendored copy after `fluencyloop init`.
 if [ -d "$SELF/scripts/bash" ]; then
-    BIN="$SELF/scripts/bash"          # running from the fluencyloop checkout or install lib
+    BIN="$SELF/scripts/bash"          # running from the bundled plugin runtime
 elif [ -d "$SELF/scripts" ] && [ -f "$SELF/scripts/common.sh" ]; then
     BIN="$SELF/scripts"               # running from an installed .fluencyloop/
 else
@@ -73,38 +67,6 @@ case "$cmd" in
     calibration) exec bash "$BIN/calibration.sh" "$@" ;;
     migrate)  exec bash "$BIN/migrate.sh" "$@" ;;
     version|--version|-v) read_version "$VERSION_FILE" ;;
-    self)
-        action="${1:-}"; shift || true
-        if [ "$action" != "upgrade" ]; then
-            echo "Unknown command: fluencyloop self ${action:-}" >&2; usage >&2; exit 1
-        fi
-        # Locate the distribution checkout to pull from: the path install.sh recorded, or this
-        # script's own dir if we're running straight from a checkout.
-        if [ -f "$SOURCE_FILE" ]; then
-            SRC="$(cat "$SOURCE_FILE")"
-        elif [ -d "$SELF/.git" ]; then
-            SRC="$SELF"
-        else
-            SRC=""
-        fi
-        if [ -z "$SRC" ] || [ ! -d "$SRC/.git" ]; then
-            echo "Can't find a git checkout to upgrade from (source: ${SRC:-none})." >&2
-            echo "Re-clone and re-install:" >&2
-            echo "  git clone https://github.com/baokhang83/fluencyloop && cd fluencyloop && ./install.sh" >&2
-            exit 1
-        fi
-        OLD="$(read_version "$VERSION_FILE")"
-        echo "Upgrading from $SRC ..."
-        git -C "$SRC" pull --ff-only
-        NEW="$(read_version "$SRC/VERSION")"
-        bash "$SRC/install.sh" "$@"
-        echo
-        if [ "$OLD" = "$NEW" ]; then
-            echo "FluencyLoop is up to date ($NEW)."
-        else
-            echo "FluencyLoop upgraded: $OLD -> $NEW"
-        fi
-        ;;
     help|-h|--help) usage ;;
     *) echo "Unknown command: $cmd" >&2; usage >&2; exit 1 ;;
 esac

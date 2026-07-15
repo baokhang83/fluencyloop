@@ -10,6 +10,13 @@ the design diagrams and the session journals. You will: (1) declare the feature,
 its design, (3) build it in slices — teaching and journaling one or two real decisions at
 each slice boundary. Never gate; never lecture. Keep the developer the author.
 
+## Bundled CLI (Codex)
+
+Before invoking a deterministic command, set `FLUENCYLOOP_SKILL_DIR` to the absolute path of
+this loaded `skills/fluencyloop-feature` directory. The bundled command is then
+`"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop"`. Every `fluencyloop …` command below means that
+bundled command; do not require a globally installed CLI.
+
 ## Question delivery — preserve the pause
 
 When this workflow needs a real answer, choice, confirmation, or knowledge probe, use
@@ -20,8 +27,9 @@ permission to bury a real question in prose.
 
 ## 0. Preconditions
 
-Confirm `.fluencyloop/` exists (`fluencyloop check` reports it). If it does not, tell
-the user to run `fluencyloop init` first, and stop.
+Confirm `.fluencyloop/` exists (`fluencyloop check --json` reports it). If it is absent, run
+`fluencyloop init` yourself, say that the repository is now initialised, and continue. Only stop
+if `init` itself fails (for example, because the directory is not a Git repository).
 
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,

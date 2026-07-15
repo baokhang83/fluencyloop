@@ -20,8 +20,9 @@ permission to bury a real question in prose.
 
 ## 0. Preconditions
 
-Confirm `.fluencyloop/` exists (`fluencyloop check` reports it). If it does not, tell
-the user to run `fluencyloop init` first, and stop.
+Confirm `.fluencyloop/` exists (`fluencyloop check --json` reports it). If it is absent, run
+`fluencyloop init` yourself, say that the repository is now initialised, and continue. Only stop
+if `init` itself fails (for example, because the directory is not a Git repository).
 
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,

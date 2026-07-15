@@ -1,0 +1,20 @@
+{
+  "name": "fluencyloop",
+  "interface": {
+    "displayName": "FluencyLoop"
+  },
+  "plugins": [
+    {
+      "name": "fluencyloop",
+      "source": {
+        "source": "local",
+        "path": "./plugins/fluencyloop"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

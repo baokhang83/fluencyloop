@@ -12,6 +12,13 @@ with a critical path, (5) offer to open GitHub tickets under a milestone, (6) ha
 off to `fluencyloop-feature`. The plan is a **map you build against, not a spec to ratify** —
 do not over-invest. Keep the developer the architect.
 
+## Bundled CLI (Codex)
+
+Before invoking a deterministic command, set `FLUENCYLOOP_SKILL_DIR` to the absolute path of
+this loaded `skills/fluencyloop-plan` directory. The bundled command is then
+`"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop"`. Every `fluencyloop …` command below means that
+bundled command; do not require a globally installed CLI.
+
 ## Question delivery — preserve the pause
 
 For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has
@@ -20,8 +27,9 @@ create issues, write a settled choice, or advance the workflow until the develop
 
 ## 0. Preconditions
 
-Confirm `.fluencyloop/` exists (`fluencyloop check` reports it). If not, tell the user
-to run `fluencyloop init` first, and stop.
+Confirm `.fluencyloop/` exists (`fluencyloop check --json` reports it). If it is absent, run
+`fluencyloop init` yourself, say that the repository is now initialised, and continue. Only stop
+if `init` itself fails (for example, because the directory is not a Git repository).
 
 **Read the constitution up front** — `docs/fluencyloop/constitution.md`, and **if it's a pointer**
 (a `Source of truth:` line naming another file, e.g. `.specify/memory/constitution.md`), read
