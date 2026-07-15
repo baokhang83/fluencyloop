@@ -72,7 +72,7 @@ Install FluencyLoop through its marketplace — this is the standard Claude Code
 
 The plugin includes the interactive skills and a bundled `fluencyloop` command for Claude Code's
 Bash tool. Its skills are intentionally namespaced, for example
-`/fluencyloop:fluencyloop-feature`, so they cannot collide with another plugin's skills.
+`/fluencyloop:feature`, so they cannot collide with another plugin's skills.
 
 ### Codex or a standalone terminal CLI
 
@@ -181,10 +181,10 @@ principle](MANIFESTO.md#efficiency-is-a-product-principle).
 
 | Step | Claude Code | Codex |
 |------|-------------|-------|
-| *(optionally)* Plan a big chunk — architecture + roadmap | `/fluencyloop:fluencyloop-plan` | `$fluencyloop-plan` |
-| Build a feature — design → build + teach *(per feature)* | `/fluencyloop:fluencyloop-feature` | `$fluencyloop-feature` |
-| Review — the PR view assembles itself *(per feature)* | `/fluencyloop:fluencyloop-review` | `$fluencyloop-review` |
-| Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop:fluencyloop-backfill` | `$fluencyloop-backfill` |
+| *(optionally)* Plan a big chunk — architecture + roadmap | `/fluencyloop:plan` | `$fluencyloop-plan` |
+| Build a feature — design → build + teach *(per feature)* | `/fluencyloop:feature` | `$fluencyloop-feature` |
+| Review — the PR view assembles itself *(per feature)* | `/fluencyloop:review` | `$fluencyloop-review` |
+| Backfill — document work that skipped the loop *(post-merge)* | `/fluencyloop:backfill` | `$fluencyloop-backfill` |
 
 You can also describe the task naturally, but invoking the stage skill explicitly makes the
 workflow unmistakable.
@@ -199,6 +199,7 @@ left to the model.
 ```
 install.sh / install.ps1    machine install (bash / PowerShell): CLI on PATH; `--agent codex` adds Codex skills
 .claude-plugin/             Claude Code plugin manifest + self-hosted marketplace catalog
+claude-skills/              Claude-only aliases: `plan`, `feature`, `review`, `backfill`
 bin/                        the plugin's bundled `fluencyloop` launchers
 fluencyloop{,.ps1,.cmd}     CLI dispatcher — verbs: init / plan / feature / session / decision / review / check / slice-context / calibration / version / self upgrade
 VERSION                     the current version (0.2.0); `fluencyloop version` prints it
