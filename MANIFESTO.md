@@ -168,9 +168,9 @@ The design has real costs.
 4. Agent surfaces differ. Skills must preserve the workflow's pauses and visuals without assuming
    every host has the same forms, renderers, or installation model.
 
-## Status: 0.2.0
+## Status: 0.2.1
 
-0.2.0 is a working cross-agent loop, not a manifesto-only concept: its Claude Code and Codex
+0.2.1 is a working cross-agent loop, not a manifesto-only concept: its Claude Code and Codex
 plugins ship the same deterministic runtime to scaffold and inspect state, construct feature and
 session records, assemble review context, and maintain private calibration. The next measure of
 success is not a more elaborate process; it is whether real contributors stay more fluent with a

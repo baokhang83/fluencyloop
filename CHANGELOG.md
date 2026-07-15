@@ -2,7 +2,7 @@
 
 All notable changes to FluencyLoop are documented here.
 
-## Unreleased
+## 0.2.1
 
 ### Changed
 
