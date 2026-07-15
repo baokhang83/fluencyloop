@@ -41,8 +41,9 @@ principles from real decisions. Nothing gates a merge — work that skips the lo
 **after** merge by `backfill`.
 
 **Requires:** a coding agent ([Claude Code](https://claude.com/claude-code) or
-[Codex](https://developers.openai.com/codex/)), `git`, and `bash` (macOS/Linux/Git Bash/WSL).
-The deterministic CLI is bundled inside the agent plugins; there is no separate machine-wide
+[Codex](https://developers.openai.com/codex/)), `git`, and either `bash` (macOS/Linux/Git
+Bash/WSL) or PowerShell (`pwsh`) on native Windows. The deterministic CLI is bundled inside the
+agent plugins as both a bash and a PowerShell dispatcher; there is no separate machine-wide
 installer or project skill vendoring step.
 
 ## Teaches to your level
@@ -150,8 +151,9 @@ left to the model.
 .agents/plugins/            Codex marketplace catalog
 claude-skills/              Claude-only aliases: `plan`, `feature`, `review`, `backfill`
 bin/                        the plugin's bundled `fluencyloop` launchers
-plugins/fluencyloop/        Codex plugin and canonical runtime: CLI, skills, scripts, templates
-tests/                      bats suite (bash) + tests/powershell Pester suite (mirror)
+plugins/fluencyloop/        Codex plugin and canonical runtime: CLI (bash + PowerShell), skills,
+                            scripts, templates
+tests/                      bats suite (bash) + tests/powershell Pester suite (parity)
 MANIFESTO.md                the why
 ```
 
