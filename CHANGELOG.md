@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.5
+
+### Fixed
+
+- Codex startup refresh hooks now use only Codex's `PLUGIN_ROOT` and no-op safely when it is
+  absent, preventing a session-start failure with exit code 127. The Windows hook follows the
+  same guard.
+
 ## 0.2.4
 
 ### Fixed

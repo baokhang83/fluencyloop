@@ -6,8 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${PLUGIN_ROOT}/hooks/refresh-marketplace.sh\"",
-            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"& (Join-Path $env:PLUGIN_ROOT 'hooks\\refresh-marketplace.ps1')\"",
+            "command": "plugin_root=\"${PLUGIN_ROOT:-}\"; if [ -n \"$plugin_root\" ]; then bash \"$plugin_root/hooks/refresh-marketplace.sh\"; fi",
+            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$pluginRoot = $env:PLUGIN_ROOT; if (-not [string]::IsNullOrWhiteSpace($pluginRoot)) { & (Join-Path $pluginRoot 'hooks\\refresh-marketplace.ps1') }\"",
             "timeout": 30,
             "statusMessage": "Checking FluencyLoop updates"
           }
