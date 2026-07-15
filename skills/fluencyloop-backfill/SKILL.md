@@ -20,9 +20,9 @@ them, and confirm decision-by-decision.
 
 ## Question delivery — preserve the pause
 
-For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code** and
-**`UserAskQuestion` in Codex**. If neither is available in the current surface, ask in chat and
-stop; do not update an entry's trust marker until the developer answers.
+For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has
+no equivalent question-form tool, so ask a concise standalone question in chat and stop; do not
+update an entry's trust marker until the developer answers.
 
 ## 1. Scope the work
 
@@ -152,8 +152,9 @@ Give the user the rendered URL and let them read before you ask anything.
 ## 4. Confirm — interactively, one decision at a time
 
 Do **not** ask for a blanket "looks good." Confirm **decision by decision**, using an
-interactive prompt with **one tab per decision** (the native question form — up to 4 per
-call; batch further decisions in follow-up calls). For each decision offer:
+interactive prompt with **one tab per decision in Claude Code** (up to 4 per call; batch further
+decisions in follow-up calls). In Codex, ask one clearly labelled decision at a time in chat and
+wait for the answer. For each decision offer:
 
 - **Confirm → ✓** — they can vouch for it firsthand; upgrade `trust: ⚠` to `✓`.
 - **Keep as ⚠** — accurate enough, but they can't personally verify it; leave it flagged.

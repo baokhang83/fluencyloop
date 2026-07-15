@@ -9,9 +9,9 @@ description: 'FluencyLoop — stay fluent in code as AI writes it. Router/overvi
 
 ## Question delivery
 
-FluencyLoop's stage skills use **`AskUserQuestion` in Claude Code** and
-**`UserAskQuestion` in Codex** for genuine prompts. If the current surface exposes neither, they
-ask in chat and pause for the answer before continuing.
+FluencyLoop's stage skills use **`AskUserQuestion` in Claude Code** for genuine prompts. Codex
+has no equivalent question-form tool, so they ask a concise standalone question in chat and pause
+for the answer before continuing.
 
 FluencyLoop keeps the people behind a codebase fluent in it as AI writes more of it. At its core
 is a **per-feature loop** — design → build (teach) → review — driven by whoever is building.
