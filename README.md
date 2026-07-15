@@ -117,21 +117,16 @@ port via `PSScriptAnalyzer` + a `Pester` suite that mirrors the bash tests.
 From inside the repository you want to work on:
 
 ```bash
-# Confirm which installed release is running, then scaffold the project once.
-fluencyloop version
+# Scaffold the project once.
 fluencyloop init
 
-# Inspect the loop's current state and initialise your private teaching profile.
-fluencyloop check
-fluencyloop calibration init
-
-# Start a feature.
+# Start a feature: this creates its branch, design stub, and session journal.
 fluencyloop feature "add rate limiting to the API"
 ```
 
-This creates the `feature/add-rate-limiting` branch and drops a design doc + session journal
-under `docs/fluencyloop/`. As you build, your agent teaches the *why* of each real decision at the
-slice boundary and records it in the journal. When you're ready to open a PR:
+This creates the `feature/add-rate-limiting` branch and drops a design doc + session journal under
+`docs/fluencyloop/`. As you build, your agent teaches the *why* of each real decision at the slice
+boundary and records it in the journal. When you're ready to open a PR:
 
 ```bash
 fluencyloop review
@@ -141,10 +136,14 @@ fluencyloop review
 because a feature *is* its branch. Shipped something without the loop? `fluencyloop backfill`
 reconstructs the journal after merge.
 
-For an installed copy, update from the source checkout recorded at install time:
+### Useful commands
 
 ```bash
-fluencyloop self upgrade
+fluencyloop check              # inspect the active feature and un-journaled drift
+fluencyloop version            # print the installed release
+fluencyloop self upgrade       # refresh an installed copy from its source checkout
+fluencyloop calibration show   # inspect your private teaching profile
+fluencyloop calibration edit   # adjust it yourself, if you want to
 ```
 
 ### Calibration
