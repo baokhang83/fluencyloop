@@ -87,8 +87,7 @@ fluencyloop init
 ```
 
 This scaffolds that repo's `.fluencyloop/` state (scripts, templates, a constitution stub) and
-adds the calibration `.gitignore` guard. It never copies agent skills into the repo; activate
-FluencyLoop through Claude Code's installation or the Codex plugin installation instead.
+adds the calibration `.gitignore` guard.
 
 ### On Windows
 
