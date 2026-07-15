@@ -180,23 +180,34 @@ PY
 
 @test "Codex startup refresh hook maintains its managed PATH shim" {
     local plugin_root="$BATS_TEST_TMPDIR/plugins/cache/fluencyloop/fluencyloop/0.2.9"
+    local updated_plugin_root="$BATS_TEST_TMPDIR/plugins/cache/fluencyloop/fluencyloop/0.3.0"
     local home="$BATS_TEST_TMPDIR/home-managed"
 
     rm -rf "$home"
-    mkdir -p "$plugin_root" "$home"
-    touch "$plugin_root/fluencyloop"
+    mkdir -p "$plugin_root" "$updated_plugin_root" "$home"
+    printf '#!/usr/bin/env bash\nprintf "0.2.9\\n"\n' > "$plugin_root/fluencyloop"
     chmod +x "$plugin_root/fluencyloop"
+    printf '#!/usr/bin/env bash\nprintf "0.3.0\\n"\n' > "$updated_plugin_root/fluencyloop"
+    chmod +x "$updated_plugin_root/fluencyloop"
 
     codex() { :; }
     export -f codex
 
     run env HOME="$home" PLUGIN_ROOT="$plugin_root" bash "$DIST/hooks/refresh-marketplace.sh"
     [ "$status" -eq 0 ]
-    [ -L "$home/.local/bin/fluencyloop" ]
+    [ -f "$home/.local/bin/fluencyloop" ]
+    [ -x "$home/.local/bin/fluencyloop" ]
 
-    run readlink "$home/.local/bin/fluencyloop"
+    run "$home/.local/bin/fluencyloop"
     [ "$status" -eq 0 ]
-    [ "$output" = "$plugin_root/fluencyloop" ]
+    [ "$output" = "0.2.9" ]
+
+    run env HOME="$home" PLUGIN_ROOT="$updated_plugin_root" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+
+    run "$home/.local/bin/fluencyloop"
+    [ "$status" -eq 0 ]
+    [ "$output" = "0.3.0" ]
 }
 
 @test "Codex startup refresh hook preserves a non-managed PATH command" {

@@ -7,11 +7,12 @@ set -euo pipefail
 PLUGIN_DIR="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
 [ -n "$PLUGIN_DIR" ] || exit 0
 
-# Give Codex a stable, readable command name without restoring a second runtime. This is a
-# symlink to the plugin bundle currently loaded by the host, refreshed each session. Never
+# Give Codex a stable, readable command name without restoring a second runtime. This small
+# wrapper dispatches to the plugin bundle currently loaded by the host and is refreshed each
+# session. Unlike a symbolic link, it also works on hosts that restrict link creation. Never
 # replace an unrelated executable a developer may already have at this name.
 install_path_shim() {
-    local shim_dir shim target existing
+    local shim_dir shim target existing temporary
 
     [ -n "${HOME:-}" ] || return 0
     target="$PLUGIN_DIR/fluencyloop"
@@ -20,19 +21,31 @@ install_path_shim() {
     shim_dir="$HOME/.local/bin"
     shim="$shim_dir/fluencyloop"
     if [ -e "$shim" ] || [ -L "$shim" ]; then
-        [ -L "$shim" ] || return 0
-        existing="$(readlink "$shim" 2>/dev/null || true)"
-        case "$existing" in
-            "$HOME"/.codex/plugins/cache/*/fluencyloop/*/fluencyloop|\
-            "$HOME"/.codex/.tmp/marketplaces/*/plugins/fluencyloop/fluencyloop|\
-            "$HOME"/.fluencyloop/lib/fluencyloop)
-                ;;
-            *) return 0 ;;
-        esac
+        if [ -L "$shim" ]; then
+            existing="$(readlink "$shim" 2>/dev/null || true)"
+            case "$existing" in
+                "$HOME"/.codex/plugins/cache/*/fluencyloop/*/fluencyloop|\
+                "$HOME"/.codex/.tmp/marketplaces/*/plugins/fluencyloop/fluencyloop|\
+                "$HOME"/.fluencyloop/lib/fluencyloop)
+                    ;;
+                *) return 0 ;;
+            esac
+        elif ! grep -Fqx '# FluencyLoop managed PATH shim' "$shim" 2>/dev/null; then
+            return 0
+        fi
     fi
 
     mkdir -p "$shim_dir" 2>/dev/null || return 0
-    ln -sfn "$target" "$shim" 2>/dev/null || true
+    temporary="$shim_dir/.fluencyloop-shim.$$"
+    {
+        printf '%s\n' '#!/usr/bin/env bash' '# FluencyLoop managed PATH shim'
+        printf 'exec %q "$@"\n' "$target"
+    } > "$temporary" 2>/dev/null || return 0
+    chmod +x "$temporary" 2>/dev/null || {
+        rm -f "$temporary"
+        return 0
+    }
+    mv -f "$temporary" "$shim" 2>/dev/null || rm -f "$temporary"
 }
 
 # Codex has used both a versioned cache root and a marketplace-snapshot root. Derive the
