@@ -180,8 +180,9 @@ PY
 
 @test "Codex startup refresh hook maintains its managed PATH shim" {
     local plugin_root="$BATS_TEST_TMPDIR/plugins/cache/fluencyloop/fluencyloop/0.2.9"
-    local home="$BATS_TEST_TMPDIR/home"
+    local home="$BATS_TEST_TMPDIR/home-managed"
 
+    rm -rf "$home"
     mkdir -p "$plugin_root" "$home"
     touch "$plugin_root/fluencyloop"
     chmod +x "$plugin_root/fluencyloop"
@@ -200,9 +201,10 @@ PY
 
 @test "Codex startup refresh hook preserves a non-managed PATH command" {
     local plugin_root="$BATS_TEST_TMPDIR/plugins/cache/fluencyloop/fluencyloop/0.2.9"
-    local home="$BATS_TEST_TMPDIR/home"
+    local home="$BATS_TEST_TMPDIR/home-unmanaged"
     local shim="$home/.local/bin/fluencyloop"
 
+    rm -rf "$home"
     mkdir -p "$plugin_root" "$(dirname "$shim")"
     touch "$plugin_root/fluencyloop"
     chmod +x "$plugin_root/fluencyloop"
