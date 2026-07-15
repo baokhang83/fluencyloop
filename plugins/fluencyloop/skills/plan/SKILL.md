@@ -87,6 +87,27 @@ visual sketch derived from the diagram, not Mermaid source. If the full diagram 
 text, show the core topology and say what was omitted. Never paste a Mermaid fence as the
 substitute. Then point the user to **`plan.md`** for GitHub/browser rendering.
 
+### Codex architecture teaching gate - before decomposition
+
+After the architecture is rendered or sketched and before writing the task breakdown, roadmap,
+constitution principles, or tickets, send a **user-visible architecture teaching turn**. This is a
+hard ordering rule for Codex, not a status update:
+
+1. Walk through the main components, their boundaries, and the load-bearing flow. Explain the
+   architectural choice and its rejected alternative, anchored to the rendered diagram or ASCII
+   sketch. "I have the architecture" is not teaching.
+2. Set depth from calibration. If an architectural domain is absent from calibration, it is
+   **unknown**: ask a concise standalone probe and stop. For `learning` and `new`, explain the
+   tradeoff, ask whether it lands or they want to go deeper, then wait. Do not decompose the work
+   or write settled architecture choices until the developer replies.
+3. For `fluent` or `familiar` domains, the explanation may be brief, but it must still be visible
+   before the plan becomes a task table. Capture the same rationale in `plan.md` only after that
+   teaching turn.
+
+The forbidden sequence is: draft diagrams in tools, then immediately write the architecture and
+task table without explaining the architecture in the conversation. The durable plan records the
+teaching; it does not replace it.
+
 Persist the same diagrams as **Mermaid** in `plan.md` under `## Architecture` (blocks
 **top-level**, never nested in another fence, so GitHub renders them). Check the shapes against
 the constitution; if one conflicts with a principle, say so plainly in `## Constitution check` —

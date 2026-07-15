@@ -73,6 +73,11 @@ assert "### Codex teaching gate - visible before the journal" in codex_feature_t
 assert "before any `fluencyloop decision`" in codex_feature_text
 assert "No reply is not a `wave`" in codex_feature_text
 assert "without a teaching turn" in codex_feature_text
+codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
+assert "### Codex architecture teaching gate - before decomposition" in codex_plan_text
+assert "before writing the task breakdown, roadmap" in codex_plan_text
+assert "Do not decompose the work" in codex_plan_text
+assert "without explaining the architecture in the conversation" in codex_plan_text
 for path in [
     dist / "skills" / "feature" / "SKILL.md",
     dist / "skills" / "plan" / "SKILL.md",

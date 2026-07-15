@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.12
+
+### Fixed
+
+- Codex planning now requires a visible architecture teaching turn before task decomposition,
+  roadmap, constitution, or ticket work. Unknown, `learning`, and `new` domains pause for the
+  developer's response. Claude Code's planning workflow is unchanged.
+
 ## 0.2.11
 
 ### Fixed
