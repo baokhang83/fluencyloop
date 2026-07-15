@@ -12,14 +12,14 @@ each slice boundary. Never gate; never lecture. Keep the developer the author.
 
 ## Bundled CLI (Codex)
 
-The CLI is bundled with this plugin, two directories above this loaded `SKILL.md`. For every
-`fluencyloop …` command, invoke that dispatcher directly from the loaded skill path. On native
-Windows, invoke the adjacent `fluencyloop.ps1` with `pwsh`.
+On macOS, Linux, Git Bash, and WSL, the trusted SessionStart hook maintains an owned
+`~/.local/bin/fluencyloop` shim for this installed plugin. Invoke `fluencyloop …` directly so
+Codex shows the readable command in its transcript. Do not resolve its path, check PATH, or
+describe the shim to the developer.
 
-This is internal packaging. Do not search for a global `fluencyloop` installation, browse the
-web, set or explain an environment variable for the skill path, or describe how the dispatcher
-was found. For a literal
-`fluencyloop …` request, run it immediately and return the result concisely.
+If that command reports `command not found` because hooks have not run yet, invoke the bundled
+dispatcher from the loaded skill path as a silent fallback. On native Windows, invoke the adjacent
+`fluencyloop.ps1` with `pwsh`.
 
 ## Question delivery — preserve the pause
 

@@ -7,16 +7,30 @@ description: 'FluencyLoop — stay fluent in code as AI writes it. Router/overvi
 
 *The code and your fluency in it are produced together, or not at all.*
 
+## Literal CLI Fast Path (Codex)
+
+This section takes priority over every later workflow instruction. If the developer gives a
+literal `fluencyloop` CLI command, such as `fluencyloop init`, `fluencyloop -v`, or
+`fluencyloop check`, they requested **only that command**.
+
+1. Invoke `fluencyloop` immediately.
+2. Do not send an interim update, inspect the workspace, read state, search the web, check PATH,
+   or explain what the command will do.
+3. Do not route to a stage or run a follow-up command after it succeeds. In particular,
+   `fluencyloop init` must not automatically start a feature or plan.
+4. Return the command's result concisely. If Codex requires approval for a write, request that
+   approval and retry the same command; do not add setup narration.
+
 ## Bundled CLI (Codex)
 
-The CLI is bundled with this plugin, two directories above this loaded `SKILL.md`. For every
-`fluencyloop …` command, invoke that dispatcher directly from the loaded skill path. On native
-Windows, invoke the adjacent `fluencyloop.ps1` with `pwsh`.
+On macOS, Linux, Git Bash, and WSL, the trusted SessionStart hook maintains an owned
+`~/.local/bin/fluencyloop` shim for this installed plugin. Invoke `fluencyloop …` directly so
+Codex shows the readable command in its transcript. Do not resolve its path, check PATH, or
+describe the shim to the developer.
 
-This is internal packaging. Do not search for a global `fluencyloop` installation, browse the
-web, set or explain an environment variable for the skill path, or describe how the dispatcher
-was found. For a literal
-`fluencyloop …` request, run it immediately and return the result concisely.
+If that command reports `command not found` because hooks have not run yet, invoke the bundled
+dispatcher from the loaded skill path as a silent fallback. On native Windows, invoke the adjacent
+`fluencyloop.ps1` with `pwsh`.
 
 ## Question delivery
 
@@ -53,11 +67,9 @@ repeatable stances from real decisions. Same law as the journal and the calibrat
 | Prepare a PR / summarise a feature for a reviewer     | **`$fluencyloop:review`**     |
 | Document work that shipped without the loop           | **`$fluencyloop:backfill`**   |
 
-If the user just says "fluency" or "set up FluencyLoop" and `.fluencyloop/` does not exist yet,
-run the bundled `fluencyloop init` without asking (it initialises Git when needed and scaffolds the
-state + an **empty** constitution stub), then go to
-**`$fluencyloop:feature`** (or **`$fluencyloop:plan`** for a big chunk) — the constitution fills itself
-in from there.
+For a conversational request to "set up FluencyLoop" (not a literal CLI command), initialise an
+absent `.fluencyloop/` scaffold, then continue with **`$fluencyloop:feature`** (or
+**`$fluencyloop:plan`** for a big chunk). The constitution fills itself in from there.
 
 ## Initialise a project
 

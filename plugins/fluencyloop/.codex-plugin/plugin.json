@@ -1,6 +1,6 @@
 {
   "name": "fluencyloop",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Stay fluent in the code your AI agent writes with a per-feature design, build, teaching, and review loop.",
   "author": {
     "name": "baokhang83",
