@@ -7,6 +7,13 @@ description: 'FluencyLoop — stay fluent in code as AI writes it. Router/overvi
 
 *The code and your fluency in it are produced together, or not at all.*
 
+## Bundled CLI (Codex)
+
+Before invoking a deterministic command, set `FLUENCYLOOP_SKILL_DIR` to the absolute path of
+this loaded `skills/fluencyloop` directory. The bundled command is then
+`"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop"`. Every `fluencyloop …` command in this skill means
+that bundled command; it is **not** a command the developer must install on their PATH.
+
 ## Question delivery
 
 FluencyLoop's stage skills use **`AskUserQuestion` in Claude Code** for genuine prompts. Codex
@@ -43,7 +50,7 @@ repeatable stances from real decisions. Same law as the journal and the calibrat
 | Document work that shipped without the loop           | **fluencyloop-backfill**   |
 
 If the user just says "fluency" or "set up FluencyLoop" and `.fluencyloop/` does not exist yet,
-run `fluencyloop init` (it scaffolds the state + an **empty** constitution stub), then go to
+run the bundled `fluencyloop init` (it scaffolds the state + an **empty** constitution stub), then go to
 **fluencyloop-feature** (or **fluencyloop-plan** for a big chunk) — the constitution fills itself
 in from there.
 

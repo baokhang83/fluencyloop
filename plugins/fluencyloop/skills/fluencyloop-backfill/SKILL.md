@@ -18,6 +18,13 @@ components the work touched — the fluency the missing real-time loop never gav
 don't just draft and ask "ok?"; you *show them the shapes, rendered,* map each decision onto
 them, and confirm decision-by-decision.
 
+## Bundled CLI (Codex)
+
+Before invoking a deterministic command, set `FLUENCYLOOP_SKILL_DIR` to the absolute path of
+this loaded `skills/fluencyloop-backfill` directory. The bundled command is then
+`"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop"`. Every `fluencyloop …` command below means that
+bundled command; do not require a globally installed CLI.
+
 ## Question delivery — preserve the pause
 
 For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has

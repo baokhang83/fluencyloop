@@ -126,24 +126,21 @@ file skeletons that a script can create, and does not repeatedly ask a question 
 private preferences. The journal is more reliable because its structure is deterministic; the
 model spends its tokens on the reasoning a script cannot supply.
 
-## Command surface
+## Agent command surface
 
-```bash
-fluencyloop init                         # scaffold FluencyLoop in this repository
-fluencyloop plan "split the monolith"    # optional initiative map
-fluencyloop feature "add rate limiting"  # branch + design + active feature state
-fluencyloop session "wire Redis store"   # open a build session
-fluencyloop review                       # assemble the reviewer-facing view
-fluencyloop backfill                     # reconstruct skipped work after merge
-fluencyloop check                        # inspect state and un-journaled drift
-fluencyloop calibration init             # initialise private teaching calibration
-fluencyloop calibration show             # inspect the profile
-fluencyloop version                      # print the installed release
-fluencyloop self upgrade                 # refresh an installed copy from its source checkout
-```
+FluencyLoop is activated through its agent plugins, not a global installer. Start an explicit
+stage command in the agent you use:
 
-The CLI is useful on its own. Agent skills supply the interactive loop and are installed through
-the relevant agent's distribution mechanism.
+| Goal | Claude Code | Codex |
+|---|---|---|
+| Plan a large initiative | `/fluencyloop:plan` | `$fluencyloop-plan` |
+| Build a feature | `/fluencyloop:feature` | `$fluencyloop-feature` |
+| Assemble its PR view | `/fluencyloop:review` | `$fluencyloop-review` |
+| Backfill skipped work | `/fluencyloop:backfill` | `$fluencyloop-backfill` |
+
+The skills invoke the bundled deterministic CLI for `init`, feature/session scaffolding, review
+assembly, and private calibration. The CLI is deliberately not a separate machine-wide install:
+the agent's plugin manager owns installation and updates.
 
 ## What FluencyLoop refuses to be
 
@@ -173,11 +170,11 @@ The design has real costs.
 
 ## Status: 0.2.0
 
-0.2.0 is a working cross-platform loop, not a manifesto-only concept: the Bash and PowerShell
-CLIs scaffold and inspect state, construct feature and session records, assemble review context,
-maintain private calibration, and support self-upgrade. The next measure of success is not a more
-elaborate process; it is whether real contributors stay more fluent with a cost they are willing to
-pay.
+0.2.0 is a working cross-agent loop, not a manifesto-only concept: its Claude Code and Codex
+plugins ship the same deterministic runtime to scaffold and inspect state, construct feature and
+session records, assemble review context, and maintain private calibration. The next measure of
+success is not a more elaborate process; it is whether real contributors stay more fluent with a
+cost they are willing to pay.
 
 ## Standing principles
 

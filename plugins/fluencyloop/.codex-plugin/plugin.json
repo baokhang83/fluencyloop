@@ -1,0 +1,38 @@
+{
+  "name": "fluencyloop",
+  "version": "0.2.0",
+  "description": "Stay fluent in the code your AI agent writes with a per-feature design, build, teaching, and review loop.",
+  "author": {
+    "name": "baokhang83",
+    "url": "https://github.com/baokhang83"
+  },
+  "homepage": "https://github.com/baokhang83/fluencyloop#readme",
+  "repository": "https://github.com/baokhang83/fluencyloop",
+  "license": "Apache-2.0",
+  "keywords": [
+    "developer-education",
+    "documentation",
+    "planning",
+    "code-review",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "FluencyLoop",
+    "shortDescription": "Stay fluent in AI-assisted code changes.",
+    "longDescription": "Design features before building, teach the important decisions at each slice, journal the rationale, and assemble a reviewer-ready PR view.",
+    "developerName": "baokhang83",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/baokhang83/fluencyloop#readme",
+    "defaultPrompt": [
+      "Start a FluencyLoop feature for this change",
+      "Plan this large initiative with FluencyLoop",
+      "Prepare this FluencyLoop feature for review"
+    ]
+  }
+}

@@ -6,14 +6,13 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$SELF = $PSScriptRoot   # this script's dir: the install lib, or the repo/checkout root
+$SELF = $PSScriptRoot   # this script's bundled plugin directory
 
 $VersionFile = Join-Path $SELF 'VERSION'
-$SourceFile = Join-Path $SELF 'SOURCE'
 function ReadVersion([string]$p) { if (Test-Path -LiteralPath $p) { (Get-Content -LiteralPath $p -Raw).Trim() } else { 'unknown' } }
 
-# Find the scripts dir: the checkout / install lib, the installed .fluencyloop/, or the current
-# repo's vendored copy after `fluencyloop init`.
+# Find the bundled scripts dir, the installed .fluencyloop/ copy, or the current repository's
+# vendored copy after `fluencyloop init`.
 if (Test-Path -LiteralPath (Join-Path $SELF 'scripts/powershell')) {
     $BIN = Join-Path $SELF 'scripts/powershell'
 } elseif ((Test-Path -LiteralPath (Join-Path $SELF 'scripts/common.ps1'))) {
@@ -27,7 +26,7 @@ $usage = @'
 fluencyloop — the FluencyLoop CLI dispatcher.
 
 Deterministic commands run directly; the interactive stages (constitution, feature, review,
-backfill) are driven by the skills your coding agent loads from .claude/skills or .codex/skills.
+backfill) are driven by the skills supplied by the installed Claude Code or Codex plugin.
 
 Usage:
   fluencyloop init                       scaffold .fluencyloop/ state + docs/fluencyloop/
@@ -41,7 +40,6 @@ Usage:
   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
   fluencyloop migrate [--dry-run]        move docs from .fluencyloop/ to docs/fluencyloop/
   fluencyloop version                    print the installed version
-  fluencyloop self upgrade               pull the latest distribution and re-install
   fluencyloop help
 '@
 
@@ -67,28 +65,6 @@ switch -Regex ($cmd) {
     '^calibration$'   { Run 'calibration.ps1' }
     '^migrate$'       { Run 'migrate.ps1' }
     '^(version|--version|-v)$' { [Console]::Out.Write((ReadVersion $VersionFile) + "`n"); exit 0 }
-    '^self$' {
-        $action = if ($rest.Count -ge 1) { [string]$rest[0] } else { '' }
-        if ($action -ne 'upgrade') { [Console]::Error.WriteLine("Unknown command: fluencyloop self $action"); [Console]::Error.WriteLine($usage); exit 1 }
-        if (Test-Path -LiteralPath $SourceFile) { $src = (Get-Content -LiteralPath $SourceFile -Raw).Trim() }
-        elseif (Test-Path -LiteralPath (Join-Path $SELF '.git')) { $src = $SELF }
-        else { $src = '' }
-        if (-not $src -or -not (Test-Path -LiteralPath (Join-Path $src '.git'))) {
-            [Console]::Error.WriteLine("Can't find a git checkout to upgrade from (source: $(if ($src) { $src } else { 'none' })).")
-            [Console]::Error.WriteLine('Re-clone and re-install:')
-            [Console]::Error.WriteLine('  git clone https://github.com/baokhang83/fluencyloop; cd fluencyloop; ./install.ps1')
-            exit 1
-        }
-        $old = ReadVersion $VersionFile
-        [Console]::Out.Write("Upgrading from $src ...`n")
-        & git -C $src pull --ff-only
-        $new = ReadVersion (Join-Path $src 'VERSION')
-        $after = @(); if ($rest.Count -gt 1) { $after = @($rest[1..($rest.Count - 1)]) }
-        & (Join-Path $src 'install.ps1') @after
-        if ($old -eq $new) { [Console]::Out.Write("`nFluencyLoop is up to date ($new).`n") }
-        else { [Console]::Out.Write("`nFluencyLoop upgraded: $old -> $new`n") }
-        exit 0
-    }
     '^(help|-h|--help)$' { [Console]::Out.Write($usage + "`n"); exit 0 }
     default { [Console]::Error.WriteLine("Unknown command: $cmd"); [Console]::Error.WriteLine($usage); exit 1 }
 }

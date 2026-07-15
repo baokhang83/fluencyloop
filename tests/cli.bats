@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# fluencyloop — the CLI dispatcher: version, help, and safe handling of bad input.
+# fluencyloop — the plugin-bundled CLI dispatcher: version, help, and safe handling of bad input.
 
 load test_helper
 
@@ -14,18 +14,13 @@ load test_helper
     [ "$status" -eq 0 ]
     [[ "$output" == *"feature"* ]]
     [[ "$output" == *"check"* ]]
-    [[ "$output" == *"self upgrade"* ]]
+    [[ "$output" != *"self upgrade"* ]]
 }
 
 @test "an unknown command exits non-zero and prints usage" {
     run bash "$DIST/fluencyloop" bogus
     [ "$status" -ne 0 ]
     [[ "$output" == *"Unknown command"* ]]
-}
-
-@test "self with a bad subcommand exits non-zero" {
-    run bash "$DIST/fluencyloop" self bogus
-    [ "$status" -ne 0 ]
 }
 
 @test "check --json is wired through the dispatcher inside a repo" {

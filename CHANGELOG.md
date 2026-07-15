@@ -2,6 +2,15 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## Unreleased
+
+### Changed
+
+- FluencyLoop is now distributed as both a Claude Code marketplace plugin and a Codex marketplace
+  plugin. The canonical runtime lives in `plugins/fluencyloop/`.
+- Retired `install.sh`, `install.ps1`, and `fluencyloop self upgrade`; agent plugin managers now
+  own installation and updates.
+
 ## 0.2.0
 
 ### Added
