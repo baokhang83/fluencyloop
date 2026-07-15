@@ -1,9 +1,9 @@
 ---
-name: fluencyloop-backfill
+name: backfill
 description: 'FluencyLoop safety net. Reconstruct journal entries for work that shipped without going through the loop — reads a merged diff, drafts a feature + session with decision blocks, renders a fluency briefing that maps each decision onto the design diagrams, then confirms them with the human one decision at a time. Marks every entry trust: ⚠ unverified until confirmed. Use post-merge, or when the user says "fluencyloop backfill", "document this PR after the fact", or "we skipped the loop on this one".'
 ---
 
-# fluencyloop-backfill — reconstruct, make fluent, then flag
+# Backfill — reconstruct, make fluent, then flag
 
 FluencyLoop never blocks a merge. The safety net for work that skipped the loop is
 **post-merge backfill**: it gives ad-hoc work a home retroactively. Backfilled rationale
@@ -21,7 +21,7 @@ them, and confirm decision-by-decision.
 ## Bundled CLI (Codex)
 
 Before invoking a deterministic command, set `FLUENCYLOOP_SKILL_DIR` to the absolute path of
-this loaded `skills/fluencyloop-backfill` directory. Use the bundled dispatcher for the current
+this loaded `skills/backfill` directory. Use the bundled dispatcher for the current
 host; do not require a globally installed CLI:
 
 - **macOS, Linux, Git Bash, or WSL:** `"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop" <arguments>`.

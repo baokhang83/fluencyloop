@@ -1,21 +1,21 @@
 ---
-name: fluencyloop-plan
-description: 'FluencyLoop planning stage. Plan a large chunk of work before building it: design and document the overall architecture, break it into task items, sequence them into a roadmap with a critical path, and (optionally) open GitHub issues under a milestone. Produces a committed plan.md that the per-feature loop then builds from — one fluencyloop-feature per task item. Use when the work is too big for a single feature/branch, or when the user says "fluencyloop plan", "plan this", "design the architecture for", "break this down", or "make a roadmap".'
+name: plan
+description: 'FluencyLoop planning stage. Plan a large chunk of work before building it: design and document the overall architecture, break it into task items, sequence them into a roadmap with a critical path, and (optionally) open GitHub issues under a milestone. Produces a committed plan.md that the per-feature loop then builds from — one feature per task item. Use when the work is too big for a single feature/branch, or when the user says "fluencyloop plan", "plan this", "design the architecture for", "break this down", or "make a roadmap".'
 ---
 
-# fluencyloop-plan — map a big chunk before you build it
+# Plan — map a big chunk before you build it
 
-Sits **upstream of `fluencyloop-feature`**. A *feature* is one branch; a **plan** is an
+Sits **upstream of `$fluencyloop:feature`**. A *feature* is one branch; a **plan** is an
 *initiative* that will spawn several features. You will: (1) frame the chunk, (2) design and
 show the overall architecture, (3) break it into task items, (4) sequence them into a roadmap
 with a critical path, (5) offer to open GitHub tickets under a milestone, (6) hand each task
-off to `fluencyloop-feature`. The plan is a **map you build against, not a spec to ratify** —
+off to `$fluencyloop:feature`. The plan is a **map you build against, not a spec to ratify** —
 do not over-invest. Keep the developer the architect.
 
 ## Bundled CLI (Codex)
 
 Before invoking a deterministic command, set `FLUENCYLOOP_SKILL_DIR` to the absolute path of
-this loaded `skills/fluencyloop-plan` directory. Use the bundled dispatcher for the current host;
+this loaded `skills/plan` directory. Use the bundled dispatcher for the current host;
 do not require a globally installed CLI:
 
 - **macOS, Linux, Git Bash, or WSL:** `"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop" <arguments>`.
@@ -45,9 +45,9 @@ stub**, this plan is where the constitution is born — see §5.
 `dimension → level` map, level ∈ {`fluent`, `familiar`, `learning`, `new`}; per-developer, global,
 never committed) — to set the depth you explain architectural choices at. Missing is fine.
 Planning is also teaching: the same "teach the why, check understanding, don't lecture" posture
-from `fluencyloop-feature` applies to the architecture decisions here.
+from `$fluencyloop:feature` applies to the architecture decisions here.
 
-Is this actually a plan? If the work fits one branch, skip straight to `fluencyloop-feature` —
+Is this actually a plan? If the work fits one branch, skip straight to `$fluencyloop:feature` —
 don't manufacture an initiative. Plans are for chunks that genuinely decompose into several
 features.
 
@@ -95,7 +95,7 @@ do not silently "fix" it. Refine once with the user's input, then move on.
 
 ## 3. Break it into task items
 
-Decompose the initiative into **task items — each a future `fluencyloop-feature`**. For each,
+Decompose the initiative into **task items — each a future `$fluencyloop:feature`**. For each,
 capture in the `## Task breakdown` table: an `id` (T1, T2, …), a slug-able **intent**, a rough
 **size** (S/M/L), and its **dependencies** (by id). Aim for items that are independently
 build-and-mergeable. Keep them coarse; a task that's really two features is two rows.
@@ -126,7 +126,7 @@ calls in the request path"*), not platitudes. Show them, confirm, and write them
 - **If a real constitution already exists** — a `Source of truth:` pointer, or SpecKit's
   `.specify/memory/constitution.md` — do **not** fork a second one; amend that in place following
   its own conventions (SpecKit carries a version + a Sync Impact Report).
-- After birth it **grows** as features harvest principles from decisions (fluencyloop-feature §3)
+- After birth it **grows** as features harvest principles from decisions (`$fluencyloop:feature` §3)
   — you don't need to make it complete here.
 
 ## 6. GitHub tickets — create them live, or offer a one-time `gh` setup
@@ -159,9 +159,9 @@ The plan is complete either way — no friction.
 
 ## 7. Hand off to the build loop
 
-The plan is the map; each task item is built with **`fluencyloop-feature`** (one branch per
+The plan is the map; each task item is built with **`$fluencyloop:feature`** (one branch per
 task, from `main`), in roadmap order along the critical path first. Tell the user that — and that
-`fluencyloop-review` assembles each feature's PR view when it's done. Do not open feature
+`$fluencyloop:review` assembles each feature's PR view when it's done. Do not open feature
 branches yourself here; §7 hands off, it doesn't build.
 
 ## Rules

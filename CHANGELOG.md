@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.7
+
+### Fixed
+
+- Codex stage skills now use the plugin-qualified names `$fluencyloop:plan`,
+  `$fluencyloop:feature`, `$fluencyloop:review`, and `$fluencyloop:backfill`, without repeating
+  the plugin name in the picker. Claude Code commands remain `/fluencyloop:<stage>`.
+
 ## 0.2.6
 
 ### Fixed

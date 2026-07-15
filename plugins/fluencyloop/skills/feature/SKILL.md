@@ -1,9 +1,9 @@
 ---
-name: fluencyloop-feature
+name: feature
 description: 'FluencyLoop Stage 2–3. Declare a feature and build it while staying fluent: creates the feature branch + design diagrams, then builds in slices, teaching the why of each real decision at the slice boundary and journaling it. Probes the concepts the work needs up front, adapts explanation depth to the developer''s knowledge, and builds/maintains a per-developer knowledge base in ~/.fluencyloop. Use when starting a new unit of work in a repo that has a .fluencyloop/ directory, or when the user says "fluencyloop feature", "start a feature", or describes something they want to build with FluencyLoop.'
 ---
 
-# fluencyloop-feature — declare a feature, build it fluent
+# Feature — declare a feature, build it fluent
 
 This is the contributor's entry point. A **feature is a branch** (`feature/<slug>`); it owns
 the design diagrams and the session journals. You will: (1) declare the feature, (2) sketch
@@ -13,7 +13,7 @@ each slice boundary. Never gate; never lecture. Keep the developer the author.
 ## Bundled CLI (Codex)
 
 Before invoking a deterministic command, set `FLUENCYLOOP_SKILL_DIR` to the absolute path of
-this loaded `skills/fluencyloop-feature` directory. Use the bundled dispatcher for the current
+this loaded `skills/feature` directory. Use the bundled dispatcher for the current
 host; do not require a globally installed CLI:
 
 - **macOS, Linux, Git Bash, or WSL:** `"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop" <arguments>`.
@@ -285,7 +285,7 @@ developer never writes it by hand.
 
 ## 4. Hand off to review — settle the recurring choice once
 
-When the feature is ready for a PR, tell the user they can run **fluencyloop-review** to
+When the feature is ready for a PR, tell the user they can run **`$fluencyloop:review`** to
 assemble the reviewer-facing view from the sessions.
 
 **Check what's actually possible here first** — run `gh auth status`. If `gh` isn't installed or
@@ -296,14 +296,14 @@ open the PR (and file plan issues) for them — using the delivery rule above (*
 install from <https://cli.github.com> (pick the command that fits their OS — don't work from a
 hardcoded package-manager list) then `gh auth login`. If `gh` stays unavailable (declined or
 deferred), the hand-off is at most *commit + push*, and a PR can be opened later via
-`fluencyloop-review`. Only run the full **commit + push + open-PR** automation where `gh` works.
+`$fluencyloop:review`. Only run the full **commit + push + open-PR** automation where `gh` works.
 
 The hand-off is a **behavioral pattern that recurs every feature** — so decide it **once**, not
 once per feature. Check `~/.fluencyloop/preferences.md` (loaded in §0):
 
 - **A preference is already recorded** — honor it silently, and **do not re-ask**. If it says
-  automatic, go ahead and commit + push + open the PR yourself (run fluencyloop-review first) at
-  completion; if manual, just point the user at fluencyloop-review and stop.
+  automatic, go ahead and commit + push + open the PR yourself (run `$fluencyloop:review` first) at
+  completion; if manual, just point the user at `$fluencyloop:review` and stop.
 - **No preference yet (this is the first feature)** — ask **exactly once**, via a single
   explicit confirmation using the delivery rule above rather than a per-feature prompt: from now on, should you commit
   + push **(+ open the PR, when `gh` is available)** yourself at feature completion, or keep

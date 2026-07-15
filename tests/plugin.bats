@@ -49,10 +49,10 @@ assert (dist / "hooks" / "refresh-marketplace.sh").is_file()
 assert (dist / "hooks" / "refresh-marketplace.ps1").is_file()
 
 for alias, source in {
-    "plan": "fluencyloop-plan",
-    "feature": "fluencyloop-feature",
-    "review": "fluencyloop-review",
-    "backfill": "fluencyloop-backfill",
+    "plan": "plan",
+    "feature": "feature",
+    "review": "review",
+    "backfill": "backfill",
 }.items():
     alias_text = read_text(root / "claude-skills" / alias / "SKILL.md")
     source_text = read_text(dist / "skills" / source / "SKILL.md")
@@ -69,9 +69,9 @@ assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
 assert "must be paths under `docs/fluencyloop/`" in feature_text
 for path in [
-    dist / "skills" / "fluencyloop-feature" / "SKILL.md",
-    dist / "skills" / "fluencyloop-plan" / "SKILL.md",
-    dist / "skills" / "fluencyloop-backfill" / "SKILL.md",
+    dist / "skills" / "feature" / "SKILL.md",
+    dist / "skills" / "plan" / "SKILL.md",
+    dist / "skills" / "backfill" / "SKILL.md",
     root / "claude-skills" / "feature" / "SKILL.md",
     root / "claude-skills" / "plan" / "SKILL.md",
     root / "claude-skills" / "backfill" / "SKILL.md",
@@ -82,6 +82,11 @@ for path in [
 readme = read_text(root / "README.md")
 assert "**Enable auto-update**" in readme
 assert "`/reload-plugins` to activate it in the current session" in readme
+for stage in ["plan", "feature", "review", "backfill"]:
+    assert f"name: {stage}" in read_text(dist / "skills" / stage / "SKILL.md")
+    assert f"name: {stage}" in read_text(root / "claude-skills" / stage / "SKILL.md")
+    assert f"$fluencyloop:{stage}" in readme
+    assert f"$fluencyloop-{stage}" not in readme
 router_text = read_text(dist / "skills" / "fluencyloop" / "SKILL.md")
 assert '"$FLUENCYLOOP_SKILL_DIR/../../fluencyloop" <arguments>' in router_text
 assert 'pwsh -NoProfile -ExecutionPolicy Bypass -File "$env:FLUENCYLOOP_SKILL_DIR/../../fluencyloop.ps1" <arguments>' in router_text

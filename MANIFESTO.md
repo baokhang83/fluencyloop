@@ -133,10 +133,10 @@ stage command in the agent you use:
 
 | Goal | Claude Code | Codex |
 |---|---|---|
-| Plan a large initiative | `/fluencyloop:plan` | `$fluencyloop-plan` |
-| Build a feature | `/fluencyloop:feature` | `$fluencyloop-feature` |
-| Assemble its PR view | `/fluencyloop:review` | `$fluencyloop-review` |
-| Backfill skipped work | `/fluencyloop:backfill` | `$fluencyloop-backfill` |
+| Plan a large initiative | `/fluencyloop:plan` | `$fluencyloop:plan` |
+| Build a feature | `/fluencyloop:feature` | `$fluencyloop:feature` |
+| Assemble its PR view | `/fluencyloop:review` | `$fluencyloop:review` |
+| Backfill skipped work | `/fluencyloop:backfill` | `$fluencyloop:backfill` |
 
 The skills invoke the bundled deterministic CLI for `init`, feature/session scaffolding, review
 assembly, and private calibration. The CLI is deliberately not a separate machine-wide install:
