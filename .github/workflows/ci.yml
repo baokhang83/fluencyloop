@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: ShellCheck (scripts, CLI, installer)
+      - name: ShellCheck (scripts, CLI, installer, plugin launcher)
         # shellcheck is preinstalled on the ubuntu runner. -P SCRIPTDIR lets it follow the
         # `# shellcheck source=common.sh` directives so sourced helpers are analysed too.
-        run: shellcheck -x -P SCRIPTDIR scripts/bash/*.sh fluencyloop install.sh
+        run: shellcheck -x -P SCRIPTDIR scripts/bash/*.sh fluencyloop install.sh bin/fluencyloop
       - name: Ban eval (shell=True-equivalent footgun)
         run: |
-          if grep -rnE '(^|[^[:alnum:]_])eval[[:space:]]' scripts/bash fluencyloop install.sh; then
+          if grep -rnE '(^|[^[:alnum:]_])eval[[:space:]]' scripts/bash fluencyloop install.sh bin/fluencyloop; then
             echo "::error::eval is banned in FluencyLoop shell — it runs arbitrary strings as code."
             exit 1
           fi

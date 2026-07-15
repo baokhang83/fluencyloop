@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "fluencyloop",
+  "owner": {
+    "name": "baokhang83"
+  },
+  "description": "FluencyLoop skills for staying fluent in AI-assisted code changes.",
+  "plugins": [
+    {
+      "name": "fluencyloop",
+      "source": ".",
+      "displayName": "FluencyLoop",
+      "version": "0.2.0",
+      "description": "A per-feature loop that designs, teaches, journals decisions, and assembles PR reviews.",
+      "author": {
+        "name": "baokhang83"
+      },
+      "homepage": "https://github.com/baokhang83/fluencyloop#readme",
+      "repository": "https://github.com/baokhang83/fluencyloop",
+      "license": "Apache-2.0",
+      "keywords": [
+        "developer-education",
+        "documentation",
+        "planning",
+        "code-review",
+        "workflow"
+      ],
+      "category": "productivity",
+      "tags": [
+        "fluencyloop",
+        "software-development",
+        "ai-assisted-development"
+      ]
+    }
+  ]
+}
