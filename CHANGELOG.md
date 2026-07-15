@@ -13,6 +13,8 @@ All notable changes to FluencyLoop are documented here.
   `fluencyloop init` preserves Git's original error when repository initialisation fails.
 - Literal Codex CLI requests now run without preflight narration, inspection, or an automatic
   transition into a FluencyLoop stage.
+- Codex now maintains a managed `fluencyloop` PATH shim on macOS, Linux, Git Bash, and WSL, so
+  its command transcript shows the stable command name instead of a versioned plugin-cache path.
 
 ## 0.2.6
 

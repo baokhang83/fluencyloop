@@ -62,9 +62,8 @@ for alias, source in {
     assert "it is never a chat instruction" in alias_text
     assert "globally installed" in alias_text
     assert "## Bundled CLI (Codex)" in source_text
-    assert "two directories above this loaded `SKILL.md`" in source_text
-    assert "Do not search for a global `fluencyloop` installation" in source_text
-    assert "FLUENCYLOOP_SKILL_DIR" not in source_text
+    assert "~/.local/bin/fluencyloop" in source_text
+    assert "Invoke `fluencyloop …` directly" in source_text
 feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
@@ -92,8 +91,8 @@ router_text = read_text(dist / "skills" / "fluencyloop" / "SKILL.md")
 assert "## Literal CLI Fast Path (Codex)" in router_text
 assert "Do not send an interim update" in router_text
 assert "must not automatically start a feature or plan" in router_text
-assert "two directories above this loaded `SKILL.md`" in router_text
-assert "FLUENCYLOOP_SKILL_DIR" not in router_text
+assert "~/.local/bin/fluencyloop" in router_text
+assert "Invoke `fluencyloop …` directly" in router_text
 assert claude_entry["skills"] == [
     "./claude-skills/plan",
     "./claude-skills/feature",
@@ -177,6 +176,49 @@ PY
     run cat "$calls"
     [ "$status" -eq 0 ]
     [ "$output" = $'plugin marketplace upgrade fluencyloop --json\nplugin add fluencyloop@fluencyloop --json' ]
+}
+
+@test "Codex startup refresh hook maintains its managed PATH shim" {
+    local plugin_root="$BATS_TEST_TMPDIR/plugins/cache/fluencyloop/fluencyloop/0.2.9"
+    local home="$BATS_TEST_TMPDIR/home"
+
+    mkdir -p "$plugin_root" "$home"
+    touch "$plugin_root/fluencyloop"
+    chmod +x "$plugin_root/fluencyloop"
+
+    codex() { :; }
+    export -f codex
+
+    run env HOME="$home" PLUGIN_ROOT="$plugin_root" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    [ -L "$home/.local/bin/fluencyloop" ]
+
+    run readlink "$home/.local/bin/fluencyloop"
+    [ "$status" -eq 0 ]
+    [ "$output" = "$plugin_root/fluencyloop" ]
+}
+
+@test "Codex startup refresh hook preserves a non-managed PATH command" {
+    local plugin_root="$BATS_TEST_TMPDIR/plugins/cache/fluencyloop/fluencyloop/0.2.9"
+    local home="$BATS_TEST_TMPDIR/home"
+    local shim="$home/.local/bin/fluencyloop"
+
+    mkdir -p "$plugin_root" "$(dirname "$shim")"
+    touch "$plugin_root/fluencyloop"
+    chmod +x "$plugin_root/fluencyloop"
+    printf '#!/usr/bin/env bash\necho custom\n' > "$shim"
+    chmod +x "$shim"
+
+    codex() { :; }
+    export -f codex
+
+    run env HOME="$home" PLUGIN_ROOT="$plugin_root" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    [ ! -L "$shim" ]
+
+    run "$shim"
+    [ "$status" -eq 0 ]
+    [ "$output" = "custom" ]
 }
 
 @test "Codex startup refresh hook supports the marketplace snapshot root" {

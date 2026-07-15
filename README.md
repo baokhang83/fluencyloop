@@ -91,8 +91,9 @@ codex plugin marketplace add baokhang83/fluencyloop
 codex plugin add fluencyloop@fluencyloop
 ```
 
-The plugin makes the `$fluencyloop:<stage>` skills available. Its bundled CLI stays private to the
-plugin and is run by those skills, so it never needs to be copied onto your PATH.
+The plugin makes the `$fluencyloop:<stage>` skills available. Its trusted startup hook also
+maintains a managed `fluencyloop` shim at `~/.local/bin/fluencyloop` on macOS, Linux, Git Bash,
+and WSL. The shim follows the installed plugin runtime; it is not a separate global installation.
 
 Codex will ask you to review FluencyLoop's startup hook once. Approve it from `/hooks` to enable
 automatic updates. From then on, at the start of each new session, the hook checks only

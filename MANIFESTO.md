@@ -139,8 +139,9 @@ stage command in the agent you use:
 | Backfill skipped work | `/fluencyloop:backfill` | `$fluencyloop:backfill` |
 
 The skills invoke the bundled deterministic CLI for `init`, feature/session scaffolding, review
-assembly, and private calibration. The CLI is deliberately not a separate machine-wide install:
-the agent's plugin manager owns installation and updates. Claude Code refreshes marketplace
+assembly, and private calibration. The CLI is deliberately not a separately versioned
+machine-wide install: Codex exposes a managed PATH shim that follows the plugin runtime, while the
+agent's plugin manager owns installation and updates. Claude Code refreshes marketplace
 plugins at startup; Codex's FluencyLoop plugin uses a trusted `SessionStart` hook to refresh only
 its supplying marketplace and activate an update in the following session. This keeps updates
 visible, host-native, and outside the middle of a task.

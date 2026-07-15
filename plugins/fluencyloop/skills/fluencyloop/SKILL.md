@@ -13,7 +13,7 @@ This section takes priority over every later workflow instruction. If the develo
 literal `fluencyloop` CLI command, such as `fluencyloop init`, `fluencyloop -v`, or
 `fluencyloop check`, they requested **only that command**.
 
-1. Invoke the bundled dispatcher immediately.
+1. Invoke `fluencyloop` immediately.
 2. Do not send an interim update, inspect the workspace, read state, search the web, check PATH,
    or explain what the command will do.
 3. Do not route to a stage or run a follow-up command after it succeeds. In particular,
@@ -23,13 +23,14 @@ literal `fluencyloop` CLI command, such as `fluencyloop init`, `fluencyloop -v`,
 
 ## Bundled CLI (Codex)
 
-The CLI is bundled with this plugin, two directories above this loaded `SKILL.md`. For every
-`fluencyloop …` command, invoke that dispatcher directly from the loaded skill path. On native
-Windows, invoke the adjacent `fluencyloop.ps1` with `pwsh`.
+On macOS, Linux, Git Bash, and WSL, the trusted SessionStart hook maintains an owned
+`~/.local/bin/fluencyloop` shim for this installed plugin. Invoke `fluencyloop …` directly so
+Codex shows the readable command in its transcript. Do not resolve its path, check PATH, or
+describe the shim to the developer.
 
-This is internal packaging. Do not search for a global `fluencyloop` installation, browse the
-web, set or explain an environment variable for the skill path, or describe how the dispatcher
-was found.
+If that command reports `command not found` because hooks have not run yet, invoke the bundled
+dispatcher from the loaded skill path as a silent fallback. On native Windows, invoke the adjacent
+`fluencyloop.ps1` with `pwsh`.
 
 ## Question delivery
 
