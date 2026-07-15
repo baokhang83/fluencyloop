@@ -140,7 +140,10 @@ stage command in the agent you use:
 
 The skills invoke the bundled deterministic CLI for `init`, feature/session scaffolding, review
 assembly, and private calibration. The CLI is deliberately not a separate machine-wide install:
-the agent's plugin manager owns installation and updates.
+the agent's plugin manager owns installation and updates. Claude Code refreshes marketplace
+plugins at startup; Codex's FluencyLoop plugin uses a trusted `SessionStart` hook to refresh only
+its supplying marketplace and activate an update in the following session. This keeps updates
+visible, host-native, and outside the middle of a task.
 
 ## What FluencyLoop refuses to be
 
@@ -168,13 +171,13 @@ The design has real costs.
 4. Agent surfaces differ. Skills must preserve the workflow's pauses and visuals without assuming
    every host has the same forms, renderers, or installation model.
 
-## Status: 0.2.1
+## Status: 0.2.2
 
-0.2.1 is a working cross-agent loop, not a manifesto-only concept: its Claude Code and Codex
+0.2.2 is a working cross-agent loop, not a manifesto-only concept: its Claude Code and Codex
 plugins ship the same deterministic runtime to scaffold and inspect state, construct feature and
-session records, assemble review context, and maintain private calibration. The next measure of
-success is not a more elaborate process; it is whether real contributors stay more fluent with a
-cost they are willing to pay.
+session records, assemble review context, maintain private calibration, and check for package
+updates through each host's lifecycle. The next measure of success is not a more elaborate
+process; it is whether real contributors stay more fluent with a cost they are willing to pay.
 
 ## Standing principles
 
