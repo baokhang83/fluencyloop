@@ -24,14 +24,21 @@ entry = marketplace["plugins"][0]
 assert entry["name"] == "fluencyloop"
 assert entry["source"] == "."
 assert entry["version"] == version
-for skill in (
-    "fluencyloop",
-    "fluencyloop-plan",
-    "fluencyloop-feature",
-    "fluencyloop-review",
-    "fluencyloop-backfill",
-):
-    assert (root / "skills" / skill / "SKILL.md").is_file(), skill
+for alias, source in {
+    "plan": "fluencyloop-plan",
+    "feature": "fluencyloop-feature",
+    "review": "fluencyloop-review",
+    "backfill": "fluencyloop-backfill",
+}.items():
+    alias_text = (root / "claude-skills" / alias / "SKILL.md").read_text()
+    source_text = (root / "skills" / source / "SKILL.md").read_text()
+    assert alias_text.replace(f"name: {alias}", f"name: {source}", 1) == source_text, alias
+assert marketplace["plugins"][0]["skills"] == [
+    "./claude-skills/plan",
+    "./claude-skills/feature",
+    "./claude-skills/review",
+    "./claude-skills/backfill",
+]
 PY
     [ "$status" -eq 0 ]
 }

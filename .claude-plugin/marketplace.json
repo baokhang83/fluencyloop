@@ -26,6 +26,12 @@
         "workflow"
       ],
       "category": "productivity",
+      "skills": [
+        "./claude-skills/plan",
+        "./claude-skills/feature",
+        "./claude-skills/review",
+        "./claude-skills/backfill"
+      ],
       "tags": [
         "fluencyloop",
         "software-development",
