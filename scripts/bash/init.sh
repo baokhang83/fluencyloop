@@ -83,6 +83,10 @@ else
     echo "Initialised FluencyLoop"
     echo "  state:        $FLUENCY (scripts + templates)"
     echo "  docs:         $DOCS (constitution, designs, session journals)"
-    $AUTO_REMOTE_SET && echo "  git:          push.autoSetupRemote=true (feature branches push without --set-upstream)"
-    $CREATED_CONSTITUTION && echo "  constitution: $CONSTITUTION (empty — written from your first plan or feature)"
+    if $AUTO_REMOTE_SET; then
+        echo "  git:          push.autoSetupRemote=true (feature branches push without --set-upstream)"
+    fi
+    if $CREATED_CONSTITUTION; then
+        echo "  constitution: $CONSTITUTION (empty — written from your first plan or feature)"
+    fi
 fi
