@@ -80,6 +80,11 @@ assert "never make explanation sound like a burden" in codex_feature_text
 assert "I am not comfortable" in codex_feature_text
 assert "standalone comprehension question and wait" in codex_feature_text
 assert "do not run another implementation" in codex_feature_text
+for feature_text in [feature_text, codex_feature_text]:
+    assert "Levels and signals are different vocabularies" in feature_text
+    assert "never valid signal types" in feature_text
+    assert "never run `fluencyloop calibration signal <dimension> learning` or `new`" in feature_text
+    assert "Only that later response can justify a signal" in feature_text
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "### Codex architecture teaching gate - before decomposition" in codex_plan_text
 assert "before writing the task breakdown, roadmap" in codex_plan_text
@@ -114,6 +119,10 @@ for path in [
 readme = read_text(root / "README.md")
 assert "**Enable auto-update**" in readme
 assert "`/reload-plugins` to activate it in the current session" in readme
+assert "claude-code-permissions.md" in readme
+permissions_guide = read_text(root / "docs" / "claude-code-permissions.md")
+assert "Bash(*.claude/plugins/cache/fluencyloop/fluencyloop/*/bin/fluencyloop *)" in permissions_guide
+assert "Bash(git *)" in permissions_guide
 for stage in ["plan", "feature", "review", "backfill"]:
     assert f"name: {stage}" in read_text(dist / "skills" / stage / "SKILL.md")
     assert f"name: {stage}" in read_text(root / "claude-skills" / stage / "SKILL.md")

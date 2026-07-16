@@ -132,7 +132,11 @@ switch ($sub) {
         }
         for ($i = 1; $i -lt $rest.Count; $i += 2) {
             if ($rest[$i] -ne 'wave' -and $rest[$i] -ne 'deeper' -and $rest[$i] -ne 'correct') {
-                [Console]::Error.WriteLine("signal type must be wave|deeper|correct (got '$($rest[$i])')"); exit 1
+                $signal = $rest[$i]
+                if ($signal -in @('fluent', 'familiar', 'learning', 'new')) {
+                    [Console]::Error.WriteLine("signal type must be wave|deeper|correct; '$signal' is a calibration level, not a signal"); exit 1
+                }
+                [Console]::Error.WriteLine("signal type must be wave|deeper|correct (got '$signal')"); exit 1
             }
         }
         if (-not (Test-Path -LiteralPath $SIG)) { ResetSignals }
