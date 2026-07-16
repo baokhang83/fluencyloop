@@ -10,7 +10,7 @@
       "name": "fluencyloop",
       "source": ".",
       "displayName": "FluencyLoop",
-      "version": "0.2.13",
+      "version": "0.2.14",
       "description": "A per-feature loop that designs, teaches, journals decisions, and assembles PR reviews.",
       "author": {
         "name": "baokhang83"

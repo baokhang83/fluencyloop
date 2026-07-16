@@ -84,12 +84,10 @@ invite reactions — this is a conversation.
 
 **If the Artifact tool isn't available** (the environment can't publish one, or the deploy keeps
 bouncing), **say so explicitly** — never silently skip the visual-design step. If this surface can
-show a local self-contained inline-SVG/HTML preview, use that. Otherwise, **attempt an ASCII
-rendering directly in chat** before linking the durable document: use a fenced `text` block, only
-ASCII characters, and show the important components plus their relationships or flow. This is a
-visual sketch derived from the diagram, not Mermaid source. If the full diagram is too complex for
-text, show the core topology and say what was omitted. Never paste a Mermaid fence as the
-substitute. Then point the user to **`plan.md`** for GitHub/browser rendering.
+show a local self-contained inline-SVG/HTML preview, use that. Otherwise, do **not** substitute an
+ASCII diagram or paste Mermaid source in chat. Point the user to **`plan.md`** and ask them to open
+it in an IDE Markdown preview, for example VS Code's **Markdown: Open Preview** (`Cmd+Shift+V` on
+macOS), where the Mermaid is rendered properly.
 
 ### Codex architecture teaching gate - before decomposition
 
@@ -100,12 +98,14 @@ hard ordering rule for Codex, not a status update:
 This is a conversation pause, not a build or merge gate.
 
 1. Walk through the main components, their boundaries, and the load-bearing flow. Explain the
-   architectural choice and its rejected alternative, anchored to the rendered diagram or ASCII
-   sketch. "I have the architecture" is not teaching.
+   architectural choice and its rejected alternative, anchored to the rendered Artifact or Mermaid
+   diagram in `plan.md`. "I have the architecture" is not teaching.
 2. Set depth from calibration. If an architectural domain is absent from calibration, it is
-   **unknown**: ask a concise standalone probe and stop. For `learning` and `new`, explain the
-   tradeoff, ask whether it lands or they want to go deeper, then wait. Do not decompose the work
-   or write settled architecture choices until the developer replies.
+   **unknown**: ask a neutral standalone probe and stop. Treat an answer such as "I am not
+   comfortable" as `new`. For `learning` and `new`, explain the building blocks, the system flow,
+   the architectural choice, and its rejected alternative; then ask a standalone comprehension
+   question and wait. Do not decompose the work or write settled architecture choices until the
+   developer replies.
 3. For `fluent` or `familiar` domains, the explanation may be brief, but it must still be visible
    before the plan becomes a task table. Capture the same rationale in `plan.md` only after that
    teaching turn.

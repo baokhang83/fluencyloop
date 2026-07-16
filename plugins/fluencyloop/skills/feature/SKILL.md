@@ -77,6 +77,14 @@ separated chat prompt in Codex), then wait. For example, before building a Maven
 Mojo objects (`@Mojo` / `AbstractMojo`)?"* — rather than silently guessing and either boring or
 losing them. Record the answers into the knowledge base and let them set your opening depth.
 
+**Probe neutrally; never make explanation sound like a burden.** Do not ask whether you should
+"keep it light," or imply that the developer needs to opt in to an explanation. Ask what they know
+and state that you will explain the decisions needed to reason about the code. For example:
+*"How familiar are you with Angular standalone components and signals? I will walk through the
+choices as we build; tell me whether you want a refresher or a fundamentals-first explanation."*
+Treat "I am not comfortable," "I am not familiar," or equivalent wording as `new`, never as
+permission to explain less.
+
 **A probe answer sets *teaching depth*, never the technical decision.** What the developer knows
 changes how *tersely* you explain — it must **never** steer which approach you take. If they say
 they know Angular async pipes, that makes async pipes the *cheap-to-teach* option, **not** the one
@@ -125,26 +133,27 @@ user through what they're looking at and invite reactions — this is a conversa
 
 **If the Artifact tool isn't available** (the environment can't publish one, or the deploy keeps
 bouncing), **say so explicitly** — don't silently skip the visual-design step. If this surface can
-show a local self-contained inline-SVG/HTML preview, use that. Otherwise, **attempt an ASCII
-rendering directly in chat** before linking the durable document: use a fenced `text` block, only
-ASCII characters, and show the important nodes plus their relationships or message flow. This is a
-visual sketch derived from the diagram, not Mermaid source. If the full diagram is too complex for
-text, show the core topology and say what was omitted. Never paste a Mermaid fence as the
-substitute. Then point the user to the feature's **`design.md`** for GitHub/browser rendering.
+show a local self-contained inline-SVG/HTML preview, use that. Otherwise, do **not** substitute an
+ASCII diagram or paste Mermaid source in chat. Point the user to the feature's **`design.md`** and
+ask them to open it in an IDE Markdown preview, for example VS Code's **Markdown: Open Preview**
+(`Cmd+Shift+V` on macOS), where the Mermaid is rendered properly.
 
 ### Codex design teaching gate - before implementation
 
-After the design is rendered or sketched and before writing feature code, constitution principles,
+After the design is rendered or persisted for Markdown preview and before writing feature code, constitution principles,
 or a build session, send a **user-visible design teaching turn**. This is a hard ordering rule for
 Codex, not a status update:
 
 1. Walk through the main shapes, their relationships, and the load-bearing flow. Explain the key
-   design choice and rejected alternative, anchored to the rendered diagram or ASCII sketch.
+   design choice and rejected alternative, anchored to the rendered Artifact or Mermaid diagram in
+   `design.md`.
    "The design is ready" is not teaching.
 2. Set depth from calibration. If the relevant domain is absent from calibration, it is
-   **unknown**: ask a concise standalone probe and stop. For `learning` and `new`, explain the
-   tradeoff, ask whether it lands or they want to go deeper, then wait. Do not implement, birth the
-   constitution, or open a build session until the developer replies.
+   **unknown**: ask a neutral standalone probe and stop. Treat an answer such as "I am not
+   comfortable" as `new`. For `learning` and `new`, give a substantive explanation of the
+   building blocks, the flow, the choice, and its rejected alternative; then ask a standalone
+   comprehension question and wait. Do not implement, birth the constitution, or open a build
+   session until the developer replies.
 3. For `fluent` or `familiar` domains, the explanation may be brief, but it must still be visible
    before implementation. Persist the same rationale in `design.md` only after that teaching turn.
 
@@ -189,9 +198,11 @@ teaching message**, not a `fluencyloop decision` command. This is a hard orderin
    code, and the rejected alternative. Anchor it to the changed code and the design shape. A status
    update such as "I am recording the decisions" is not teaching.
 2. Use the depth policy below. If the relevant domain is absent from calibration, it is **unknown**:
-   probe it in a concise standalone chat question and stop. Treat `learning` and `new` the same
-   way: explain, ask whether it lands or they want to go deeper, then wait. Do not journal the
-   decision or continue building until the developer replies.
+   probe it neutrally in a concise standalone chat question and stop. Treat an answer such as "I
+   am not comfortable" as `new`. For `learning` and `new`, give a substantive explanation of the
+   building blocks, the flow, the choice, and its rejected alternative; then ask a standalone
+   comprehension question and wait. Do not journal the decision or continue building until the
+   developer replies.
 3. After a `fluent` or `familiar` teaching turn, journal the same rationale. Never write the
    journal first and substitute it for the conversation.
 4. Log a calibration signal only from a real developer response. No reply is not a `wave`; omit
@@ -230,8 +241,8 @@ visible; the journal is its durable byproduct.
    |---------------------|------------------------------|
    | `fluent`   | **name it and move on** — state the call in a clause; no *why* unless they ask. |
    | `familiar` | **one-line why** — the decision plus its single load-bearing reason; don't unpack. |
-   | `learning` | **unpack + check understanding** — the why *and* the rejected alternative, then pause and confirm it landed. |
-   | `new`      | **unpack, slow down, offer to go deeper** — build from fundamentals at a gentler pace, and explicitly offer to dig further. |
+   | `learning` | **unpack + check understanding** — explain the mechanism, why this code uses it, and the rejected alternative; end with a standalone comprehension question and wait. |
+   | `new`      | **teach from fundamentals + check understanding** — explain the building blocks, flow, project-specific choice, and rejected alternative; end with a standalone comprehension question and wait. |
 
    A decision spanning several domains takes the depth of its **least-known** one. This mapping is
    the payoff of calibration: it stops you *deliberating* about how much to teach (token-cheap) and
@@ -239,8 +250,10 @@ visible; the journal is its durable byproduct.
    **calibration level** and **demonstrated engagement** — *never* authorship (see below).
 
    For each decision, at the depth the policy sets:
-   - Explain to that depth — for `learning`/`new` the why *and* the rejected alternative, right
-     now; for `familiar` the one-line why; for `fluent` just name the call.
+   - Explain to that depth — for `learning`/`new`, cover the building blocks, runtime flow, why
+     this code takes the chosen path, and the rejected alternative before asking anything; for
+     `familiar` give the one-line why; for `fluent` just name the call. Never replace the core
+     explanation with "if you want, I can explain more."
    - **Anchor it to the rendered design diagram** — point back to the Artifact from §2 and name
      the exact shape the decision concerns, so the *why* lands on something they can see, not
      just prose. If the decision changed the design, re-render and re-check the diagram.
@@ -250,9 +263,10 @@ visible; the journal is its durable byproduct.
      standalone, concise chat prompt and **wait** before continuing. (A rhetorical aside — *"if
      that feels shaky, say so"* — is not a real question; those stay inline.)
    - **Pause and check understanding** *(where the policy calls for it — `learning` / `new`)* —
-     ask if it lands, and explicitly offer to go deeper ("want me to unpack how X works, or is
-     this enough to trust it?"). Then *wait* for the answer before moving on. A monologue that
-     ends in "see the journal" is the failure mode.
+     after the substantive explanation, ask a standalone question such as "Does that make sense?
+     Which part should I unpack before I continue?" Then *stop*: do not run another implementation,
+     journal, calibration, or completion action until the developer answers. A monologue that ends
+     in "see the journal" or "if you want" is the failure mode.
    - **Calibrate continuously (see §0), but let the policy set depth.** Hold a live estimate of
      what they know and *update it every exchange*: a quick confirmation is evidence of fluency
      (log a `wave`, §3.4); a surprised "wait, why?" or a follow-up is evidence it's shaky (log a

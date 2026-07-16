@@ -2,6 +2,16 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.14
+
+### Fixed
+
+- Codex no longer substitutes ASCII diagrams when an Artifact is unavailable. It points to the
+  generated Markdown file and recommends opening it in an IDE Markdown preview, such as VS Code.
+- Codex probes now frame explanation neutrally. `learning` and `new` answers require a substantive
+  explanation and a standalone comprehension question before the workflow can continue. Claude
+  Code workflows are unchanged.
+
 ## 0.2.13
 
 ### Fixed

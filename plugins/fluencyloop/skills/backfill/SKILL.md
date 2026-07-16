@@ -120,12 +120,11 @@ components, **rendered**, with each decision tied to what it touches. Load the
   client-side — those bundles carry lone surrogate/escape sequences that fail the Artifact
   deploy (see byte-check below). The committed `design.md` keeps the Mermaid as the canonical
   source; the Artifact is the rendered view.
-- **If no visual Artifact can be published, say so and attempt an ASCII rendering in chat.** Use
-  a fenced `text` block with only ASCII characters to show the important nodes and relationships
-  or flow. It is a visual sketch derived from the diagram, not Mermaid source. If the full
-  diagram is too complex for text, show the core topology and say what was omitted. Never paste
-  Mermaid source as the substitute. Point to `design.md` for GitHub/browser rendering, and leave
-  the relevant `trust: ⚠` markers unconfirmed until the human can review the visual.
+- **If no visual Artifact can be published, say so; do not render an ASCII diagram or paste
+  Mermaid source in chat.** Point to `design.md` and ask the user to open it in an IDE Markdown
+  preview, for example VS Code's **Markdown: Open Preview** (`Cmd+Shift+V` on macOS), where the
+  Mermaid is rendered properly. Leave the relevant `trust: ⚠` markers unconfirmed until the human
+  can review that visual.
 - **Map every decision onto the diagram.** For each decision, name the exact nodes it concerns
   and make the link visible (e.g. hovering a decision highlights those nodes). A decision the
   human can't see located on a rendered diagram teaches nothing.
