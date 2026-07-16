@@ -143,8 +143,12 @@ case "$SUB" in
         i=1
         for a in "$@"; do
             if [ $(( i % 2 )) -eq 0 ]; then
-                case "$a" in wave|deeper|correct) ;; *)
-                    echo "signal type must be wave|deeper|correct (got '$a')" >&2; exit 1 ;;
+                case "$a" in
+                    wave|deeper|correct) ;;
+                    fluent|familiar|learning|new)
+                        echo "signal type must be wave|deeper|correct; '$a' is a calibration level, not a signal" >&2; exit 1 ;;
+                    *)
+                        echo "signal type must be wave|deeper|correct (got '$a')" >&2; exit 1 ;;
                 esac
             fi
             i=$((i + 1))

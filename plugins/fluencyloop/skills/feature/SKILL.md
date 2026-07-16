@@ -319,9 +319,18 @@ visible; the journal is its durable byproduct.
    # e.g.  fluencyloop calibration signal maven wave junit wave spring deeper
    ```
 
-   where `wave` = waved it through (evidence of fluency), `deeper` = asked you to unpack it (still
-   building it), `correct` = corrected you / drove it (keep teaching rich there). Appending is the
-   whole job — trivial, and honest (it records what actually happened, not a guess). The deterministic `fluencyloop calibration compact` (run at the next feature's §0)
+   **Levels and signals are different vocabularies.** `fluent`, `familiar`, `learning`, and `new`
+   are calibration levels; they are **never valid signal types**. A probe answer sets the opening
+   level but emits no signal. Signal only a response *after teaching*: `wave` = waved the
+   explanation through, `deeper` = asked to unpack it or showed confusion, `correct` = corrected
+   the rationale or drove it. If there is no response after teaching, emit no signal. In
+   particular, never run `fluencyloop calibration signal <dimension> learning` or `new`.
+
+   For `learning` and `new`, first give the required substantive explanation and ask the standalone
+   comprehension question; then **wait**. Do not journal, run calibration, or continue
+   implementation automatically. Only that later response can justify a signal.
+   Appending is the whole job — trivial, and honest (it records what actually happened, not a
+   guess). The deterministic `fluencyloop calibration compact` (run at the next feature's §0)
    rolls repeated signals into level changes: promote on repeated wave-throughs, demote on
    deeper-asks or corrections. This is how calibration adapts across features instead of resetting
    each session. *(For a brand-new dimension, set its initial level from your §0 probe by editing

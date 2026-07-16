@@ -47,11 +47,13 @@ Describe 'calibration.ps1' {
         (Invoke-FlExit 'calibration.ps1' 'frobnicate') | Should -Not -Be 0
     }
 
-    It 'signal appends to the ledger; a bad signal type is rejected' {
+    It 'signal appends to the ledger; a calibration level is rejected as a signal' {
         & $script:PwshExe -NoProfile -File "$script:Bin/calibration.ps1" 'init' | Out-Null
         & $script:PwshExe -NoProfile -File "$script:Bin/calibration.ps1" 'signal' 'java' 'wave' | Out-Null
         "$script:testHome/signals.log" | Should -Exist
         (Get-Content -Raw "$script:testHome/signals.log") | Should -Match 'java wave'
+        (Invoke-FlExit 'calibration.ps1' 'signal' 'java' 'learning') | Should -Not -Be 0
+        (Invoke-FlAll 'calibration.ps1' 'signal' 'java' 'learning') | Should -Match 'calibration level, not a signal'
         (Invoke-FlExit 'calibration.ps1' 'signal' 'java' 'bogus') | Should -Not -Be 0
     }
 

@@ -67,11 +67,14 @@ assert "bogus" not in d, d                    # invalid level excluded
 
 level_of() { cal show --json | python3 -c "import json,sys;print(json.load(sys.stdin).get('$1',''))"; }
 
-@test "signal appends to the ledger; a bad signal type is rejected" {
+@test "signal appends to the ledger; a calibration level is rejected as a signal" {
     cal init >/dev/null
     cal signal java wave
     [ -f "$FLUENCYLOOP_HOME/signals.log" ]
     grep -q "java wave" "$FLUENCYLOOP_HOME/signals.log"
+    run cal signal java learning
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"calibration level, not a signal"* ]]
     run cal signal java bogus
     [ "$status" -ne 0 ]
 }

@@ -2,6 +2,18 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.15
+
+### Fixed
+
+- Claude Code and Codex feature skills now distinguish calibration levels from engagement signals.
+  A probe answer such as `learning` or `new` sets teaching depth; it cannot be passed to
+  `fluencyloop calibration signal`. The CLI now explains that error directly.
+- Claude Code treats "not comfortable" answers as `new`, gives the substantive explanation, and
+  waits for an `AskUserQuestion` response before journaling, calibrating, or continuing.
+- Added a project-scoped Claude Code permissions guide for native Windows that reduces routine
+  FluencyLoop, editing, and read-only Git prompts without granting broad Git or Bash access.
+
 ## 0.2.14
 
 ### Fixed

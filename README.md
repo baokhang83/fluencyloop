@@ -82,6 +82,11 @@ when it reports an update, run `/reload-plugins` to activate it in the current s
 Without that opt-in, update manually with `/plugin marketplace update fluencyloop`, then
 `/plugin update fluencyloop@fluencyloop`, and finally `/reload-plugins`.
 
+On native Windows, Claude Code cannot use its Bash sandbox to remove routine command prompts.
+For a trusted project, use the scoped setup in [Claude Code approvals](docs/claude-code-permissions.md):
+it permits this plugin's bundled dispatcher, ordinary read-only Git inspection, and workspace
+edits while keeping branch changes, commits, pushes, and network actions explicit.
+
 ### Codex
 
 Install FluencyLoop from the same repository marketplace:
