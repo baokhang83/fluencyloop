@@ -94,12 +94,25 @@ is no separate system-wide FluencyLoop installation.
 <details>
 <summary>Claude Code updates and Windows approvals</summary>
 
-FluencyLoop's startup hook checks its own marketplace each session and, when an update is
+FluencyLoop's startup hook checks its own marketplace on each new session and, when an update is
 available, installs it for the next session without changing the active one. Run
-`/reload-plugins` to activate it in the current session instead.
+`/reload-plugins` to activate it in the current session instead. The check runs at startup only;
+resuming, clearing, or compacting a session does not repeat it.
 
 To update at any time by hand, run `/plugin marketplace update fluencyloop`, then
 `/plugin update fluencyloop@fluencyloop`, and finally `/reload-plugins`.
+
+The startup check is best-effort and deliberately silent, because a session must never fail to
+start over an update it could not fetch. If the `claude` CLI is absent from the `PATH`, or the
+network or a policy blocks the marketplace, the session starts normally and reports nothing. Run
+`claude plugin list` to see the version you are actually running, and use the manual commands
+above if it looks stale.
+
+**Installed before 0.2.16?** Claude Code self-refresh shipped *in* 0.2.16, so an install at 0.2.15
+or earlier carries no hook that can refresh its own tree and stays on its current version
+indefinitely. If you also have Codex installed, such a session refreshes the *Codex* package
+instead, which can leave Claude Code pinned while `fluencyloop version` reports something newer.
+Run the manual commands above once; every later update is automatic.
 
 Claude Code's own **Enable auto-update** toggle (`/plugin` → **Marketplaces** → **fluencyloop**)
 is a separate control that stays off by default. FluencyLoop refreshes only its own package and
@@ -127,6 +140,12 @@ command shim on macOS, Linux, Git Bash, and WSL; no separate runtime installatio
 Codex asks you to review FluencyLoop's startup hook once. Approve it from `/hooks` to enable
 automatic updates. Each new session checks only FluencyLoop's marketplace and, when an update is
 available, installs it for the next session without changing the active one.
+
+Like the Claude Code check, this one is best-effort and silent: an unapproved hook, a missing
+`codex` CLI, or a blocked marketplace leaves the session running its current version without
+reporting anything. Run `fluencyloop version` to see the version the Codex install is actually
+running. To update by hand, run `codex plugin marketplace upgrade fluencyloop`, then
+`codex plugin add fluencyloop@fluencyloop`; the next session picks it up.
 
 </details>
 
