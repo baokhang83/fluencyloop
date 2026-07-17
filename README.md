@@ -23,8 +23,8 @@ is too large for a single feature.
 | Step | Claude Code | Codex | What it does |
 |------|-------------|-------|--------------|
 | **1. Initialize** | `fluencyloop init` | `fluencyloop init` | Creates the project state and an empty constitution. Plan and feature also do this automatically if needed. |
-| **2. Plan (optional)** | `/fluencyloop:plan <initiative descr.>` | `$fluencyloop:plan <initiative descr.>` | Designs the architecture and breaks a large initiative into feature-sized tasks. |
-| **3. Build + learn** | `/fluencyloop:feature <feature descr.>` | `$fluencyloop:feature <feature descr.>` | Creates a feature branch and design, builds in slices, teaches each real decision, and journals it. |
+| **2. Plan (optional)** | `/fluencyloop:plan <initiative description>` | `$fluencyloop:plan <initiative description>` | Designs the architecture and breaks a large initiative into feature-sized tasks. |
+| **3. Build + learn** | `/fluencyloop:feature <feature description>` | `$fluencyloop:feature <feature description>` | Creates a feature branch and design, builds in slices, teaches each real decision, and journals it. |
 | **4. Review** | `/fluencyloop:review` | `$fluencyloop:review` | Assembles the branch's sessions and decisions into a reviewer-facing PR view. |
 
 For normal-sized work, the practical path is **init → feature → review**. For a large initiative,
