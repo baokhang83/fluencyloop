@@ -6,8 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "plugin_root=\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}\"; if [ -n \"$plugin_root\" ]; then bash \"$plugin_root/hooks/refresh-marketplace.sh\"; fi",
-            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$pluginRoot = $env:PLUGIN_ROOT; if ([string]::IsNullOrWhiteSpace($pluginRoot)) { $pluginRoot = $env:CLAUDE_PLUGIN_ROOT }; if (-not [string]::IsNullOrWhiteSpace($pluginRoot)) { & (Join-Path $pluginRoot 'hooks\\refresh-marketplace.ps1') }\"",
+            "command": "plugin_root=\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}\"; if [ -n \"$plugin_root\" ]; then hook=\"$plugin_root/hooks/refresh-marketplace.sh\"; if [ ! -f \"$hook\" ] && [ -n \"${PLUGIN_ROOT:-}\" ]; then case \"$plugin_root\" in */plugins/cache/*/*/*) for candidate in \"${plugin_root%/*}\"/*/hooks/refresh-marketplace.sh; do if [ -f \"$candidate\" ]; then hook=\"$candidate\"; plugin_root=\"${candidate%/hooks/refresh-marketplace.sh}\"; fi; done ;; esac; fi; if [ -f \"$hook\" ]; then if [ -n \"${PLUGIN_ROOT:-}\" ]; then PLUGIN_ROOT=\"$plugin_root\" bash \"$hook\"; else CLAUDE_PLUGIN_ROOT=\"$plugin_root\" bash \"$hook\"; fi; fi; fi",
+            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$pluginRoot = $env:PLUGIN_ROOT; if ([string]::IsNullOrWhiteSpace($pluginRoot)) { $pluginRoot = $env:CLAUDE_PLUGIN_ROOT }; if (-not [string]::IsNullOrWhiteSpace($pluginRoot)) { $hook = Join-Path $pluginRoot 'hooks\\refresh-marketplace.ps1'; if (Test-Path -LiteralPath $hook -PathType Leaf) { & $hook } }\"",
             "timeout": 30,
             "statusMessage": "Checking FluencyLoop updates"
           }

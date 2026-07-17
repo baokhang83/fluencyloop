@@ -2,6 +2,16 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.17
+
+### Fixed
+
+- Codex no longer reports a `SessionStart` error when an update prunes the versioned plugin root
+  before its hook launches. The launcher either recovers through the newly installed sibling
+  version or safely no-ops when no replacement exists; Windows also guards the hook path.
+- The managed `fluencyloop` PATH shim now falls through to the replacement runtime in the same
+  trusted plugin cache when its original version is removed during startup.
+
 ## 0.2.16
 
 ### Added

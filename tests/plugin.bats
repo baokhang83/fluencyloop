@@ -45,6 +45,8 @@ assert 'plugin_root="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"' in handler["comma
 assert "CLAUDE_PLUGIN_ROOT" in handler["commandWindows"]
 assert "refresh-marketplace.sh" in handler["command"]
 assert "refresh-marketplace.ps1" in handler["commandWindows"]
+assert '[ -f "$hook" ]' in handler["command"]
+assert "Test-Path -LiteralPath $hook -PathType Leaf" in handler["commandWindows"]
 assert (dist / "hooks" / "refresh-marketplace.sh").is_file()
 assert (dist / "hooks" / "refresh-marketplace.ps1").is_file()
 
@@ -201,6 +203,73 @@ PY
     [ -z "$output" ]
 }
 
+@test "startup command no-ops when its versioned plugin root was removed" {
+    local hook_command
+
+    run python3 - "$DIST/hooks/hooks.json" <<'PY'
+import json
+import pathlib
+import sys
+
+hooks = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(hooks["hooks"]["SessionStart"][0]["hooks"][0]["command"])
+PY
+    [ "$status" -eq 0 ]
+    hook_command="$output"
+
+    run env -i PATH="$PATH" PLUGIN_ROOT="$BATS_TEST_TMPDIR/missing/0.2.15" bash -c "$hook_command"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "startup command recovers through a newly installed sibling version" {
+    local hook_command
+    local cache_root="$BATS_TEST_TMPDIR/plugins/cache/fluencyloop/fluencyloop"
+    local removed_root="$cache_root/0.2.15"
+    local current_root="$cache_root/0.2.17"
+    mkdir -p "$current_root/hooks"
+    printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$PLUGIN_ROOT"\n' > "$current_root/hooks/refresh-marketplace.sh"
+
+    run python3 - "$DIST/hooks/hooks.json" <<'PY'
+import json
+import pathlib
+import sys
+
+hooks = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(hooks["hooks"]["SessionStart"][0]["hooks"][0]["command"])
+PY
+    [ "$status" -eq 0 ]
+    hook_command="$output"
+
+    run env -i PATH="$PATH" PLUGIN_ROOT="$removed_root" bash -c "$hook_command"
+    [ "$status" -eq 0 ]
+    [ "$output" = "$current_root" ]
+}
+
+@test "startup recovery never executes a sibling marketplace plugin hook" {
+    local hook_command
+    local plugins_root="$BATS_TEST_TMPDIR/.tmp/marketplaces/fluencyloop/plugins"
+    local missing_root="$plugins_root/fluencyloop"
+    local unrelated_root="$plugins_root/unrelated"
+    mkdir -p "$unrelated_root/hooks"
+    printf '#!/usr/bin/env bash\nprintf "wrong plugin\\n"\n' > "$unrelated_root/hooks/refresh-marketplace.sh"
+
+    run python3 - "$DIST/hooks/hooks.json" <<'PY'
+import json
+import pathlib
+import sys
+
+hooks = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(hooks["hooks"]["SessionStart"][0]["hooks"][0]["command"])
+PY
+    [ "$status" -eq 0 ]
+    hook_command="$output"
+
+    run env -i PATH="$PATH" PLUGIN_ROOT="$missing_root" bash -c "$hook_command"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
 # A Claude root once interpolated into an unguarded path, so every Claude session started by
 # failing the hook on a missing "/hooks/refresh-marketplace.sh".
 @test "startup command resolves the hook from a Claude plugin root" {
@@ -324,6 +393,13 @@ PY
     run "$home/.local/bin/fluencyloop"
     [ "$status" -eq 0 ]
     [ "$output" = "0.2.9" ]
+
+    # Installing an update can prune the active package after this hook wrote the shim. The shim
+    # must find the replacement in the same managed cache without waiting for another session.
+    rm -rf "$plugin_root"
+    run "$home/.local/bin/fluencyloop"
+    [ "$status" -eq 0 ]
+    [ "$output" = "0.3.0" ]
 
     run env HOME="$home" PLUGIN_ROOT="$updated_plugin_root" bash "$DIST/hooks/refresh-marketplace.sh"
     [ "$status" -eq 0 ]

@@ -24,11 +24,19 @@ fi
 # session. Unlike a symbolic link, it also works on hosts that restrict link creation. Never
 # replace an unrelated executable a developer may already have at this name.
 install_path_shim() {
-    local shim_dir shim target existing temporary
+    local shim_dir shim target cache_root existing temporary
 
     [ -n "${HOME:-}" ] || return 0
     target="$PLUGIN_DIR/fluencyloop"
     [ -x "$target" ] || return 0
+
+    # A Codex update replaces the version directory while this hook is still running. Keep the
+    # cache parent in the wrapper so a command issued before the next SessionStart can fall through
+    # to the newly installed version instead of executing a path that was just pruned.
+    case "$PLUGIN_DIR" in
+        */plugins/cache/*/*/*) cache_root="${PLUGIN_DIR%/*}" ;;
+        *) cache_root="" ;;
+    esac
 
     shim_dir="$HOME/.local/bin"
     shim="$shim_dir/fluencyloop"
@@ -51,7 +59,24 @@ install_path_shim() {
     temporary="$shim_dir/.fluencyloop-shim.$$"
     {
         printf '%s\n' '#!/usr/bin/env bash' '# FluencyLoop managed PATH shim'
-        printf 'exec %q "$@"\n' "$target"
+        printf 'primary=%q\n' "$target"
+        printf 'cache_root=%q\n' "$cache_root"
+        printf '%s\n' \
+            'if [ -x "$primary" ]; then' \
+            '    exec "$primary" "$@"' \
+            'fi' \
+            'if [ -n "$cache_root" ]; then' \
+            '    replacement=""' \
+            '    for candidate in "$cache_root"/*/fluencyloop; do' \
+            '        [ -x "$candidate" ] || continue' \
+            '        replacement="$candidate"' \
+            '    done' \
+            '    if [ -n "$replacement" ]; then' \
+            '        exec "$replacement" "$@"' \
+            '    fi' \
+            'fi' \
+            'printf "%s\\n" "fluencyloop: installed plugin runtime is unavailable" >&2' \
+            'exit 127'
     } > "$temporary" 2>/dev/null || return 0
     chmod +x "$temporary" 2>/dev/null || {
         rm -f "$temporary"
