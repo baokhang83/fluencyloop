@@ -7,174 +7,137 @@
 [![CI](https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml/badge.svg)](https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/baokhang83/fluencyloop)](LICENSE)
 [![Top language](https://img.shields.io/github/languages/top/baokhang83/fluencyloop)](https://github.com/baokhang83/fluencyloop)
-[![Status: alpha](https://img.shields.io/badge/status-alpha-orange)](#distribution-roadmap)
+[![Status: alpha](https://img.shields.io/badge/status-alpha-orange)](CONTRIBUTING.md#distribution-roadmap)
 
-**Stay fluent in the code your AI agent writes.** FluencyLoop is a per-feature loop that
-teaches you the *why* of each change as it ships — so the agent writes the code without you
-losing the plot.
+**Stay fluent in the code your AI agent writes.** FluencyLoop turns each feature into a documented
+design, teaches the decisions at your level, tracks the rationale, and produces a reviewer-ready
+summary. A private knowledge base keeps that teaching calibrated across features.
 
 > The code and your fluency in it are produced together, or not at all.
-> See [MANIFESTO.md](MANIFESTO.md) for the why.
 
-## What it does
+## The workflow
 
-FluencyLoop is delivered as coding-agent **skills** + deterministic **bash scripts** +
-committed **docs** in `docs/fluencyloop/` (the constitution, per-feature designs, and session
-journals; the tool's machine state is in `.fluencyloop/`).
+Initialize the project once, then run one feature loop per branch. Use **plan** only when the work
+is too large for a single feature.
 
-The core is a **per-feature loop**, with an optional planning step in front for big chunks:
+| Step | Claude Code | Codex | What it does |
+|------|-------------|-------|--------------|
+| **1. Initialize** | `fluencyloop init` | `fluencyloop init` | Creates the project state and an empty constitution. Plan and feature also do this automatically if needed. |
+| **2. Plan (optional)** | `/fluencyloop:plan <initiative>` | `$fluencyloop:plan <initiative>` | Designs the architecture and breaks a large initiative into feature-sized tasks. |
+| **3. Build + learn** | `/fluencyloop:feature <feature>` | `$fluencyloop:feature <feature>` | Creates a feature branch and design, builds in slices, teaches each real decision, and journals it. |
+| **4. Review** | `/fluencyloop:review` | `$fluencyloop:review` | Assembles the branch's sessions and decisions into a reviewer-facing PR view. |
 
-<p align="center">
-  <img width="500" height="195" alt="image" src="https://github.com/user-attachments/assets/fb5e1855-2ff7-4ff5-bb4b-4d0fc102bd54" />
-</p>
+For normal-sized work, the practical path is **init → feature → review**. For a large initiative,
+run **plan** first, then repeat **feature → review** for each task in its roadmap.
 
-- **plan** — *optional*, only when a chunk is too big for one feature: architecture + roadmap,
-  broken into feature-sized tasks.
-- **design** — the shapes, rendered so you actually *see* them before any code.
-- **build (teach)** — the agent writes it; you get taught the *why* of each real decision at the
-  slice boundary, journaled as it goes.
-- **review** — the reviewer view assembles itself from the journal, because a feature *is* its branch.
+If work was merged without the loop, use `/fluencyloop:backfill` in Claude Code or
+`$fluencyloop:backfill` in Codex to reconstruct and verify its design and decisions.
 
-A **constitution** (checkable principles for your project) is woven through the loop: it's **born from your first plan or feature** and grows as later features **harvest** principles from real decisions. Nothing gates a conventional merge — work that skips the loop is caught **after** merge by `backfill`.
+## What it gives you
 
-**Requires:** a coding agent ([Claude Code](https://claude.com/claude-code) or
-[Codex](https://developers.openai.com/codex/)), `git`, and either `bash` (macOS/Linux/Git
-Bash/WSL) or PowerShell (`pwsh`) on native Windows. The deterministic CLI is bundled inside the
-agent plugins as both a bash and a PowerShell dispatcher; there is no separate machine-wide
-installer or project skill vendoring step.
+### A living constitution
 
-## Teaches to your level
+The constitution is a short set of checkable engineering principles for the project. It starts
+from the first real plan or feature and grows when a decision reveals a repeatable stance. Every
+later design and review is checked against it, but it never blocks a conventional merge.
 
-FluencyLoop doesn't lecture at a fixed depth. Before a feature touches unfamiliar ground it
-**asks** — *"For the new Maven plugin, are you familiar with A and B?"* — then keeps re-estimating what you
-know from how you respond: terse on solid ground, deeper where it's shaky. What it learns is
-persisted to a **per-developer knowledge base** in `~/.fluencyloop/` (global, never committed) —
-a structured `dimension: level` profile (`java: fluent`, `reactive: learning`, `k8s: new`) the
-loop parses to set teaching depth deterministically. It **adapts from how you engage**: as it
-teaches it appends cheap signals (you waved a decision through, asked to go deeper, corrected it),
-and `fluencyloop calibration compact` rolls repeated signals into level promotions/demotions — so
-depth tracks your real fluency across features instead of resetting each session. Manage it with
-`fluencyloop calibration init|show|edit`. Your knowledge profile stays private to your machine;
-the committed journal only ever describes the work, never you.
+### Knowledge transfer, taught to your level
+
+FluencyLoop teaches at the moment a meaningful decision is made. It explains the mechanism, the
+reason for the chosen path, and the rejected alternative, then checks that the explanation landed
+before continuing when the topic is unfamiliar.
+
+It maintains a private, per-developer knowledge base of domain familiarity and demonstrated
+engagement. That profile carries across projects and features, keeping explanations concise on
+familiar ground and deeper where knowledge is still forming. It is never committed to a project;
+only person-neutral knowledge-transfer notes about the software enter the documentation.
+
+### Software documentation that follows the code
+
+Plans, Mermaid design diagrams, feature sessions, and review summaries live beside the code under
+`docs/fluencyloop/`. They are created from the actual branch and its changes, so documentation is
+produced during delivery rather than reconstructed after context has been lost.
+
+### Decision tracking with rationale
+
+Each real fork records what was chosen, where it applies, why it was chosen, which alternative was
+rejected, how it relates to the constitution and design, and whether the rationale was verified.
+Reviewers get the decisions that shaped the feature instead of only a list of changed files.
+
+## What gets committed
+
+```text
+docs/fluencyloop/
+├── constitution.md
+├── plans/<initiative>/plan.md
+└── features/<feature>/
+    ├── design.md
+    └── sessions/*.md
+```
+
+`.fluencyloop/` contains project workflow state. The per-developer calibration profile lives in
+`~/.fluencyloop/`; it controls teaching depth and is never committed. Session documents describe
+the work, never the person.
 
 ## Install
 
 ### Claude Code
 
-Install FluencyLoop through its marketplace — this is the standard Claude Code installation:
-
-```
+```text
 /plugin marketplace add baokhang83/fluencyloop
 /plugin install fluencyloop@fluencyloop
 ```
 
-The plugin includes the interactive skills and a bundled `fluencyloop` command for Claude Code's
-Bash tool. Its skills are intentionally namespaced, for example `/fluencyloop:feature`, so they cannot collide with another plugin's skills.
+Use the namespaced slash commands shown above. The plugin bundles its deterministic CLI, so there
+is no separate system-wide FluencyLoop installation.
 
-Use the slash commands in chat: the bundled `fluencyloop` command is for Claude's Bash tool, so
-a bare `fluencyloop …` chat message can collide with a personal skill of the same name.
+<details>
+<summary>Claude Code updates and Windows approvals</summary>
 
 Claude Code leaves third-party marketplace updates off by default. To opt in once, open
 `/plugin`, choose **Marketplaces**, select **fluencyloop**, then choose **Enable auto-update**.
-Claude Code will subsequently refresh the marketplace and update the installed plugin at startup;
-when it reports an update, run `/reload-plugins` to activate it in the current session.
+When Claude reports an update, run `/reload-plugins` to activate it in the current session.
 
-Without that opt-in, update manually with `/plugin marketplace update fluencyloop`, then
+Without auto-update, run `/plugin marketplace update fluencyloop`, then
 `/plugin update fluencyloop@fluencyloop`, and finally `/reload-plugins`.
 
-On native Windows, Claude Code cannot use its Bash sandbox to remove routine command prompts.
-For a trusted project, use the scoped setup in [Claude Code approvals](docs/claude-code-permissions.md):
-it permits this plugin's bundled dispatcher, ordinary read-only Git inspection, and workspace
-edits while keeping branch changes, commits, pushes, and network actions explicit.
+On native Windows, use the project-scoped setup in
+[Claude Code approvals](docs/claude-code-permissions.md) to reduce routine FluencyLoop, editing,
+and read-only Git prompts without granting broad Git or Bash access.
+
+</details>
 
 ### Codex
-
-Install FluencyLoop from the same repository marketplace:
 
 ```bash
 codex plugin marketplace add baokhang83/fluencyloop
 codex plugin add fluencyloop@fluencyloop
 ```
 
-The plugin makes the `$fluencyloop:<stage>` skills available. Its trusted startup hook also
-maintains a managed `fluencyloop` shim at `~/.local/bin/fluencyloop` on macOS, Linux, Git Bash,
-and WSL. The shim follows the installed plugin runtime; it is not a separate global installation.
+Use the `$fluencyloop:<stage>` skills shown above. The plugin maintains its own `fluencyloop`
+command shim on macOS, Linux, Git Bash, and WSL; no separate runtime installation is required.
 
-Codex will ask you to review FluencyLoop's startup hook once. Approve it from `/hooks` to enable
-automatic updates. From then on, at the start of each new session, the hook checks only
-FluencyLoop's marketplace. If an update is available, it installs it for the *next* session—it
-never changes FluencyLoop while you are working, and it never updates another plugin.
+<details>
+<summary>Codex updates</summary>
 
-## Quickstart
+Codex asks you to review FluencyLoop's startup hook once. Approve it from `/hooks` to enable
+automatic updates. Each new session checks only FluencyLoop's marketplace and, when an update is
+available, installs it for the next session without changing the active one.
 
-Inside the project directory you want to work on, invoke the workflow stage in your installed
-agent. The plan and feature stages initialise Git and `.fluencyloop/` automatically when needed;
-they do not create an initial commit.
+</details>
 
-| Goal | Claude Code | Codex |
-|------|-------------|-------|
-| Plan a large initiative — architecture + roadmap | `/fluencyloop:plan <what to plan>` | `$fluencyloop:plan <what to plan>` |
-| Build a normal-sized feature — design → build + teach | `/fluencyloop:feature <what to build>` | `$fluencyloop:feature <what to build>` |
-| Assemble the feature's PR view | `/fluencyloop:review` | `$fluencyloop:review` |
-| Document merged work that skipped the loop | `/fluencyloop:backfill` | `$fluencyloop:backfill` |
+## Requirements
 
-Use **plan** only for work too large for one feature branch. It creates an architecture + roadmap
-under `docs/fluencyloop/plans/`; build each roadmap item as a feature. A feature creates its
-branch, design, and session journal under `docs/fluencyloop/`, teaches the *why* of each real
-decision at the slice boundary, and records it. Review assembles the reviewer-facing view from
-those journals, because a feature *is* its branch.
+FluencyLoop requires [Claude Code](https://claude.com/claude-code) or
+[Codex](https://developers.openai.com/codex/), `git`, and either Bash on macOS/Linux/Git Bash/WSL
+or PowerShell (`pwsh`) on native Windows.
 
-### Calibration
+## More detail
 
-Calibration controls **how deeply** FluencyLoop explains a decision, never which technical choice
-it makes. Your private `~/.fluencyloop/calibration.md` records domain levels—`fluent`,
-`familiar`, `learning`, or `new`. During a feature, demonstrated engagement is appended to a
-private ledger; `fluencyloop calibration compact` turns repeated signals into deterministic level
-changes. The committed session records the work and its rationale, not a judgment about a person.
-See [the calibration and privacy rationale](MANIFESTO.md#calibration-is-private-and-deterministic).
-
-### Efficient by design
-
-FluencyLoop keeps the agent's context focused. Scripts create files, calculate branch ranges, and
-assemble slice context; the agent spends its effort on design, decisions, and teaching. It reads a
-slice diff rather than whole files, asks only what the calibration profile does not settle, and
-records rationale at the moment it is still grounded in the change. See [the efficiency
-principle](MANIFESTO.md#efficiency-is-a-product-principle).
-
-The **skills** carry the interactive, calibrated behaviour (teaching at slice boundaries,
-one-question-at-a-time constitution authoring). The **scripts** carry the deterministic
-plumbing (branches, files, PR-view assembly) so the journal is reliable rather than
-left to the model.
-
-## Layout
-
-```
-.claude-plugin/             Claude Code plugin manifest + self-hosted marketplace catalog
-.agents/plugins/            Codex marketplace catalog
-claude-skills/              Claude-only aliases: `plan`, `feature`, `review`, `backfill`
-bin/                        the plugin's bundled `fluencyloop` launchers
-plugins/fluencyloop/        Codex plugin and canonical runtime: CLI (bash + PowerShell), skills,
-                            scripts, templates
-tests/                      bats suite (bash) + tests/powershell Pester suite (parity)
-MANIFESTO.md                the why
-```
-
-## Key rules baked in
-
-- **A feature is a branch** (`feature/<slug>`) — the PR view assembles itself, no manual
-  linking; session files store no commit SHAs.
-- **Never gate.** Flag exposure and unverified trust; never block building or merging.
-- **Sessions describe the work, not the person.** The `trust:` marker is about a decision's
-  verification state, never an author's competence.
-- **Calibrated to you, privately.** The loop probes what you know, adapts explanation depth as it
-  goes, and builds a per-developer knowledge base in `~/.fluencyloop/` — global, never committed.
-  Person-specific knowledge lives *only* there; the repo journal stays person-neutral.
+Read [MANIFESTO.md](MANIFESTO.md) for the product principles, calibration and privacy model, and
+the boundary between deterministic tooling and agent reasoning. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for the repository layout, test commands, and distribution notes.
 
 ## License
 
 [Apache-2.0](LICENSE).
-
----
-
-⭐ **If the "fluency *during* code" framing resonates, star the repo** — it's the clearest
-signal this direction is worth pushing on.
