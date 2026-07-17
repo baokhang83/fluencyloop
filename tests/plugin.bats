@@ -80,13 +80,22 @@ assert "conversation pause, not a build or merge gate" in codex_feature_text
 assert "request sandbox elevation before its first" in codex_feature_text
 assert "never make explanation sound like a burden" in codex_feature_text
 assert "I am not comfortable" in codex_feature_text
-assert "standalone comprehension question and wait" in codex_feature_text
+assert "Understanding checks are self-report, never quizzes" in codex_feature_text
+assert "Do you understand this explanation, or should I clarify anything?" in codex_feature_text
+assert "topic-specific question" in codex_feature_text
+assert "standalone comprehension question" not in codex_feature_text
 assert "do not run another implementation" in codex_feature_text
-for feature_text in [feature_text, codex_feature_text]:
-    assert "Levels and signals are different vocabularies" in feature_text
-    assert "never valid signal types" in feature_text
-    assert "never run `fluencyloop calibration signal <dimension> learning` or `new`" in feature_text
-    assert "Only that later response can justify a signal" in feature_text
+for feature_skill_text in [feature_text, codex_feature_text]:
+    assert "Understanding checks are self-report, never quizzes" in feature_skill_text
+    assert "Do you understand this explanation, or should I clarify anything?" in feature_skill_text
+    assert 'explaining it "in your own' in feature_skill_text
+    assert "topic-specific question" in feature_skill_text
+    assert "standalone comprehension question" not in feature_skill_text
+    assert "Levels and signals are different vocabularies" in feature_skill_text
+    assert "never valid signal types" in feature_skill_text
+    assert "never run `fluencyloop calibration signal <dimension> learning` or `new`" in feature_skill_text
+    assert "Only that later response can justify a signal" in feature_skill_text
+claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "### Codex architecture teaching gate - before decomposition" in codex_plan_text
 assert "before writing the task breakdown, roadmap" in codex_plan_text
@@ -95,7 +104,17 @@ assert "without explaining the architecture in the conversation" in codex_plan_t
 assert "request sandbox elevation before its first" in codex_plan_text
 assert "conversation pause, not a build or merge gate" in codex_plan_text
 assert "comfortable\" as `new`" in codex_plan_text
-assert "standalone comprehension" in codex_plan_text
+assert "direct self-report" in codex_plan_text
+assert "topic-specific question" in codex_plan_text
+assert "standalone comprehension" not in codex_plan_text
+for plan_skill_text in [claude_plan_text, codex_plan_text]:
+    assert "Understanding checks are self-report, never quizzes" in plan_skill_text
+    assert "Do you understand this" in plan_skill_text
+    assert "explanation, or should I clarify anything?" in plan_skill_text
+    assert "self-report-only" in plan_skill_text
+    assert 'explaining it "in your own words,"' in plan_skill_text
+    assert "topic-specific question" in plan_skill_text
+    assert "standalone comprehension" not in plan_skill_text
 codex_backfill_text = read_text(dist / "skills" / "backfill" / "SKILL.md")
 assert "## 0. Preconditions" in codex_backfill_text
 assert "state required by `fluencyloop feature`" in codex_backfill_text
@@ -122,6 +141,10 @@ readme = read_text(root / "README.md")
 assert "**Enable auto-update**" in readme
 assert "`/reload-plugins` to activate it in the current session" in readme
 assert "claude-code-permissions.md" in readme
+manifesto = read_text(root / "MANIFESTO.md")
+assert "An understanding check is narrower still" in manifesto
+assert "the check into a quiz" in manifesto
+assert "topic-specific question" in manifesto
 permissions_guide = read_text(root / "docs" / "claude-code-permissions.md")
 assert "Bash(*.claude/plugins/cache/fluencyloop/fluencyloop/*/bin/fluencyloop *)" in permissions_guide
 assert "Bash(git *)" in permissions_guide

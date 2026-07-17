@@ -109,6 +109,12 @@ tool, so it is asked as a concise standalone chat prompt. In either surface, the
 the answer before making the dependent change. A real choice must not disappear inside explanatory
 prose.
 
+An understanding check is narrower still: it asks the developer to self-report whether the
+explanation is understood or needs clarification, and trusts that answer. FluencyLoop never turns
+the check into a quiz by asking the developer to restate a mechanism, predict behavior, select an
+answer, or respond to another topic-specific question. Familiarity probes before teaching and real
+technical choices remain valid, but they are not tests of what the developer learned.
+
 ## Efficiency is a product principle
 
 FluencyLoop is intentionally split between deterministic scripts and interactive skills:

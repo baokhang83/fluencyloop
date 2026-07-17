@@ -28,6 +28,14 @@ question concisely in chat, then **stop**. Do not implement, write the decision,
 next step until the developer has answered. A chat question is a portability fallback, not
 permission to bury a real question in prose.
 
+**Understanding checks are self-report, never quizzes.** After teaching, the only permitted check
+is to ask the developer directly whether they understand and whether anything needs clarification:
+*"Do you understand this explanation, or should I clarify anything?"* Then trust their answer.
+Never ask them to prove understanding by restating the mechanism, explaining it "in your own
+words," predicting behavior, selecting an answer, or answering any other topic-specific question.
+A pre-teaching familiarity probe and a real technical choice are still valid questions, but neither
+may be repurposed as verification of what the developer learned.
+
 ## 0. Preconditions
 
 Run the bundled `fluencyloop check --json` and parse its output. If `git_repo` or `fluency` is
@@ -94,7 +102,7 @@ authorship; flag the honest tradeoff and let them choose.
 you're touching does **not** mean they understand it. AI-generated / vibecoded code is
 exactly where the author is *least* fluent: they typed the intent, the model made the
 decisions. Git authorship tells you who committed it, not who can reason about it. So the
-default is to *explain how it works and check understanding*, not to skip on the basis of
+default is to *explain how it works and ask whether it is understood*, not to skip on the basis of
 "they own this file." Fluency comes from being taught *through* the code (this loop), not
 from having produced it. Only the calibration profile or the developer's demonstrated
 engagement — never authorship — justifies skipping.
@@ -196,7 +204,7 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    |---------------------|------------------------------|
    | `fluent`   | **name it and move on** — state the call in a clause; no *why* unless they ask. |
    | `familiar` | **one-line why** — the decision plus its single load-bearing reason; don't unpack. |
-   | `learning` | **unpack + check understanding** — the why *and* the rejected alternative, then pause and confirm it landed. |
+   | `learning` | **unpack + ask whether it is understood** — the why *and* the rejected alternative, then use the direct self-report check and wait. |
    | `new`      | **unpack, slow down, offer to go deeper** — build from fundamentals at a gentler pace, and explicitly offer to dig further. |
 
    A decision spanning several domains takes the depth of its **least-known** one. This mapping is
@@ -215,10 +223,10 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
      uses `AskUserQuestion` in Claude Code (one tab per decision/question). In Codex, ask it as a
      standalone, concise chat prompt and **wait** before continuing. (A rhetorical aside — *"if
      that feels shaky, say so"* — is not a real question; those stay inline.)
-   - **Pause and check understanding** *(where the policy calls for it — `learning` / `new`)* —
-     ask if it lands, and explicitly offer to go deeper ("want me to unpack how X works, or is
-     this enough to trust it?"). Then *wait* for the answer before moving on. A monologue that
-     ends in "see the journal" is the failure mode.
+   - **Pause and ask whether it is understood** *(where the policy calls for it — `learning` /
+     `new`)* — use only the direct self-report check above and *wait* for the answer before moving
+     on. If the developer says no, ask what needs clarification and explain it; never test them
+     with a topic-specific question. A monologue that ends in "see the journal" is the failure mode.
    - **Calibrate continuously (see §0), but let the policy set depth.** Hold a live estimate of
      what they know and *update it every exchange*: a quick confirmation is evidence of fluency
      (log a `wave`, §3.4); a surprised "wait, why?" or a follow-up is evidence it's shaky (log a
@@ -281,8 +289,9 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    particular, never run `fluencyloop calibration signal <dimension> learning` or `new`.
 
    For `learning` and `new`, first give the required substantive explanation and use
-   `AskUserQuestion` to check understanding; then **wait**. Do not journal, run calibration, or
-   continue implementation automatically. Only that later response can justify a signal.
+   `AskUserQuestion` for the direct self-report understanding check; then **wait**. Do not journal,
+   run calibration, or continue implementation automatically.
+   Only that later response can justify a signal.
    Appending is the whole job — trivial, and honest (it records what actually happened, not a
    guess). The deterministic `fluencyloop calibration compact` (run at the next feature's §0)
    rolls repeated signals into level changes: promote on repeated wave-throughs, demote on

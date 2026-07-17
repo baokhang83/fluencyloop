@@ -30,6 +30,14 @@ question concisely in chat, then **stop**. Do not implement, write the decision,
 next step until the developer has answered. A chat question is a portability fallback, not
 permission to bury a real question in prose.
 
+**Understanding checks are self-report, never quizzes.** After teaching, the only permitted check
+is to ask the developer directly whether they understand and whether anything needs clarification:
+*"Do you understand this explanation, or should I clarify anything?"* Then trust their answer.
+Never ask them to prove understanding by restating the mechanism, explaining it "in your own
+words," predicting behavior, selecting an answer, or answering any other topic-specific question.
+A pre-teaching familiarity probe and a real technical choice are still valid questions, but neither
+may be repurposed as verification of what the developer learned.
+
 ## 0. Preconditions
 
 Run `fluencyloop check --json`. If `git_repo` or `fluency` is false, run `fluencyloop init --json`
@@ -97,7 +105,7 @@ authorship; flag the honest tradeoff and let them choose.
 you're touching does **not** mean they understand it. AI-generated / vibecoded code is
 exactly where the author is *least* fluent: they typed the intent, the model made the
 decisions. Git authorship tells you who committed it, not who can reason about it. So the
-default is to *explain how it works and check understanding*, not to skip on the basis of
+default is to *explain how it works and ask whether it is understood*, not to skip on the basis of
 "they own this file." Fluency comes from being taught *through* the code (this loop), not
 from having produced it. Only the calibration profile or the developer's demonstrated
 engagement — never authorship — justifies skipping.
@@ -151,9 +159,9 @@ Codex, not a status update:
 2. Set depth from calibration. If the relevant domain is absent from calibration, it is
    **unknown**: ask a neutral standalone probe and stop. Treat an answer such as "I am not
    comfortable" as `new`. For `learning` and `new`, give a substantive explanation of the
-   building blocks, the flow, the choice, and its rejected alternative; then ask a standalone
-   comprehension question and wait. Do not implement, birth the constitution, or open a build
-   session until the developer replies.
+   building blocks, the flow, the choice, and its rejected alternative; then ask the direct
+   self-report understanding check and wait. Do not implement, birth the constitution, or open a
+   build session until the developer replies.
 3. For `fluent` or `familiar` domains, the explanation may be brief, but it must still be visible
    before implementation. Persist the same rationale in `design.md` only after that teaching turn.
 
@@ -200,9 +208,9 @@ teaching message**, not a `fluencyloop decision` command. This is a hard orderin
 2. Use the depth policy below. If the relevant domain is absent from calibration, it is **unknown**:
    probe it neutrally in a concise standalone chat question and stop. Treat an answer such as "I
    am not comfortable" as `new`. For `learning` and `new`, give a substantive explanation of the
-   building blocks, the flow, the choice, and its rejected alternative; then ask a standalone
-   comprehension question and wait. Do not journal the decision or continue building until the
-   developer replies.
+   building blocks, the flow, the choice, and its rejected alternative; then ask the direct
+   self-report understanding check and wait. Do not journal the decision or continue building
+   until the developer replies.
 3. After a `fluent` or `familiar` teaching turn, journal the same rationale. Never write the
    journal first and substitute it for the conversation.
 4. Log a calibration signal only from a real developer response. No reply is not a `wave`; omit
@@ -241,8 +249,8 @@ visible; the journal is its durable byproduct.
    |---------------------|------------------------------|
    | `fluent`   | **name it and move on** — state the call in a clause; no *why* unless they ask. |
    | `familiar` | **one-line why** — the decision plus its single load-bearing reason; don't unpack. |
-   | `learning` | **unpack + check understanding** — explain the mechanism, why this code uses it, and the rejected alternative; end with a standalone comprehension question and wait. |
-   | `new`      | **teach from fundamentals + check understanding** — explain the building blocks, flow, project-specific choice, and rejected alternative; end with a standalone comprehension question and wait. |
+   | `learning` | **unpack + ask whether it is understood** — explain the mechanism, why this code uses it, and the rejected alternative; use the direct self-report check and wait. |
+   | `new`      | **teach from fundamentals + ask whether it is understood** — explain the building blocks, flow, project-specific choice, and rejected alternative; use the direct self-report check and wait. |
 
    A decision spanning several domains takes the depth of its **least-known** one. This mapping is
    the payoff of calibration: it stops you *deliberating* about how much to teach (token-cheap) and
@@ -262,11 +270,12 @@ visible; the journal is its durable byproduct.
      uses `AskUserQuestion` in Claude Code (one tab per decision/question). In Codex, ask it as a
      standalone, concise chat prompt and **wait** before continuing. (A rhetorical aside — *"if
      that feels shaky, say so"* — is not a real question; those stay inline.)
-   - **Pause and check understanding** *(where the policy calls for it — `learning` / `new`)* —
-     after the substantive explanation, ask a standalone question such as "Does that make sense?
-     Which part should I unpack before I continue?" Then *stop*: do not run another implementation,
-     journal, calibration, or completion action until the developer answers. A monologue that ends
-     in "see the journal" or "if you want" is the failure mode.
+   - **Pause and ask whether it is understood** *(where the policy calls for it — `learning` /
+     `new`)* — after the substantive explanation, use only the direct self-report check above.
+     Then *stop*: do not run another implementation, journal, calibration, or completion action
+     until the developer answers. If they say no, ask what needs clarification and explain it;
+     never test them with a topic-specific question. A monologue that ends in "see the journal" or
+     "if you want" is the failure mode.
    - **Calibrate continuously (see §0), but let the policy set depth.** Hold a live estimate of
      what they know and *update it every exchange*: a quick confirmation is evidence of fluency
      (log a `wave`, §3.4); a surprised "wait, why?" or a follow-up is evidence it's shaky (log a
@@ -326,8 +335,8 @@ visible; the journal is its durable byproduct.
    the rationale or drove it. If there is no response after teaching, emit no signal. In
    particular, never run `fluencyloop calibration signal <dimension> learning` or `new`.
 
-   For `learning` and `new`, first give the required substantive explanation and ask the standalone
-   comprehension question; then **wait**. Do not journal, run calibration, or continue
+   For `learning` and `new`, first give the required substantive explanation and ask the direct
+   self-report understanding check; then **wait**. Do not journal, run calibration, or continue
    implementation automatically. Only that later response can justify a signal.
    Appending is the whole job — trivial, and honest (it records what actually happened, not a
    guess). The deterministic `fluencyloop calibration compact` (run at the next feature's §0)

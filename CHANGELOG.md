@@ -2,6 +2,16 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.18
+
+### Fixed
+
+- Claude Code and Codex now verify whether teaching landed exclusively through developer
+  self-report: they ask whether the explanation is understood or needs clarification and trust the
+  answer. The skills explicitly prohibit quiz-style checks such as restating a mechanism,
+  explaining it in the developer's own words, predicting behavior, selecting an answer, or
+  responding to another topic-specific question.
+
 ## 0.2.17
 
 ### Fixed

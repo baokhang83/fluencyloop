@@ -29,6 +29,13 @@ For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Co
 no equivalent question-form tool, so ask a concise standalone question in chat and stop; do not
 create issues, write a settled choice, or advance the workflow until the developer answers.
 
+**Understanding checks are self-report, never quizzes.** After teaching, ask only whether the
+developer understands and whether anything needs clarification: *"Do you understand this
+explanation, or should I clarify anything?"* Then trust their answer. Never ask them to prove
+understanding by restating the mechanism, explaining it "in your own words," predicting behavior,
+selecting an answer, or answering any other topic-specific question. Familiarity probes before
+teaching and real technical choices remain valid, but they are not learning verification.
+
 ## 0. Preconditions
 
 Run `fluencyloop check --json`. If `git_repo` or `fluency` is false, run `fluencyloop init --json`
@@ -47,8 +54,9 @@ stub**, this plan is where the constitution is born — see §5.
 **Load the learner's knowledge base** — parse it via `fluencyloop calibration show --json` (a
 `dimension → level` map, level ∈ {`fluent`, `familiar`, `learning`, `new`}; per-developer, global,
 never committed) — to set the depth you explain architectural choices at. Missing is fine.
-Planning is also teaching: the same "teach the why, check understanding, don't lecture" posture
-from `$fluencyloop:feature` applies to the architecture decisions here.
+Planning is also teaching: the same "teach the why, ask whether it is understood, don't lecture"
+posture from `$fluencyloop:feature` applies to the architecture decisions here. Apply the
+self-report-only rule above to every architecture explanation.
 
 Is this actually a plan? If the work fits one branch, skip straight to `$fluencyloop:feature` —
 don't manufacture an initiative. Plans are for chunks that genuinely decompose into several
@@ -103,9 +111,9 @@ This is a conversation pause, not a build or merge gate.
 2. Set depth from calibration. If an architectural domain is absent from calibration, it is
    **unknown**: ask a neutral standalone probe and stop. Treat an answer such as "I am not
    comfortable" as `new`. For `learning` and `new`, explain the building blocks, the system flow,
-   the architectural choice, and its rejected alternative; then ask a standalone comprehension
-   question and wait. Do not decompose the work or write settled architecture choices until the
-   developer replies.
+   the architectural choice, and its rejected alternative; then ask the direct self-report
+   understanding check and wait. Do not decompose the work or write settled architecture choices
+   until the developer replies.
 3. For `fluent` or `familiar` domains, the explanation may be brief, but it must still be visible
    before the plan becomes a task table. Capture the same rationale in `plan.md` only after that
    teaching turn.
