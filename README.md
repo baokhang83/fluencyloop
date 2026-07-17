@@ -10,7 +10,8 @@
 [![Status: alpha](https://img.shields.io/badge/status-alpha-orange)](CONTRIBUTING.md#distribution-roadmap)
 
 **Stay fluent in the code your AI agent writes.** FluencyLoop turns each feature into a documented
-design, a live teaching session, a decision record, and a reviewer-ready summary.
+design, teaches the decisions at your level, tracks the rationale, and produces a reviewer-ready
+summary. A private knowledge base keeps that teaching calibrated across features.
 
 > The code and your fluency in it are produced together, or not at all.
 
@@ -40,12 +41,16 @@ The constitution is a short set of checkable engineering principles for the proj
 from the first real plan or feature and grows when a decision reveals a repeatable stance. Every
 later design and review is checked against it, but it never blocks a conventional merge.
 
-### Knowledge transfer while the code is written
+### Knowledge transfer, taught to your level
 
 FluencyLoop teaches at the moment a meaningful decision is made. It explains the mechanism, the
 reason for the chosen path, and the rejected alternative, then checks that the explanation landed
-before continuing when the topic is unfamiliar. Teaching depth adapts to the developer without
-putting personal knowledge in the repository.
+before continuing when the topic is unfamiliar.
+
+It maintains a private, per-developer knowledge base of domain familiarity and demonstrated
+engagement. That profile carries across projects and features, keeping explanations concise on
+familiar ground and deeper where knowledge is still forming. It is never committed to a project;
+only person-neutral knowledge-transfer notes about the software enter the documentation.
 
 ### Software documentation that follows the code
 
