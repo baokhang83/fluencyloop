@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml/badge.svg)](https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/baokhang83/fluencyloop)](LICENSE)
-[![Top language](https://img.shields.io/github/languages/top/baokhang83/fluencyloop?cacheSeconds=86400)](https://github.com/baokhang83/fluencyloop)
+[![Top language](https://img.shields.io/badge/language-Shell-89e051)](https://github.com/baokhang83/fluencyloop)
 [![Status: beta](https://img.shields.io/badge/status-beta-blue)](CONTRIBUTING.md#project-status)
 
 **Stay fluent in the code your AI agent writes.** FluencyLoop turns each feature into a documented
