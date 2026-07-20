@@ -1,5 +1,12 @@
 <p align="center">
   <img src="https://github.com/user-attachments/assets/e3a04a63-4b68-4f61-ad58-60df8cc67045" alt="FluencyLoop Banner" width="1774" style="max-width: 100%; height: auto;">
+	<a href="https://peerlist.io/baokhang/project/fluencyloop" target="_blank" rel="noreferrer">
+				<img
+					src="https://peerlist.io/api/v1/projects/embed/PRJHOK8PP6PLD6A8EI88JLE8PJDBBE?showUpvote=false&theme=light"
+					alt="FluencyLoop"
+					style="width: auto; height: 72px;"
+				/>
+</a>
 </p>
 
 # FluencyLoop
@@ -7,15 +14,7 @@
 [![CI](https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml/badge.svg)](https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/baokhang83/fluencyloop)](LICENSE)
 [![Top language](https://img.shields.io/github/languages/top/baokhang83/fluencyloop?cacheSeconds=86400)](https://github.com/baokhang83/fluencyloop)
-[![Status: beta](https://img.shields.io/badge/status-beta-blue)](CONTRIBUTING.md#project-status) <a href="https://peerlist.io/baokhang/project/fluencyloop" target="_blank" rel="noreferrer">
-				<img
-					src="https://peerlist.io/api/v1/projects/embed/PRJHOK8PP6PLD6A8EI88JLE8PJDBBE?showUpvote=false&theme=light"
-					alt="FluencyLoop"
-					style="width: auto; height: 72px;"
-				/>
-</a>
-
-
+[![Status: beta](https://img.shields.io/badge/status-beta-blue)](CONTRIBUTING.md#project-status) 
       
 **Stay fluent in the code your AI agent writes.** FluencyLoop turns each feature into a documented
 design, teaches the decisions at your level, tracks the rationale, and produces a reviewer-ready
