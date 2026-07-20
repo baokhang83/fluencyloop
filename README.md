@@ -115,7 +115,6 @@ does not read or change that setting.
 On native Windows, use the project-scoped setup in
 [Claude Code approvals](docs/claude-code-permissions.md) to reduce routine FluencyLoop, editing,
 and read-only Git prompts without granting broad Git or Bash access.
-
 </details>
 
 ### Codex
