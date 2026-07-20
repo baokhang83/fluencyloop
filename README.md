@@ -9,6 +9,14 @@
 [![Top language](https://img.shields.io/github/languages/top/baokhang83/fluencyloop?cacheSeconds=86400)](https://github.com/baokhang83/fluencyloop)
 [![Status: beta](https://img.shields.io/badge/status-beta-blue)](CONTRIBUTING.md#project-status)
 
+<a href="https://peerlist.io/baokhang/project/fluencyloop" target="_blank" rel="noreferrer">
+				<img
+					src="https://peerlist.io/api/v1/projects/embed/PRJHOK8PP6PLD6A8EI88JLE8PJDBBE?showUpvote=false&theme=light"
+					alt="FluencyLoop"
+					style="width: auto; height: 72px;"
+				/>
+</a>
+      
 **Stay fluent in the code your AI agent writes.** FluencyLoop turns each feature into a documented
 design, teaches the decisions at your level, tracks the rationale, and produces a reviewer-ready
 summary. A private knowledge base keeps that teaching calibrated across features.
