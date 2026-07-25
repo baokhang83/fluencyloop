@@ -142,6 +142,13 @@ running. To update by hand, run `codex plugin marketplace upgrade fluencyloop`, 
 
 </details>
 
+## Help shape FluencyLoop
+
+Have you tried FluencyLoop, stopped during setup, or only looked through the workflow? Share where
+you are and what helped or got in the way in
+[the adoption feedback discussion](https://github.com/baokhang83/fluencyloop/discussions/69).
+Critical feedback is especially useful and a one-line response is enough.
+
 ## Requirements
 
 FluencyLoop requires [Claude Code](https://claude.com/claude-code) or
