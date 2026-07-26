@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.21
+
+### Fixed
+
+- The backfill skills for Claude Code and Codex now apply the same GitHub Mermaid label check as
+  plan and feature: a bare semicolon in a sequence arrow label or `Note` is rewritten before the
+  generated `design.md` is committed.
+
 ## 0.2.20
 
 ### Fixed

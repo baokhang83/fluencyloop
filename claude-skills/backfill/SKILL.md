@@ -98,6 +98,12 @@ wasn't the branch you ran this from, correct `base_ref` to the ref your §1 diff
 Sketch the feature's `design.md` diagrams (class + sequence) from the code you just read —
 these are what the briefing renders.
 
+**GitHub's Mermaid parser is strict.** Before committing a backfilled `design.md`, inspect every
+sequence-diagram arrow label and every `Note` for a bare `;`. GitHub treats `;` as a statement
+terminator even inside label text, so `Agent->>Agent: record baseline; guard checksum recursion`
+can fail with `Parse error ... got 'INVALID'`. Rewrite it with a comma, dash, or `<br/>` line
+break, then validate the exact diagram in https://mermaid.live when it was added or changed.
+
 ## 3. Make the reviewer fluent — a rendered briefing
 
 Reconstruction on its own asks the human to rubber-stamp prose. Instead, show them the
