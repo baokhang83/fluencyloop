@@ -39,7 +39,7 @@ Describe 'slice-context.ps1' {
 
     It 'after a journaled session, the slice scopes to changes since it' {
         [System.IO.File]::WriteAllText("$script:repo/app.txt", "a`nb`nc`n")
-        & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' 'add-caching' 'slice one' | Out-Null
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-add-caching' 'slice one' | Out-Null
         git add -A 2>&1 | Out-Null; git commit -q -m 'slice one + journal' 2>&1 | Out-Null
         [System.IO.File]::WriteAllText("$script:repo/app.txt", "a`nb`nc`nd`n")
         $j = Get-FlJson 'slice-context.ps1' '--json'

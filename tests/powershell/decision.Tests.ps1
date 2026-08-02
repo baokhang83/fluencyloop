@@ -10,8 +10,8 @@ Describe 'add-decision.ps1' {
     BeforeEach {
         $script:repo = Initialize-TestRepo
         & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add caching' | Out-Null
-        & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' 'add-caching' 'wire the cache' | Out-Null
-        $script:session = "$script:repo/docs/fluencyloop/features/add-caching/sessions/wire-the-cache.md"
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-add-caching' 'wire the cache' | Out-Null
+        $script:session = "$script:repo/docs/fluencyloop/features/001-add-caching/sessions/001-wire-the-cache.md"
     }
 
     It 'appends a fully-formatted block, session resolved from state' {

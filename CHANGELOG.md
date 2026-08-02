@@ -2,6 +2,22 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.22
+
+### Added
+
+- `docs/fluencyloop/` now gets a generated `README.md` index (`fluencyloop index`) listing every
+  plan and feature with its status (in progress / shipped), linking features back to the plan that
+  spawned them.
+- Feature dirs now carry a numeric prefix (`docs/fluencyloop/features/<prefix>-<slug>`) instead of
+  a flat, unordered pile of bare slugs — a ticket id (`--prefix`), a PR number (assigned after the
+  fact once one exists, via the new `fluencyloop rename-feature-dir --pr <n>`), or a zero-padded
+  sequential counter, in that order of preference. The `feature` skill now asks once, per developer,
+  which mode to use and remembers the choice in `~/.fluencyloop/preferences.md`.
+- Sessions within a feature are similarly numbered so `sessions/` sorts in build order.
+- `design.md` now records its own `branch:` (and, when declared from a plan, `plan:`) line, so a
+  feature's docs dir can be renamed independently of its branch name.
+
 ## 0.2.21
 
 ### Fixed

@@ -191,8 +191,8 @@ PY
   run bash "$REPO_ROOT/bin/fluencyloop" feature --json "write documentation"
   [ "$status" -eq 0 ]
   [[ "$output" == *'"design"'* ]]
-  [ -f "$TESTREPO/docs/fluencyloop/features/write-documentation/design.md" ]
-  [ ! -e "$TESTREPO/.fluencyloop/features/write-documentation" ]
+  [ -f "$TESTREPO/docs/fluencyloop/features/001-write-documentation/design.md" ]
+  [ ! -e "$TESTREPO/.fluencyloop/features/001-write-documentation" ]
 }
 
 @test "Codex plugin bundles the CLI beside its skills" {

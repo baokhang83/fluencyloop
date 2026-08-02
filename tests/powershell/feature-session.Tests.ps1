@@ -10,10 +10,10 @@ Describe 'new-feature.ps1 + new-session.ps1' {
     It 'new-feature creates the branch, design stub, and state (stage: design)' {
         $script:repo = Initialize-TestRepo
         $j = Get-FlJson 'new-feature.ps1' '--json' 'add rate limiting'
-        $j.slug | Should -Be 'add-rate-limiting'
-        $j.branch | Should -Be 'feature/add-rate-limiting'
-        (git rev-parse --abbrev-ref HEAD) | Should -Be 'feature/add-rate-limiting'
-        "$script:repo/docs/fluencyloop/features/add-rate-limiting/design.md" | Should -Exist
+        $j.slug | Should -Be '001-add-rate-limiting'
+        $j.branch | Should -Be 'feature/001-add-rate-limiting'
+        (git rev-parse --abbrev-ref HEAD) | Should -Be 'feature/001-add-rate-limiting'
+        "$script:repo/docs/fluencyloop/features/001-add-rate-limiting/design.md" | Should -Exist
         $s = Get-Content -Raw "$script:repo/.fluencyloop/state.json" | ConvertFrom-Json
         $s.stage | Should -Be 'design'
         $s.base_ref | Should -Be 'main'
@@ -35,11 +35,11 @@ Describe 'new-feature.ps1 + new-session.ps1' {
     It 'new-session moves state to build and records the last session' {
         $script:repo = Initialize-TestRepo
         & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add caching' | Out-Null
-        $j = Get-FlJson 'new-session.ps1' '--json' '--slug' 'add-caching' 'wire the LRU cache'
-        "$script:repo/docs/fluencyloop/features/add-caching/sessions/wire-the-lru-cache.md" | Should -Exist
+        $j = Get-FlJson 'new-session.ps1' '--json' '--slug' '001-add-caching' 'wire the LRU cache'
+        "$script:repo/docs/fluencyloop/features/001-add-caching/sessions/001-wire-the-lru-cache.md" | Should -Exist
         $s = Get-Content -Raw "$script:repo/.fluencyloop/state.json" | ConvertFrom-Json
         $s.stage | Should -Be 'build'
-        $s.last_session | Should -Be 'docs/fluencyloop/features/add-caching/sessions/wire-the-lru-cache.md'
+        $s.last_session | Should -Be 'docs/fluencyloop/features/001-add-caching/sessions/001-wire-the-lru-cache.md'
         $s.base_ref | Should -Be 'main'
     }
 

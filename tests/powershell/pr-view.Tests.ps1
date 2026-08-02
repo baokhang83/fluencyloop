@@ -23,7 +23,7 @@ Describe 'assemble-pr-view.ps1' {
     }
 
     It 'lists journaled sessions' {
-        & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' 'add-search' 'index the docs' | Out-Null
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-add-search' 'index the docs' | Out-Null
         (Get-FlJson 'assemble-pr-view.ps1' '--json').session_count | Should -Be 1
     }
 

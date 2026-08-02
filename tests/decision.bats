@@ -6,8 +6,8 @@ load test_helper
 setup() {
     setup_initialized_repo
     bash "$BIN/new-feature.sh" "add caching" >/dev/null
-    bash "$BIN/new-session.sh" --slug add-caching "wire the cache" >/dev/null
-    SESSION="$TESTREPO/docs/fluencyloop/features/add-caching/sessions/wire-the-cache.md"
+    bash "$BIN/new-session.sh" --slug 001-add-caching "wire the cache" >/dev/null
+    SESSION="$TESTREPO/docs/fluencyloop/features/001-add-caching/sessions/001-wire-the-cache.md"
 }
 
 dec() { bash "$BIN/add-decision.sh" "$@"; }

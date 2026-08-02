@@ -15,7 +15,7 @@ load test_helper
     bash "$BIN/new-feature.sh" "add search" >/dev/null
     run bash "$BIN/check.sh" --json
     [ "$status" -eq 0 ]
-    [ "$(echo "$output" | json_field feature)" = "add-search" ]
+    [ "$(echo "$output" | json_field feature)" = "001-add-search" ]
     [ "$(echo "$output" | json_field constitution)" = "empty" ]
 }
 
@@ -36,7 +36,7 @@ load test_helper
     git add -A && git commit -q -m "scaffold, no session"
     [ "$(bash "$BIN/check.sh" --json | json_field unjournaled_commits)" = "1" ]
 
-    bash "$BIN/new-session.sh" --slug add-search "index" >/dev/null
+    bash "$BIN/new-session.sh" --slug 001-add-search "index" >/dev/null
     git add -A && git commit -q -m "journal"
     [ "$(bash "$BIN/check.sh" --json | json_field unjournaled_commits)" = "0" ]
 

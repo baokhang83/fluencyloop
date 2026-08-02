@@ -50,6 +50,15 @@ function FlSlugify([string]$s) {
     return $x.Trim('-')
 }
 
+# prefix + intent -> "<slugified-prefix>-<slugified-intent>", capped at the 60-char slugify
+# ceiling. A ticket id, PR number, or sequential counter always becomes the leading segment of
+# the feature dir name (e.g. "042-adding-rate-limiting").
+function FlNumberedSlug([string]$prefix, [string]$intent) {
+    $x = "$(FlSlugify $prefix)-$(FlSlugify $intent)"
+    if ($x.Length -gt 60) { $x = $x.Substring(0, 60) }
+    return $x.TrimEnd('-')
+}
+
 function FlToday { (Get-Date).ToString('yyyy-MM-dd') }
 
 # Minimal JSON string escaper (quotes, backslashes, newlines) — matches common.sh json_escape.
@@ -83,7 +92,15 @@ function FlOut([string]$s) { [Console]::Out.Write($s + "`n") }
 
 function FlBranchFor([string]$slug) { "feature/$slug" }
 
+# The dir name can drift from the branch slug (e.g. renamed to carry a PR number once one
+# exists — see rename-feature-dir.ps1), so for the *active* feature this checks state.json's
+# `feature_dir` override before falling back to the computed path.
 function FlFeaturePath([string]$slug) {
+    $stateFeature = FlStateGet 'feature'
+    if ($stateFeature -and $stateFeature -eq $slug) {
+        $stored = FlStateGet 'feature_dir'
+        if ($stored) { return "$(FlRepoRoot)/$stored" }
+    }
     $new = "$(FlDocsDir)/features/$slug"
     $old = "$(FlFluencyDir)/features/$slug"
     if (-not (Test-Path -LiteralPath $new -PathType Container) -and (Test-Path -LiteralPath $old -PathType Container)) { return $old }
@@ -91,6 +108,29 @@ function FlFeaturePath([string]$slug) {
 }
 
 function FlPlanPath([string]$slug) { "$(FlDocsDir)/plans/$slug" }
+
+# --- feature numbering ------------------------------------------------------
+# Every feature dir is prefixed so `features/` sorts and scans instead of reading as a flat,
+# unordered pile: a ticket id, a PR number (patched in after the fact — see
+# rename-feature-dir.ps1), or, absent either, a zero-padded sequential counter.
+function FlNextFeatureNumber {
+    $dir = "$(FlDocsDir)/features"
+    $n = 0
+    if (Test-Path -LiteralPath $dir -PathType Container) {
+        $n = @(Get-ChildItem -LiteralPath $dir -Directory -ErrorAction SilentlyContinue).Count
+    }
+    return ('{0:d3}' -f ($n + 1))
+}
+
+# Next sequential session number within a feature (zero-padded), so sessions/ sorts in build
+# order instead of alphabetically by intent slug.
+function FlNextSessionNumber([string]$dir) {
+    $n = 0
+    if (Test-Path -LiteralPath $dir -PathType Container) {
+        $n = @(Get-ChildItem -LiteralPath $dir -Filter '*.md' -File -ErrorAction SilentlyContinue).Count
+    }
+    return ('{0:d3}' -f ($n + 1))
+}
 
 function FlCurrentFeatureSlug {
     $b = & git rev-parse --abbrev-ref HEAD 2>$null

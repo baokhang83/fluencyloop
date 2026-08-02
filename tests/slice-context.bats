@@ -47,7 +47,7 @@ assert not any(".fluencyloop" in p or "docs/fluencyloop" in p for p in paths+d["
 
 @test "after a journaled session, the slice scopes to changes since it" {
     printf 'a\nb\nc\n' > app.txt
-    bash "$BIN/new-session.sh" --slug add-caching "slice one" >/dev/null
+    bash "$BIN/new-session.sh" --slug 001-add-caching "slice one" >/dev/null
     git add -A && git commit -q -m "slice one + journal"
     printf 'a\nb\nc\nd\n' > app.txt          # second slice
     [ "$(json | python3 -c 'import json,sys;print(json.load(sys.stdin)["base_kind"])')" = "last-session" ]

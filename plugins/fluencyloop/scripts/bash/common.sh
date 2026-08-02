@@ -61,6 +61,13 @@ slugify() {
         | sed -E 's/-+$//'
 }
 
+# prefix + intent -> "<slugified-prefix>-<slugified-intent>", capped at the same 60-char
+# ceiling as slugify. Used so a ticket id, PR number, or sequential counter always reads as
+# the leading segment of the feature dir name (e.g. "042-adding-rate-limiting").
+numbered_slug() {
+    printf '%s-%s' "$(slugify "$1")" "$(slugify "$2")" | cut -c1-60 | sed -E 's/-+$//'
+}
+
 # Today, ISO date.
 today() { date +%Y-%m-%d; }
 
@@ -91,8 +98,20 @@ branch_for()      { printf 'feature/%s' "$1"; }         # slug -> branch name
 # slug -> feature dir. Lives under docs_dir now. Back-compat: if a feature still sits at the
 # pre-refactor location (.fluencyloop/features/<slug>) and hasn't been migrated, resolve to
 # that so existing repos keep working until they run `fluencyloop migrate`.
+#
+# The dir name can drift from the branch slug (e.g. renamed to carry a PR number once one
+# exists — see rename-feature-dir.sh), so for the *active* feature this checks state.json's
+# `feature_dir` override before falling back to the computed path.
 feature_path() {
-    local slug="$1" new old
+    local slug="$1" new old state_feature stored
+    state_feature="$(state_get feature)"
+    if [ -n "$state_feature" ] && [ "$state_feature" = "$slug" ]; then
+        stored="$(state_get feature_dir)"
+        if [ -n "$stored" ]; then
+            printf '%s/%s' "$(repo_root)" "$stored"
+            return
+        fi
+    fi
     new="$(docs_dir)/features/$slug"
     old="$(fluency_dir)/features/$slug"
     if [ ! -d "$new" ] && [ -d "$old" ]; then
@@ -105,6 +124,33 @@ feature_path() {
 # slug -> plan dir. A plan is an initiative that spawns several features; it is a committed
 # doc (no dedicated branch), and lives under docs_dir alongside features.
 plan_path() { printf '%s/plans/%s' "$(docs_dir)" "$1"; }
+
+# --- feature numbering ------------------------------------------------------
+# Every feature dir is prefixed so `features/` sorts and scans instead of reading as a flat,
+# unordered pile: a ticket id, a PR number (patched in after the fact — see
+# rename-feature-dir.sh), or, absent either, a zero-padded sequential counter. This is the
+# fallback used whenever the caller doesn't supply an explicit --prefix.
+next_feature_number() {
+    local dir n
+    dir="$(docs_dir)/features"
+    n=0
+    if [ -d "$dir" ]; then
+        n="$(find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
+    fi
+    printf '%03d' "$((n + 1))"
+}
+
+# Next sequential session number within a feature (zero-padded), so sessions/ sorts in build
+# order instead of alphabetically by intent slug.
+next_session_number() {
+    local dir n
+    dir="$1"
+    n=0
+    if [ -d "$dir" ]; then
+        n="$(find "$dir" -mindepth 1 -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+    fi
+    printf '%03d' "$((n + 1))"
+}
 
 # The active feature slug, derived from the current branch (empty if not on one).
 current_feature_slug() {

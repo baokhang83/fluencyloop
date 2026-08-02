@@ -25,8 +25,8 @@ setup() { setup_repo; }
 
     run bash "$BIN/new-feature.sh" --json "first feature"
     [ "$status" -eq 0 ]
-    [ "$(git -C "$TESTREPO" branch --show-current)" = "feature/first-feature" ]
-    [ -f "$TESTREPO/docs/fluencyloop/features/first-feature/design.md" ]
+    [ "$(git -C "$TESTREPO" branch --show-current)" = "feature/001-first-feature" ]
+    [ -f "$TESTREPO/docs/fluencyloop/features/001-first-feature/design.md" ]
     [ "$(cat "$TESTREPO/app.txt")" = "existing project file" ]
 }
 

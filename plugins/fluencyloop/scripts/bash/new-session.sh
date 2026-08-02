@@ -44,7 +44,8 @@ if [ -z "$INTENT" ]; then
     exit 1
 fi
 
-SESSION_SLUG="$(slugify "$INTENT")"
+# Numbered so sessions/ sorts in build order at a glance, instead of alphabetically by intent.
+SESSION_SLUG="$(numbered_slug "$(next_session_number "$FEATURE/sessions")" "$INTENT")"
 SESSION="$FEATURE/sessions/$SESSION_SLUG.md"
 
 CREATED=false
@@ -59,7 +60,8 @@ if [ ! -f "$SESSION" ]; then
 fi
 
 # Update loop state: opening a session moves the feature to the build stage and points at the
-# current session file. Preserve the base ref recorded when the feature was declared.
+# current session file. write_state replaces the whole file, so carry forward every field, not
+# just the ones this script cares about (feature_dir/plan are set by new-feature.sh).
 BASE_REF="$(state_get base_ref)"; [ -z "$BASE_REF" ] && BASE_REF="main"
 write_state \
     feature "$FEATURE_SLUG" \
@@ -67,6 +69,8 @@ write_state \
     stage "build" \
     last_session "$(repo_rel "$SESSION")" \
     base_ref "$BASE_REF" \
+    feature_dir "$(state_get feature_dir)" \
+    plan "$(state_get plan)" \
     updated "$(today)"
 STATE="$(state_path)"
 

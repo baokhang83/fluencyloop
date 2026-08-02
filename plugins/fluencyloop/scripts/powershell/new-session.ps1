@@ -34,7 +34,8 @@ if (-not $intent) {
     exit 1
 }
 
-$sessionSlug = FlSlugify $intent
+# Numbered so sessions/ sorts in build order at a glance, instead of alphabetically by intent.
+$sessionSlug = FlNumberedSlug (FlNextSessionNumber "$feature/sessions") $intent
 $session = "$feature/sessions/$sessionSlug.md"
 
 $created = 'false'
@@ -46,9 +47,12 @@ if (-not (Test-Path -LiteralPath $session)) {
     $created = 'true'
 }
 
+# write_state replaces the whole file, so carry forward every field, not just the ones this
+# script cares about (feature_dir/plan are set by new-feature.ps1).
 $baseRef = FlStateGet 'base_ref'; if (-not $baseRef) { $baseRef = 'main' }
 FlWriteState @('feature', $featureSlug, 'branch', (FlBranchFor $featureSlug), 'stage', 'build',
-    'last_session', (FlRepoRel $session), 'base_ref', $baseRef, 'updated', (FlToday))
+    'last_session', (FlRepoRel $session), 'base_ref', $baseRef,
+    'feature_dir', (FlStateGet 'feature_dir'), 'plan', (FlStateGet 'plan'), 'updated', (FlToday))
 $state = FlStatePath
 
 if ($jsonMode) {

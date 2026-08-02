@@ -22,7 +22,7 @@ setup() {
 }
 
 @test "assemble-pr-view lists journaled sessions" {
-    bash "$BIN/new-session.sh" --slug add-search "index the docs" >/dev/null
+    bash "$BIN/new-session.sh" --slug 001-add-search "index the docs" >/dev/null
     run bash "$BIN/assemble-pr-view.sh" --json
     [ "$status" -eq 0 ]
     echo "$output" | python3 -c "import json,sys;d=json.load(sys.stdin);assert d['session_count']==1,d"

@@ -37,6 +37,8 @@ if (-not (Test-Path -LiteralPath $plan)) {
     $created = 'true'
 }
 
+& "$PSScriptRoot/index.ps1" *> $null
+
 if ($jsonMode) {
     FlOut (FlEmitJson @('slug', $slug, 'intent', $intent, 'plan_dir', $planDir, 'plan', $plan, 'created', $created))
 } else {

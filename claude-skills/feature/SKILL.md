@@ -69,10 +69,11 @@ block on it.
 **Load the learner's preferences.** Also read `~/.fluencyloop/preferences.md` — a sibling to
 `calibration.md` (global, per-developer, **never committed**) that records recurring *workflow*
 choices already settled once, so you never re-ask them — e.g. the completion hand-off (commit +
-push + open the PR vs. hand off manually, §4) and `gh-setup` (whether to set up the `gh` CLI,
-offered once when `gh` is missing so the loop can automate PRs/issues). Honor whatever it records
-without re-asking. If it's missing, that's fine — you'll create it the first time a recurring
-choice comes up.
+push + open the PR vs. hand off manually, §4), `gh-setup` (whether to set up the `gh` CLI, offered
+once when `gh` is missing so the loop can automate PRs/issues), and `feature-numbering` (ticket id
+vs. PR number vs. plain sequential counter for the feature dir's numeric prefix, §1). Honor
+whatever it records without re-asking. If it's missing, that's fine — you'll create it the first
+time a recurring choice comes up.
 
 **Probe before you dive in.** Continuously estimating the learner's knowledge is critical, and it
 starts *before* the first explanation. From the feature's intent and the code, list the domain
@@ -109,10 +110,42 @@ engagement — never authorship — justifies skipping.
 
 ## 1. Declare the feature
 
+**Decide the feature-numbering mode — settled once, like §4's hand-off preference.** Every
+feature dir is prefixed (`<prefix>-<slug>`) so `features/` sorts and scans instead of reading as a
+flat pile. Which prefix to use is a recurring workflow choice, not a per-feature judgment call.
+Check `~/.fluencyloop/preferences.md` (loaded in §0) for `feature-numbering`:
+
+- **A preference is already recorded** — honor it silently, and **do not re-ask**:
+  - `ticket` — ask the developer for *this* feature's specific ticket/story id (e.g. `JIRA-1234`)
+    and pass it as `--prefix "<id>"`.
+  - `pr` — declare with no `--prefix` (the sequential fallback numbers it for now); once the PR is
+    opened in §4, run `fluencyloop rename-feature-dir --json --pr <number>` to swap the dir to
+    carry the real PR number. The branch name never changes — only the docs dir.
+  - `sequential` — declare with no `--prefix`; the built-in zero-padded counter handles it.
+- **No preference yet (this is the first feature)** — ask **once**, via the delivery rule in
+  "Question delivery" above, in this order:
+  1. *"Does this feature track a story or ticket number (e.g. a JIRA id)?"* — **Yes, use ticket
+     numbers** / **No**. On yes, record `feature-numbering: ticket`, then ask for *this* feature's
+     specific id and pass `--prefix "<id>"`.
+  2. If no, and only if you can open GitHub PRs here (`gh` installed and authed — same check as
+     §4): *"Use the PR number as the numbering prefix instead?"* — note plainly that the PR number
+     isn't known until the PR exists, so the dir gets renamed afterward. **Yes, number by PR**
+     *(the dir gets renamed once the PR opens)* / **No, use sequential numbers**. On yes, record
+     `feature-numbering: pr` and proceed exactly as the `pr` branch above (declare with no
+     `--prefix` now; rename after the PR opens in §4).
+  3. Otherwise (no ticket, no `gh`, or declined both): record `feature-numbering: sequential` and
+     declare with no `--prefix`.
+
+  Persist the choice to `~/.fluencyloop/preferences.md` (create it if absent — global,
+  uncommitted, sibling to `calibration.md`) alongside any existing `feature-handoff`/`gh-setup`
+  lines, e.g. `feature-numbering: ticket · 2026-07-13`. Never pose this question again once a mode
+  is recorded.
+
 Take the user's one-line intent. Run:
 
 ```bash
-fluencyloop feature --json "<intent>"
+fluencyloop feature --json "<intent>"                      # sequential mode
+fluencyloop feature --json --prefix "<ticket-id>" "<intent>"  # ticket mode
 ```
 
 This creates the `feature/<slug>` branch (switching to it), the feature dir, and a
@@ -338,6 +371,12 @@ install from <https://cli.github.com> (pick the command that fits their OS — d
 hardcoded package-manager list) then `gh auth login`. If `gh` stays unavailable (declined or
 deferred), the hand-off is at most *commit + push*, and a PR can be opened later via
 `fluencyloop-review`. Only run the full **commit + push + open-PR** automation where `gh` works.
+
+**If `feature-numbering: pr` is recorded** (§1), the moment a PR actually opens — whether you ran
+`gh pr create` here or the user opened it manually and told you the number — run
+`fluencyloop rename-feature-dir --json --pr <number>` to swap the feature's docs dir onto that
+number. The branch is untouched; only the dir (and `design.md`'s recorded path references) move.
+If no PR ever gets opened for this feature, leave the dir as the sequential name it started with.
 
 The hand-off is a **behavioral pattern that recurs every feature** — so decide it **once**, not
 once per feature. Check `~/.fluencyloop/preferences.md` (loaded in §0):

@@ -17,6 +17,8 @@
 #   fluencyloop check [--json]             doctor: loop state + un-journaled drift
 #   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
 #   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
+#   fluencyloop index                      regenerate docs/fluencyloop/README.md
+#   fluencyloop rename-feature-dir --pr <n>  swap the active feature's dir to carry its PR number
 #   fluencyloop migrate [--dry-run]        move docs from .fluencyloop/ to docs/fluencyloop/
 #   fluencyloop version                    print the installed version
 #   fluencyloop help
@@ -65,6 +67,8 @@ case "$cmd" in
     check)    exec bash "$BIN/check.sh" "$@" ;;
     slice-context) exec bash "$BIN/slice-context.sh" "$@" ;;
     calibration) exec bash "$BIN/calibration.sh" "$@" ;;
+    index)    exec bash "$BIN/index.sh" "$@" ;;
+    rename-feature-dir) exec bash "$BIN/rename-feature-dir.sh" "$@" ;;
     migrate)  exec bash "$BIN/migrate.sh" "$@" ;;
     version|--version|-v) read_version "$VERSION_FILE" ;;
     help|-h|--help) usage ;;

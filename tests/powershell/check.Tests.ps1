@@ -16,7 +16,7 @@ Describe 'check.ps1' {
         $script:repo = Initialize-TestRepo
         & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add search' | Out-Null
         $j = Get-FlJson 'check.ps1' '--json'
-        $j.feature | Should -Be 'add-search'
+        $j.feature | Should -Be '001-add-search'
         $j.constitution | Should -Be 'empty'
     }
 
@@ -34,7 +34,7 @@ Describe 'check.ps1' {
         & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add search' | Out-Null
         git add -A 2>&1 | Out-Null; git commit -q -m 'scaffold, no session' 2>&1 | Out-Null
         (Get-FlJson 'check.ps1' '--json').unjournaled_commits | Should -Be 1
-        & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' 'add-search' 'index' | Out-Null
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-add-search' 'index' | Out-Null
         git add -A 2>&1 | Out-Null; git commit -q -m 'journal' 2>&1 | Out-Null
         (Get-FlJson 'check.ps1' '--json').unjournaled_commits | Should -Be 0
         [System.IO.File]::WriteAllText("$script:repo/more.txt", "x`n")
