@@ -2,6 +2,17 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.23
+
+### Fixed
+
+- On native Windows, `fluencyloop feature`, `fluencyloop plan`, and `fluencyloop rename-feature-dir`
+  no longer leak an extra `Index: ...` line into their own output (breaking `--json` parsing for
+  anything consuming it, including the feature/plan skills themselves). PowerShell's `FlOut` writes
+  directly to the console, which bypasses stream redirection when a script calls another script
+  in-process; the index refresh after each mutation is now spawned as a genuine child process so
+  redirection actually applies, matching how the Bash port already behaved.
+
 ## 0.2.22
 
 ### Added
