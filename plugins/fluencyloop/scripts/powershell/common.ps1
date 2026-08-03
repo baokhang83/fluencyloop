@@ -109,6 +109,16 @@ function FlFeaturePath([string]$slug) {
 
 function FlPlanPath([string]$slug) { "$(FlDocsDir)/plans/$slug" }
 
+# Re-run index.ps1 after a feature/plan mutation. Spawned as a genuine child process (not called
+# in-process via `&`) because FlOut writes straight to [Console]::Out — bypassing whatever
+# PowerShell stream redirection (e.g. `*> $null`) the *in-process* caller applies. A real child
+# process's stdout is a real OS-level handle, so the caller's redirection actually silences it,
+# the same way bash's `index.sh >/dev/null` genuinely discards output as a subprocess.
+function FlRefreshIndex {
+    $exe = (Get-Process -Id $PID).Path
+    & $exe -NoProfile -File "$PSScriptRoot/index.ps1" *> $null
+}
+
 # --- feature numbering ------------------------------------------------------
 # Every feature dir is prefixed so `features/` sorts and scans instead of reading as a flat,
 # unordered pile: a ticket id, a PR number (patched in after the fact — see

@@ -71,7 +71,7 @@ if ($old -ne $new) {
         'last_session', $lastSession, 'base_ref', (FlStateGet 'base_ref'), 'feature_dir', $newRel,
         'plan', (FlStateGet 'plan'), 'updated', (FlToday))
 
-    & "$PSScriptRoot/index.ps1" *> $null
+    FlRefreshIndex
 }
 
 if ($jsonMode) {

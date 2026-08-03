@@ -97,7 +97,7 @@ if (-not (Test-Path -LiteralPath $design)) {
 FlWriteState @('feature', $slug, 'branch', $branch, 'stage', 'design', 'last_session', '', 'base_ref', $baseRef, 'feature_dir', (FlRepoRel $feature), 'plan', $plan, 'updated', (FlToday))
 $state = FlStatePath
 
-& "$PSScriptRoot/index.ps1" *> $null
+FlRefreshIndex
 
 if ($jsonMode) {
     FlOut (FlEmitJson @(
