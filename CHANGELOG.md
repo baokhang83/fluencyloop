@@ -2,6 +2,18 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.24
+
+### Fixed
+
+- `fluencyloop feature`'s idempotency check — re-running the same intent on the current
+  feature branch to avoid minting a new numbered dir — assumed the existing slug always had a
+  `<prefix>-` segment to strip. On a feature declared before per-feature numbering shipped
+  (0.2.22), stripping `^[a-z0-9]+-` from its bare slug mangled the first word instead of a real
+  prefix, so the comparison never matched: a bare re-run forked a brand-new numbered
+  branch/dir off the legacy one instead of reusing it. The check now also matches the
+  un-stripped slug, so legacy features stay on their original branch and dir.
+
 ## 0.2.23
 
 ### Fixed

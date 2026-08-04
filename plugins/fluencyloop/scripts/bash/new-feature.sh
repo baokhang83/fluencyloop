@@ -44,10 +44,17 @@ if [ -z "$SLUG" ]; then
     # Idempotency: a bare re-run (no --slug/--prefix) with the same intent while already on
     # that feature's branch must reuse its slug rather than minting a new number each time —
     # next_feature_number() isn't a pure function of intent the way slugify(intent) alone was.
+    # Compare against both the prefix-stripped slug (numbered features) and the whole slug
+    # (features declared before per-feature numbering existed, which carry no prefix at all —
+    # stripping "^[a-z0-9]+-" from one of those mangles the first word instead of a real
+    # prefix, so it would never match and would fork a duplicate numbered branch/dir here).
     EXISTING_SLUG="$(current_feature_slug)"
-    if [ -n "$EXISTING_SLUG" ] \
-        && [ "$(printf '%s' "$EXISTING_SLUG" | sed -E 's/^[a-z0-9]+-//')" = "$(slugify "$INTENT")" ]; then
-        SLUG="$EXISTING_SLUG"
+    if [ -n "$EXISTING_SLUG" ]; then
+        WANT_SLUG="$(slugify "$INTENT")"
+        STRIPPED_SLUG="$(printf '%s' "$EXISTING_SLUG" | sed -E 's/^[a-z0-9]+-//')"
+        if [ "$STRIPPED_SLUG" = "$WANT_SLUG" ] || [ "$EXISTING_SLUG" = "$WANT_SLUG" ]; then
+            SLUG="$EXISTING_SLUG"
+        fi
     fi
 fi
 if [ -z "$SLUG" ]; then

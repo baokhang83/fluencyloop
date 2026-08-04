@@ -48,3 +48,19 @@ setup() { setup_initialized_repo; }
     bash "$BIN/new-feature.sh" "forked work" >/dev/null
     [ "$(cat "$TESTREPO/.fluencyloop/state.json" | json_field base_ref)" = "trunk" ]
 }
+
+@test "new-feature reuses a legacy unnumbered branch instead of forking a numbered duplicate" {
+    # Simulate a feature declared before per-feature numbering existed (pre-0.2.22): the dir
+    # and branch carry a bare slugify(intent), with no <prefix>- segment.
+    git checkout -q -b "feature/add-caching"
+    mkdir -p "$TESTREPO/docs/fluencyloop/features/add-caching/sessions"
+    echo "# Design" > "$TESTREPO/docs/fluencyloop/features/add-caching/design.md"
+
+    run bash "$BIN/new-feature.sh" --json "add caching"
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | json_field slug)" = "add-caching" ]
+    [ "$(echo "$output" | json_field branch_created)" = "false" ]
+    [ "$(git rev-parse --abbrev-ref HEAD)" = "feature/add-caching" ]
+    # Must not have forked a new numbered branch off the legacy one.
+    ! git show-ref --verify --quiet "refs/heads/feature/001-add-caching"
+}

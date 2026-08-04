@@ -55,4 +55,20 @@ Describe 'new-feature.ps1 + new-session.ps1' {
         $s = Get-Content -Raw "$script:repo/.fluencyloop/state.json" | ConvertFrom-Json
         $s.base_ref | Should -Be 'trunk'
     }
+
+    It 'new-feature reuses a legacy unnumbered branch instead of forking a numbered duplicate' {
+        $script:repo = Initialize-TestRepo
+        # Simulate a feature declared before per-feature numbering existed (pre-0.2.22): the
+        # dir and branch carry a bare FlSlugify(intent), with no <prefix>- segment.
+        git checkout -q -b 'feature/add-caching' 2>&1 | Out-Null
+        New-Item -ItemType Directory -Force -Path "$script:repo/docs/fluencyloop/features/add-caching/sessions" | Out-Null
+        Set-Content -LiteralPath "$script:repo/docs/fluencyloop/features/add-caching/design.md" -Value '# Design'
+
+        $j = Get-FlJson 'new-feature.ps1' '--json' 'add caching'
+        $j.slug | Should -Be 'add-caching'
+        $j.branch_created | Should -Be 'false'
+        (git rev-parse --abbrev-ref HEAD) | Should -Be 'feature/add-caching'
+        & git show-ref --verify --quiet 'refs/heads/feature/001-add-caching' 2>$null
+        $LASTEXITCODE | Should -Not -Be 0
+    }
 }

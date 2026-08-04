@@ -33,9 +33,17 @@ if (-not $slug) {
     # Idempotency: a bare re-run (no --slug/--prefix) with the same intent while already on
     # that feature's branch must reuse its slug rather than minting a new number each time —
     # FlNextFeatureNumber isn't a pure function of intent the way FlSlugify(intent) alone was.
+    # Compare against both the prefix-stripped slug (numbered features) and the whole slug
+    # (features declared before per-feature numbering existed, which carry no prefix at all —
+    # stripping "^[a-z0-9]+-" from one of those mangles the first word instead of a real
+    # prefix, so it would never match and would fork a duplicate numbered branch/dir here).
     $existingSlug = FlCurrentFeatureSlug
-    if ($existingSlug -and (($existingSlug -replace '^[a-z0-9]+-', '') -eq (FlSlugify $intent))) {
-        $slug = $existingSlug
+    if ($existingSlug) {
+        $wantSlug = FlSlugify $intent
+        $strippedSlug = $existingSlug -replace '^[a-z0-9]+-', ''
+        if ($strippedSlug -eq $wantSlug -or $existingSlug -eq $wantSlug) {
+            $slug = $existingSlug
+        }
     }
 }
 if (-not $slug) {
