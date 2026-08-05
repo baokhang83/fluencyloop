@@ -2,6 +2,21 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.25
+
+### Fixed
+
+- The `SessionStart` hook that refreshes the marketplace and updates the installed plugin
+  never actually registered under Claude Code. The marketplace entry declares `"source": "."`
+  (repo root), so `CLAUDE_PLUGIN_ROOT` resolves to the repo root and Claude Code only ever looks
+  for `hooks/hooks.json` there — but that file only ever existed under `plugins/fluencyloop/hooks/`,
+  the Codex bundle's own plugin root. The hook was silently never discovered (not a runtime
+  failure — the wrapper's `|| exit 0` fallbacks made this indistinguishable from a network/policy
+  no-op), so installed Claude Code plugins stopped picking up updates entirely after the initial
+  install. Added a root-level `hooks/hooks.json`, `hooks/refresh-marketplace.sh`, and
+  `hooks/refresh-marketplace.ps1` that delegate to the existing Codex-bundle implementation, so
+  there is one source of truth for the refresh logic and Claude Code can find it where it looks.
+
 ## 0.2.24
 
 ### Fixed
