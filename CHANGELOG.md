@@ -2,6 +2,23 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.26
+
+### Added
+
+- `.fluencyloop/state.json` now carries a `schema_version` field, stamped by `write_state` itself
+  so no write path can omit it. Nothing branches on it yet — it exists so that a later version can
+  tell an old project from a new one directly, instead of inferring the generation from which files
+  happen to be present. A state file written before this shipped has no field and reads as
+  generation 1 via the new `state_schema_version` helper, so no existing project is rewritten or
+  invalidated. Shipped ahead of any change that needs it, because the marker is only useful once it
+  has propagated to installs that predate it.
+- `.github/scripts/bump-version.sh` makes `plugins/fluencyloop/VERSION` the single source of truth
+  for the plugin version and generates the three JSON manifests from it, replacing four hand-edited
+  copies. CI now fails on drift: a mismatch between them breaks the `SessionStart` update hook,
+  which resolves the plugin by its marketplace-qualified name, and that failure is silent for
+  everyone already installed.
+
 ## 0.2.25
 
 ### Fixed

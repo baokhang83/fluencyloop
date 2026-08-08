@@ -17,7 +17,7 @@ jobs:
       - name: ShellCheck (bundled runtime and Claude launcher)
         # shellcheck is preinstalled on the ubuntu runner. -P SCRIPTDIR lets it follow the
         # `# shellcheck source=common.sh` directives so sourced helpers are analysed too.
-        run: shellcheck -x -P SCRIPTDIR plugins/fluencyloop/scripts/bash/*.sh plugins/fluencyloop/fluencyloop bin/fluencyloop
+        run: shellcheck -x -P SCRIPTDIR plugins/fluencyloop/scripts/bash/*.sh plugins/fluencyloop/fluencyloop bin/fluencyloop .github/scripts/*.sh
       - name: Ban eval (shell=True-equivalent footgun)
         run: |
           if grep -rnE '(^|[^[:alnum:]_])eval[[:space:]]' plugins/fluencyloop/scripts/bash plugins/fluencyloop/fluencyloop bin/fluencyloop; then
@@ -30,6 +30,10 @@ jobs:
             echo "::error::bats @test names must be ASCII — a multibyte char breaks the Git Bash runner."
             exit 1
           fi
+      - name: Version is single-sourced from VERSION
+        # The manifests used to be bumped by hand. A mismatch breaks the SessionStart update
+        # hook for every installed user, so drift fails the build rather than shipping.
+        run: .github/scripts/bump-version.sh --check
 
   bats:
     name: bats tests (Linux)
