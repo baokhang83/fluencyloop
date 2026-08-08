@@ -259,10 +259,10 @@ store_commit() {
 store_append_record() {
     local f="${1:-}" type="${2:-}" feature="${3:-}" session="${4:-}"
     shift 4 || true
-    [ -n "$f" ] && [ -n "$type" ] && [ -n "$feature" ] && [ -n "$session" ] || {
+    if [ -z "$f" ] || [ -z "$type" ] || [ -z "$feature" ] || [ -z "$session" ]; then
         echo "Error: store_append_record requires file, type, feature, and session." >&2
         return 1
-    }
+    fi
     store_append "$f" \
         schema_version "$FLUENCYLOOP_SCHEMA_VERSION" \
         type "$type" \
