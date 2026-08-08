@@ -30,6 +30,17 @@ is merged there and only promoted to `main` when the whole thing is shippable.
 Small, self-contained fixes may still go straight to `main` as their own release, the way 0.2.27
 did. Anything that is one step of several does not.
 
+GitHub bases every new PR on the default branch, which is `main`, so the flow above is one missed
+dropdown away from going wrong. The `Release base` check enforces it: a PR into `main` whose head
+is not `dev` fails. Retarget it with `gh pr edit <n> --base dev`, or — when it genuinely is a
+self-contained fix shipping as its own release — apply the **`direct-release`** label, which turns
+the check green and leaves a record that the direct merge was a decision rather than an accident.
+
+The default branch stays `main` because neither manifest names a branch: `.claude-plugin/` uses
+`"source": "."` and `.agents/` a path inside the clone with no ref field, so both agents resolve
+whatever the default branch is. Making `dev` the default would not relabel anything — it would
+repoint the auto-update hook at unfinished work.
+
 Promoting `dev` is a fast-forward, so `main` stays linear and every release is a commit you can
 name:
 
