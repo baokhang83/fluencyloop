@@ -8,7 +8,11 @@
   "plugins": [
     {
       "name": "fluencyloop",
-      "source": ".",
+      "source": {
+        "source": "github",
+        "repo": "baokhang83/fluencyloop",
+        "ref": "stable"
+      },
       "displayName": "FluencyLoop",
       "version": "0.2.26",
       "description": "A per-feature loop that designs, teaches, journals decisions, and assembles PR reviews.",
