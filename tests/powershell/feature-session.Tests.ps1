@@ -7,10 +7,6 @@ Describe 'new-feature.ps1 + new-session.ps1' {
         if ($script:repo) { Remove-Item -Recurse -Force -LiteralPath $script:repo -ErrorAction SilentlyContinue }
     }
 
-    function Get-LastStoreRecord([string]$path) {
-        ([System.IO.File]::ReadAllLines($path) | Select-Object -Last 1) | ConvertFrom-Json
-    }
-
     It 'new-feature creates the branch, a feature record, and state (stage: design)' {
         $script:repo = Initialize-TestRepo
         $j = Get-FlJson 'new-feature.ps1' '--json' 'add rate limiting'
@@ -20,7 +16,7 @@ Describe 'new-feature.ps1 + new-session.ps1' {
         $store = "$script:repo/docs/fluencyloop/store/features/001-add-rate-limiting.jsonl"
         $j.store | Should -Be $store
         $store | Should -Exist
-        $record = Get-LastStoreRecord $store
+        $record = ([System.IO.File]::ReadAllLines($store) | Select-Object -Last 1) | ConvertFrom-Json
         $record.type | Should -Be 'feature'
         foreach ($field in @('schema_version', 'type', 'ts', 'feature', 'session', 'commit')) {
             $record.PSObject.Properties.Name | Should -Contain $field
@@ -57,7 +53,7 @@ Describe 'new-feature.ps1 + new-session.ps1' {
         $j = Get-FlJson 'new-session.ps1' '--json' '--slug' '001-add-caching' 'wire the LRU cache'
         $store = "$script:repo/docs/fluencyloop/store/features/001-add-caching.jsonl"
         @([System.IO.File]::ReadAllLines($store)).Count | Should -Be 2
-        (Get-LastStoreRecord $store).type | Should -Be 'session'
+        (([System.IO.File]::ReadAllLines($store) | Select-Object -Last 1) | ConvertFrom-Json).type | Should -Be 'session'
         $s = Get-Content -Raw "$script:repo/.fluencyloop/state.json" | ConvertFrom-Json
         $s.stage | Should -Be 'build'
         $s.last_session | Should -Be '001-wire-the-lru-cache'

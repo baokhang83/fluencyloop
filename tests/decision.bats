@@ -24,14 +24,14 @@ PY
 @test "appends one schema-complete decision, resolved from state" {
     run dec --title "chose LRU over unbounded map" --where "src/cache.js" \
             --why "memory must stay bounded" \
-            --alternative "unbounded Map — rejected: leaks" --constitution "§2" --trust unverified
+            --alternative "unbounded Map - rejected: leaks" --constitution "§2" --trust unverified
     [ "$status" -eq 0 ]
     [ "$(wc -l < "$STORE")" -eq 3 ]
     [ "$(decision_field type)" = "decision" ]
     [ "$(decision_field title)" = "chose LRU over unbounded map" ]
     [ "$(decision_field where)" = "src/cache.js" ]
     [ "$(decision_field why)" = "memory must stay bounded" ]
-    [ "$(decision_field alternative)" = "unbounded Map — rejected: leaks" ]
+    [ "$(decision_field alternative)" = "unbounded Map - rejected: leaks" ]
     [ "$(decision_field constitution)" = "§2" ]
     [ "$(decision_field trust)" = "unverified" ]
     [ "$(decision_field feature)" = "001-add-caching" ]

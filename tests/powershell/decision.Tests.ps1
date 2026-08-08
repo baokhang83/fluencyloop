@@ -14,16 +14,12 @@ Describe 'add-decision.ps1' {
         $script:store = "$script:repo/docs/fluencyloop/store/features/001-add-caching.jsonl"
     }
 
-    function Get-LastDecision {
-        ([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json
-    }
-
     It 'appends one schema-complete decision, resolved from state' {
         (Invoke-FlExit 'add-decision.ps1' '--title' 'chose LRU over unbounded map' '--where' 'src/cache.js' `
             '--why' 'memory must stay bounded' '--alternative' 'unbounded Map — rejected: leaks' `
             '--constitution' '§2' '--trust' 'unverified') | Should -Be 0
         @([System.IO.File]::ReadAllLines($script:store)).Count | Should -Be 3
-        $record = Get-LastDecision
+        $record = ([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json
         $record.type | Should -Be 'decision'
         $record.title | Should -Be 'chose LRU over unbounded map'
         $record.where | Should -Be 'src/cache.js'
@@ -42,14 +38,14 @@ Describe 'add-decision.ps1' {
 
     It 'trust: verified and default unverified are stored' {
         & $script:PwshExe -NoProfile -File "$script:Bin/add-decision.ps1" '--where' 'a' '--why' 'b' '--trust' 'verified' | Out-Null
-        (Get-LastDecision).trust | Should -Be 'verified'
+        (([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json).trust | Should -Be 'verified'
         & $script:PwshExe -NoProfile -File "$script:Bin/add-decision.ps1" '--where' 'c' '--why' 'd' | Out-Null
-        (Get-LastDecision).trust | Should -Be 'unverified'
+        (([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json).trust | Should -Be 'unverified'
     }
 
     It 'omits optional fields rather than writing empty values' {
         & $script:PwshExe -NoProfile -File "$script:Bin/add-decision.ps1" '--where' 'a' '--why' 'b' | Out-Null
-        $record = Get-LastDecision
+        $record = ([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json
         foreach ($field in @('alternative', 'constitution', 'design')) {
             $record.PSObject.Properties.Name | Should -Not -Contain $field
         }
