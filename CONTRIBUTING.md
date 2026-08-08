@@ -14,7 +14,14 @@ The scripts switch branches and write files in your repo, so they're tested. CI 
 suite on every push and PR; run them locally with
 `shellcheck -x -P SCRIPTDIR plugins/fluencyloop/scripts/bash/*.sh` and `bats tests`.
 
+`scripts/bash/` and `scripts/powershell/` are two implementations of one contract, with
+`tests/powershell/` mirroring `tests/`. A change to one runtime needs the same change in the other,
+or it ships behaviour that differs by platform; if you have no `pwsh` locally, say so in the PR and
+let the Windows CI job be the check.
+
 <a id="distribution-roadmap"></a>
 > **Distribution:** FluencyLoop ships through its Claude Code and Codex marketplace plugins.
 > The canonical runtime lives in `plugins/fluencyloop/`; do not add a machine-wide installer or
-> copy skills into a user's agent directory.
+> copy skills into a user's agent directory. Both agents auto-update from `main` on every session,
+> so merging there *is* releasing — see [RELEASING.md](RELEASING.md). Work that spans more than one
+> release goes to `dev`.
