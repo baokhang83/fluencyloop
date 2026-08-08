@@ -52,6 +52,21 @@ setup() { setup_initialized_repo; source "$BIN/common.sh"; }
     [ -z "$(state_get feature)" ]
 }
 
+@test "write_state stamps schema_version without the caller passing it" {
+    write_state feature foo branch feature/foo stage design
+    [ "$(state_get schema_version)" = "$FLUENCYLOOP_SCHEMA_VERSION" ]
+    [ "$(state_schema_version)" = "$FLUENCYLOOP_SCHEMA_VERSION" ]
+    python3 -c "import json;json.load(open('$TESTREPO/.fluencyloop/state.json'))"
+}
+
+@test "state_schema_version reads a pre-existing state file as generation 1" {
+    # A project initialised before the field existed. It must read as schema 1 rather than
+    # empty, so a later version can branch on the generation without rewriting anyone's state.
+    printf '{\n  "feature": "legacy",\n  "stage": "build"\n}\n' > "$TESTREPO/.fluencyloop/state.json"
+    [ -z "$(state_get schema_version)" ]
+    [ "$(state_schema_version)" = "1" ]
+}
+
 @test "fluency_dir/docs_dir/state_path return empty (not a crash) outside a git repo" {
     # Regression: these used to end in a bare `[ -n "$root" ] && printf ...`, whose failing
     # exit status aborted the whole calling script under `set -e` the moment it was captured

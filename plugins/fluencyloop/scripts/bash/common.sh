@@ -166,6 +166,11 @@ current_feature_slug() {
 # re-deriving from git every turn. Machine state, so it lives in .fluencyloop/; committed with
 # the feature branch (part of the journal record). Written by new-feature.sh / new-session.sh.
 
+# The state file's data-model generation. Bump only when the on-disk shape changes in a way a
+# reader has to branch on — it is how a later version tells an old project from a new one
+# without guessing from which files happen to be present.
+FLUENCYLOOP_SCHEMA_VERSION=1
+
 state_path() { local d; d="$(fluency_dir)"; if [ -n "$d" ]; then printf '%s/state.json' "$d"; fi; }
 
 # A repo-relative path (state stores paths relative to the repo root, so they survive a move).
@@ -179,13 +184,23 @@ state_get() {
     sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p" "$f" | head -n1
 }
 
+# The generation of the state file on disk. A file written before the field existed has none,
+# and reads as 1 — so every pre-existing project is a valid schema 1 without being rewritten.
+state_schema_version() {
+    local v; v="$(state_get schema_version)"
+    printf '%s' "${v:-1}"
+}
+
 # Write state.json from alternating key value arguments (all string-valued), creating it.
 #   write_state feature "$SLUG" branch "$BRANCH" stage design ...
 write_state() {
     local f; f="$(state_path)"
     [ -n "$f" ] || return 0
     mkdir -p "$(dirname "$f")"
-    local out="{" first=1 k v
+    # schema_version leads every state file, written here rather than by each caller so no
+    # write path can omit it. Quoted like every other value — state_get only reads strings.
+    local out="{" first=0 k v
+    out+=$'\n  '"\"schema_version\": \"$FLUENCYLOOP_SCHEMA_VERSION\""
     while [ "$#" -ge 2 ]; do
         k="$1"; v="$2"; shift 2
         [ "$first" -eq 1 ] || out+=","
