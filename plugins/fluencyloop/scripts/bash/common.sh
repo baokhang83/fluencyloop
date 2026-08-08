@@ -211,6 +211,37 @@ write_state() {
     printf '%s\n' "$out" > "$f"
 }
 
+# --- store ----------------------------------------------------------------
+# The append-only record of what the loop observed: one JSON object per line, JSONL rather than
+# JSON so shell can add a line with `>>` and no parser. Nothing here ever reads or rewrites what
+# it wrote — a correction is a new line, and readers take the last record for an identity.
+#
+# One file per feature, because a feature is a branch: two branches then never append to the same
+# file, so there is nothing to conflict. concepts.jsonl is the single global stream, and the one
+# place a line-based merge actually earns its keep.
+
+store_dir() { local d; d="$(docs_dir)"; if [ -n "$d" ]; then printf '%s/store' "$d"; fi; }
+
+feature_store_path() { printf '%s/features/%s.jsonl' "$(store_dir)" "$1"; }
+concepts_store_path() { printf '%s/concepts.jsonl' "$(store_dir)"; }
+
+# Append one record to a store file from alternating key value arguments, creating the file and
+# its parent dir. Pairs with an empty value are dropped, so an unused optional field costs nothing
+# on every line rather than writing "alternative":"" forever. That skip is the only difference
+# from emit_json, which keeps empties and has callers depending on it — hence the filter here.
+#   store_append "$(feature_store_path add-caching)" type decision title "Chose a read-through cache"
+store_append() {
+    local f="$1"; shift
+    local -a pairs=()
+    while [ "$#" -ge 2 ]; do
+        if [ -n "$2" ]; then pairs+=("$1" "$2"); fi
+        shift 2
+    done
+    mkdir -p "$(dirname "$f")"
+    # Guard the expansion: on bash < 4.4 (macOS ships 3.2) "${arr[@]}" errors under `set -u`.
+    emit_json ${pairs[@]+"${pairs[@]}"} >> "$f"
+}
+
 # --- calibration ----------------------------------------------------------
 # The per-developer knowledge profile: global, never committed. Lives under FLUENCYLOOP_HOME
 # (default ~/.fluencyloop), NOT in the repo — it is the only place person-specific knowledge lives.

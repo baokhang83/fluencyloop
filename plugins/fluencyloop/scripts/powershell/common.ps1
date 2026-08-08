@@ -196,6 +196,31 @@ function FlWriteState([string[]]$kv) {
     FlWriteText $f ("{`n" + ($parts -join ",`n") + "`n}`n")
 }
 
+# --- store ----------------------------------------------------------------
+# The append-only record of what the loop observed: one JSON object per line. Mirrors the store
+# section of common.sh — see there for why JSONL, and why features get a file each while concepts
+# share one global stream.
+
+function FlStoreDir { $d = FlDocsDir; if ($d) { "$d/store" } else { '' } }
+
+function FlFeatureStorePath([string]$slug) { "$(FlStoreDir)/features/$slug.jsonl" }
+function FlConceptsStorePath { "$(FlStoreDir)/concepts.jsonl" }
+
+# Append one record from an alternating key/value array, creating the file and its parent dir.
+# Pairs with an empty value are dropped — the only difference from FlEmitJson, which keeps them.
+# Written with an explicit LF and no BOM, so a line is byte-identical to the bash runtime's.
+function FlStoreAppend([string]$path, [string[]]$kv) {
+    $pairs = @()
+    if ($kv) {
+        for ($i = 0; $i + 1 -lt $kv.Count; $i += 2) {
+            if ([string]$kv[$i + 1] -ne '') { $pairs += $kv[$i]; $pairs += [string]$kv[$i + 1] }
+        }
+    }
+    $dir = Split-Path -Parent $path
+    if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+    [System.IO.File]::AppendAllText($path, (FlEmitJson $pairs) + "`n", (New-Object System.Text.UTF8Encoding($false)))
+}
+
 # --- calibration ----------------------------------------------------------
 
 function FlHomeDir { if ($env:FLUENCYLOOP_HOME) { $env:FLUENCYLOOP_HOME } else { "$HOME/.fluencyloop" } }
