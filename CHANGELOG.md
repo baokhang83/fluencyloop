@@ -2,6 +2,16 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.2.27
+
+### Fixed
+
+- The `schema_version` marker added in 0.2.26 was only stamped by the bash runtime. On Windows,
+  `FlWriteState` wrote state files without it, so Windows installs would have stayed unmarked no
+  matter how long 0.2.26 propagated — defeating the point of shipping the marker early. `common.ps1`
+  now mirrors `common.sh`: `FlSchemaVersion` holds the generation, `FlWriteState` prepends it, and
+  `FlStateSchemaVersion` reads a field-less file as generation 1.
+
 ## 0.2.26
 
 ### Added

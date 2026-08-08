@@ -62,6 +62,24 @@ Describe 'common.ps1' {
         FlStateGet 'feature' | Should -Be ''
     }
 
+    It 'write_state stamps schema_version without the caller passing it' {
+        $script:repo = Initialize-TestRepo
+        FlWriteState @('feature', 'foo', 'branch', 'feature/foo', 'stage', 'design')
+        FlStateGet 'schema_version' | Should -Be ([string](FlSchemaVersion))
+        FlStateSchemaVersion | Should -Be ([string](FlSchemaVersion))
+        { Get-Content -Raw "$script:repo/.fluencyloop/state.json" | ConvertFrom-Json } | Should -Not -Throw
+    }
+
+    It 'state_schema_version reads a pre-existing state file as generation 1' {
+        # A project initialised before the field existed. It must read as schema 1 rather than
+        # empty, so a later version can branch on the generation without rewriting anyone's state.
+        $script:repo = Initialize-TestRepo
+        FlWriteState @('feature', 'foo')
+        Set-Content -LiteralPath "$script:repo/.fluencyloop/state.json" -Value "{`n  `"feature`": `"legacy`",`n  `"stage`": `"build`"`n}"
+        FlStateGet 'schema_version' | Should -Be ''
+        FlStateSchemaVersion | Should -Be '1'
+    }
+
     It 'repo_rel makes a path relative to the repo root' {
         $script:repo = Initialize-TestRepo
         FlRepoRel "$script:repo/docs/fluencyloop/x.md" | Should -Be 'docs/fluencyloop/x.md'
