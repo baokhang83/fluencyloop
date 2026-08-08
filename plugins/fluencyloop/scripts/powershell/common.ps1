@@ -120,15 +120,16 @@ function FlRefreshIndex {
 }
 
 # --- feature numbering ------------------------------------------------------
-# Every feature dir is prefixed so `features/` sorts and scans instead of reading as a flat,
-# unordered pile: a ticket id, a PR number (patched in after the fact — see
-# rename-feature-dir.ps1), or, absent either, a zero-padded sequential counter.
+# Every feature slug is prefixed with a ticket id, PR number, or a zero-padded counter. Since 0.3
+# no longer creates feature directories, count the committed per-feature store files and local
+# feature branches as well as legacy dirs. This stays structural: it never reads JSONL.
 function FlNextFeatureNumber {
     $dir = "$(FlDocsDir)/features"
-    $n = 0
-    if (Test-Path -LiteralPath $dir -PathType Container) {
-        $n = @(Get-ChildItem -LiteralPath $dir -Directory -ErrorAction SilentlyContinue).Count
-    }
+    $store = "$(FlStoreDir)/features"
+    $dirs = if (Test-Path -LiteralPath $dir -PathType Container) { @(Get-ChildItem -LiteralPath $dir -Directory -ErrorAction SilentlyContinue).Count } else { 0 }
+    $stores = if (Test-Path -LiteralPath $store -PathType Container) { @(Get-ChildItem -LiteralPath $store -Filter '*.jsonl' -File -ErrorAction SilentlyContinue).Count } else { 0 }
+    $branches = @(& git for-each-ref --format='%(refname)' refs/heads/feature 2>$null).Count
+    $n = [Math]::Max($dirs, [Math]::Max($stores, $branches))
     return ('{0:d3}' -f ($n + 1))
 }
 
@@ -219,6 +220,31 @@ function FlStoreAppend([string]$path, [string[]]$kv) {
     $dir = Split-Path -Parent $path
     if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
     [System.IO.File]::AppendAllText($path, (FlEmitJson $pairs) + "`n", (New-Object System.Text.UTF8Encoding($false)))
+}
+
+# Append a schema-complete record. Store writers supply the contextual fields that vary per call;
+# this wrapper owns the invariant envelope so no future writer can forget it. Keep FlStoreAppend
+# generic: it is also the low-level primitive A1 promises to callers.
+function FlStoreCommit {
+    $commit = & git rev-parse --verify --quiet HEAD 2>$null
+    if ($LASTEXITCODE -eq 0 -and $commit) { return ($commit | Select-Object -First 1) }
+    return 'uncommitted'
+}
+
+# Example: FlStoreAppendRecord (FlFeatureStorePath 'add-caching') 'decision' 'add-caching' '001-wire-cache' @(...)
+function FlStoreAppendRecord([string]$path, [string]$type, [string]$feature, [string]$session, [string[]]$kv) {
+    if (-not $path -or -not $type -or -not $feature -or -not $session) {
+        throw 'store record requires file, type, feature, and session.'
+    }
+    $record = @(
+        'schema_version', (FlSchemaVersion),
+        'type', $type,
+        'ts', (FlToday),
+        'feature', $feature,
+        'session', $session,
+        'commit', (FlStoreCommit)
+    ) + $kv
+    FlStoreAppend $path $record
 }
 
 # --- calibration ----------------------------------------------------------

@@ -21,12 +21,18 @@ $feature = FlStateGet 'feature'
 if (-not $feature) { $feature = FlCurrentFeatureSlug }
 $baseRef = FlStateGet 'base_ref'; if (-not $baseRef) { $baseRef = 'main' }
 
-# Where the slice starts: last journaled session, else base ref, else HEAD. A repository made by
-# `fluencyloop init` can have no first commit, so an unborn branch needs an empty-tree baseline.
+# Where the slice starts: last committed session record, else base ref, else HEAD. Legacy
+# markdown remains a read-only fallback until it is imported. A repository made by `fluencyloop
+# init` can have no first commit, so an unborn branch needs an empty-tree baseline.
 $since = ''; $baseKind = 'base-ref'
-if ($feature) {
-    $sdir = "$(FlFeaturePath $feature)/sessions"
-    $lastJournal = & git log -1 --format=%H -- $sdir 2>$null
+if ($feature -and (FlStateGet 'last_session')) {
+    $store = FlFeatureStorePath $feature
+    if (Test-Path -LiteralPath $store -PathType Leaf) {
+        $lastJournal = & git log -1 --format=%H -- $store 2>$null
+    } else {
+        $sdir = "$(FlFeaturePath $feature)/sessions"
+        $lastJournal = & git log -1 --format=%H -- $sdir 2>$null
+    }
     if ($LASTEXITCODE -eq 0 -and $lastJournal) { $since = ($lastJournal | Select-Object -First 1); $baseKind = 'last-session' }
 }
 if (-not $since) { $since = $baseRef }

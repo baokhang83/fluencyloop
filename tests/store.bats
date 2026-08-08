@@ -83,6 +83,24 @@ PY
     [ "$(cat "$f")" = '{}' ]
 }
 
+@test "store_append_record stamps the common envelope and requires context" {
+    local f; f="$(feature_store_path add-caching)"
+    store_append_record "$f" decision add-caching 001-wire-cache title "keep it bounded" where src/cache.js why "memory is finite"
+    python3 - "$f" "$(git rev-parse HEAD)" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    record = json.loads(fh.readline())
+assert record['schema_version'] == '1'
+assert record['type'] == 'decision'
+assert record['feature'] == 'add-caching'
+assert record['session'] == '001-wire-cache'
+assert record['commit'] == sys.argv[2]
+assert record['title'] == 'keep it bounded'
+PY
+    run store_append_record "$f" decision '' 001-wire-cache
+    [ "$status" -ne 0 ]
+}
+
 @test "store files are covered by the LF pin init.sh writes" {
     # Append correctness on Windows depends on the store subtree being pinned to LF. The glob
     # `docs/fluencyloop/**` matches across directories, so it already covers store/.

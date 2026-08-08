@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # init.sh — scaffold FluencyLoop into the current repo (Stage 0, once per project).
 # Creates .fluencyloop/ for machine state (scripts + templates) and docs/fluencyloop/ for the
-# human-facing artifacts (constitution stub; per-feature design + sessions land here later).
+# human-facing artifacts (the constitution stub and append-only store).
 # Skills are activated by the coding agent's own installation mechanism; they are never copied
 # into a project.
 #
@@ -44,7 +44,7 @@ fi
 # The distribution root is two levels up from scripts/bash.
 DIST_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FLUENCY="$ROOT/.fluencyloop"          # machine state: scripts + templates
-DOCS="$(docs_dir)"                    # human-facing docs: constitution, designs, sessions
+DOCS="$(docs_dir)"                    # human-facing docs: constitution and store
 
 mkdir -p "$FLUENCY/scripts" "$FLUENCY/templates" "$DOCS"
 
@@ -99,7 +99,7 @@ else
         echo "  git:          initialised a repository in $ROOT"
     fi
     echo "  state:        $FLUENCY (scripts + templates)"
-    echo "  docs:         $DOCS (constitution, designs, session journals)"
+    echo "  docs:         $DOCS (constitution and append-only store)"
     if $AUTO_REMOTE_SET; then
         echo "  git:          push.autoSetupRemote=true (feature branches push without --set-upstream)"
     fi

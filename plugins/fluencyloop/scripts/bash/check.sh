@@ -37,12 +37,21 @@ STAGE="$(state_get stage)"
 BASE="$(state_get base_ref)"; [ -z "$BASE" ] && BASE="main"
 LAST_SESSION="$(state_get last_session)"
 
-# --- un-journaled drift: commits since the last commit that touched the sessions dir. If no
-# session has ever been committed, everything since the base ref counts as un-journaled. ---
+# --- un-journaled drift: commits since the last committed session record. Before the first
+# session, everything since the base ref counts as un-journaled. Legacy session markdown remains
+# a read-only fallback for projects that have not imported it yet. ---
 UNJOURNALED=0
 if [ -n "$ROOT" ] && [ -n "$FEATURE" ]; then
-    SESSIONS_DIR="$(feature_path "$FEATURE")/sessions"
-    LAST_JOURNAL_COMMIT="$(git log -1 --format=%H -- "$SESSIONS_DIR" 2>/dev/null || true)"
+    LAST_JOURNAL_COMMIT=""
+    if [ -n "$LAST_SESSION" ]; then
+        STORE="$(feature_store_path "$FEATURE")"
+        if [ -f "$STORE" ]; then
+            LAST_JOURNAL_COMMIT="$(git log -1 --format=%H -- "$STORE" 2>/dev/null || true)"
+        else
+            SESSIONS_DIR="$(feature_path "$FEATURE")/sessions"
+            LAST_JOURNAL_COMMIT="$(git log -1 --format=%H -- "$SESSIONS_DIR" 2>/dev/null || true)"
+        fi
+    fi
     if [ -n "$LAST_JOURNAL_COMMIT" ]; then
         UNJOURNALED="$(git rev-list --count "$LAST_JOURNAL_COMMIT..HEAD" 2>/dev/null || echo 0)"
     elif git rev-parse --verify --quiet "$BASE" >/dev/null 2>&1; then

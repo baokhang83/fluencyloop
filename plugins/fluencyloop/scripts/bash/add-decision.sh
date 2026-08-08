@@ -1,15 +1,10 @@
 #!/usr/bin/env bash
-# add-decision.sh — deterministically assemble a `## Decision:` block and append it to the active
-# session. The model supplies only the irreducible field values (the taught *why*); the script
-# does the mechanical markdown formatting (the bullet schema), so the journal is consistently
-# structured and the model never hand-formats it.
+# add-decision.sh — append one decision record to the active feature's store. The model supplies
+# only the irreducible field values (the taught *why*); the script assembles the schema envelope.
 #
 # Usage: add-decision.sh --where <path> --why <text> [--title <text>] [--alternative <text>]
 #          [--design <ref>] [--constitution <§N>] [--trust <verified|unverified>]
-#          [--session <path>]
-#
-# The session defaults to the active feature's last session (state.json); pass --session to target
-# a specific file. Emits nothing to the file's schema the model has to remember.
+#          [--session <session-slug-or-legacy-path>]
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,7 +13,7 @@ source "$SCRIPT_DIR/common.sh"
 require_fluency
 
 TITLE=""; WHERE=""; WHY=""; ALT=""; DESIGN=""; CONST=""
-TRUST="⚠ not independently verified"; SESSION=""
+TRUST="unverified"; SESSION=""
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --title) shift; TITLE="${1:-}" ;;
@@ -28,8 +23,8 @@ while [ "$#" -gt 0 ]; do
         --design) shift; DESIGN="${1:-}" ;;
         --constitution) shift; CONST="${1:-}" ;;
         --trust) shift; case "${1:-}" in
-                     verified|✓*) TRUST="✓ verified" ;;
-                     *) TRUST="⚠ not independently verified" ;;
+                     verified|✓*) TRUST="verified" ;;
+                     *) TRUST="unverified" ;;
                  esac ;;
         --session) shift; SESSION="${1:-}" ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -40,26 +35,33 @@ done
 [ -n "$WHERE" ] || { echo "Error: --where is required (a file/area, never a line number)." >&2; exit 1; }
 [ -n "$WHY" ]   || { echo "Error: --why is required (the taught rationale)." >&2; exit 1; }
 
-# Resolve the session file: explicit --session, else the active feature's last session.
+# Resolve the session slug: explicit --session, else the active feature's last session. Legacy
+# markdown paths stay accepted as input, but only their filename is persisted in new records.
 if [ -z "$SESSION" ]; then
-    rel="$(state_get last_session)"
-    [ -n "$rel" ] && SESSION="$(repo_root)/$rel"
+    SESSION="$(state_get last_session)"
 fi
-if [ -z "$SESSION" ] || [ ! -f "$SESSION" ]; then
-    echo "Error: no session file — open one with 'fluencyloop session \"<slice>\"' or pass --session." >&2
+SESSION="${SESSION##*/}"
+SESSION="${SESSION%.md}"
+if [ -z "$SESSION" ]; then
+    echo "Error: no active session — open one with 'fluencyloop session \"<slice>\"' or pass --session." >&2
     exit 1
 fi
 
 [ -n "$TITLE" ] || TITLE="decision"
+FEATURE="$(state_get feature)"
+[ -n "$FEATURE" ] || FEATURE="$(current_feature_slug)"
+if [ -z "$FEATURE" ]; then
+    echo "Error: no active feature. Checkout a feature/<slug> branch first." >&2
+    exit 1
+fi
+STORE="$(feature_store_path "$FEATURE")"
+store_append_record "$STORE" decision "$FEATURE" "$SESSION" \
+    title "$TITLE" \
+    where "$WHERE" \
+    why "$WHY" \
+    alternative "$ALT" \
+    design "$DESIGN" \
+    constitution "$CONST" \
+    trust "$TRUST"
 
-{
-    printf '\n## Decision: %s\n\n' "$TITLE"
-    printf -- '- **where:** %s\n' "\`$WHERE\`"
-    printf -- '- **why:** %s\n' "$WHY"
-    [ -n "$ALT" ]    && printf -- '- **alternative:** %s\n' "$ALT"
-    [ -n "$DESIGN" ] && printf -- '- **design:** %s\n' "$DESIGN"
-    [ -n "$CONST" ]  && printf -- '- **constitution:** %s\n' "$CONST"
-    printf -- '- **trust:** %s\n' "$TRUST"
-} >> "$SESSION"
-
-echo "Appended decision \"$TITLE\" to $SESSION"
+echo "Appended decision \"$TITLE\" to $STORE"

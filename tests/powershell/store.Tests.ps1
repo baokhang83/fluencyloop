@@ -77,6 +77,20 @@ Describe 'store' {
         ([System.IO.File]::ReadAllLines($f))[0] | Should -Be '{}'
     }
 
+    It 'FlStoreAppendRecord stamps the common envelope and requires context' {
+        $script:repo = Initialize-TestRepo
+        $f = FlFeatureStorePath 'add-caching'
+        FlStoreAppendRecord $f 'decision' 'add-caching' '001-wire-cache' @('title', 'keep it bounded', 'where', 'src/cache.js', 'why', 'memory is finite')
+        $record = ([System.IO.File]::ReadAllLines($f))[0] | ConvertFrom-Json
+        $record.schema_version | Should -Be '1'
+        $record.type | Should -Be 'decision'
+        $record.feature | Should -Be 'add-caching'
+        $record.session | Should -Be '001-wire-cache'
+        $record.commit | Should -Be (git rev-parse HEAD)
+        $record.title | Should -Be 'keep it bounded'
+        { FlStoreAppendRecord $f 'decision' '' '001-wire-cache' @() } | Should -Throw
+    }
+
     It 'store files are covered by the LF pin init.ps1 writes' {
         # Append correctness on Windows depends on the store subtree being pinned to LF. The glob
         # `docs/fluencyloop/**` matches across directories, so it already covers store/.

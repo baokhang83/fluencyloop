@@ -180,7 +180,7 @@ PY
   [ "$output" = "$(cat "$DIST/VERSION")" ]
 }
 
-@test "Claude plugin launcher creates feature documents under docs" {
+@test "Claude plugin launcher creates feature store records under docs" {
   setup_repo
 
   run bash "$REPO_ROOT/bin/fluencyloop" init --json
@@ -190,8 +190,9 @@ PY
 
   run bash "$REPO_ROOT/bin/fluencyloop" feature --json "write documentation"
   [ "$status" -eq 0 ]
-  [[ "$output" == *'"design"'* ]]
-  [ -f "$TESTREPO/docs/fluencyloop/features/001-write-documentation/design.md" ]
+  [[ "$output" == *'"store"'* ]]
+  [ -f "$TESTREPO/docs/fluencyloop/store/features/001-write-documentation.jsonl" ]
+  [ ! -e "$TESTREPO/docs/fluencyloop/features/001-write-documentation/design.md" ]
   [ ! -e "$TESTREPO/.fluencyloop/features/001-write-documentation" ]
 }
 

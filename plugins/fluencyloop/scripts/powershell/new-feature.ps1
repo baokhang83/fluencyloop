@@ -1,5 +1,5 @@
-# new-feature.ps1 — PowerShell port of new-feature.sh. Declare a feature: create the branch, the
-# feature dir + design.md stub, write state.json. Matches new-feature.sh --json.
+# new-feature.ps1 — PowerShell port of new-feature.sh. Declare a feature: create the branch,
+# write state.json, and append the feature declaration to the store. Matches new-feature.sh --json.
 #
 # The feature dir name always leads with a number so `features/` sorts and scans instead of
 # reading as a flat pile: pass -Prefix for a ticket id (e.g. "JIRA-1234") or a PR number
@@ -51,7 +51,6 @@ if (-not $slug) {
     else { $slug = FlNumberedSlug (FlNextFeatureNumber) $intent }
 }
 $branch = FlBranchFor $slug
-$feature = FlFeaturePath $slug
 
 # Switch to the feature branch (create it if new). Capture the fork point as the base ref.
 $createdBranch = 'false'
@@ -79,44 +78,19 @@ if (-not $baseRef) {
     }
 }
 
-New-Item -ItemType Directory -Force -Path "$feature/sessions" | Out-Null
-
-$design = "$feature/design.md"
-$createdDesign = 'false'
-if (-not (Test-Path -LiteralPath $design)) {
-    $tmpl = "$(FlFluencyDir)/templates/design.md"
-    $content = [System.IO.File]::ReadAllText($tmpl)
-    $content = $content.Replace('{{FEATURE}}', $intent).Replace('{{DATE}}', (FlToday))
-    FlWriteText $design $content
-    # branch: is recorded here (not just in state.json) because the dir can later be renamed
-    # to carry a PR number — see rename-feature-dir.ps1 — while the branch name stays put. The
-    # index needs a durable way to map a feature dir back to its branch for merge status.
-    $lines = [System.Collections.Generic.List[string]]::new([string[]](Get-Content -LiteralPath $design))
-    $idx = ($lines | Select-String -Pattern '^started: ').LineNumber
-    if ($idx) { $lines.Insert($idx, "branch: $branch") }
-    if ($plan) {
-        $idx2 = ($lines | Select-String -Pattern '^branch: ').LineNumber
-        if ($idx2) { $lines.Insert($idx2, "plan: $plan") }
-    }
-    FlWriteText $design (($lines -join "`n") + "`n")
-    $createdDesign = 'true'
-}
-
-FlWriteState @('feature', $slug, 'branch', $branch, 'stage', 'design', 'last_session', '', 'base_ref', $baseRef, 'feature_dir', (FlRepoRel $feature), 'plan', $plan, 'updated', (FlToday))
+FlWriteState @('feature', $slug, 'branch', $branch, 'stage', 'design', 'last_session', '', 'base_ref', $baseRef, 'feature_dir', '', 'plan', $plan, 'updated', (FlToday))
 $state = FlStatePath
-
-FlRefreshIndex
+$store = FlFeatureStorePath $slug
+FlStoreAppendRecord $store 'feature' $slug 'none' @('slug', $slug, 'intent', $intent, 'branch', $branch, 'base_ref', $baseRef)
 
 if ($jsonMode) {
     FlOut (FlEmitJson @(
         'slug', $slug, 'intent', $intent, 'branch', $branch, 'branch_created', $createdBranch,
-        'feature_dir', $feature, 'design', $design, 'design_created', $createdDesign,
-        'sessions_dir', "$feature/sessions", 'base_ref', $baseRef, 'plan', $plan, 'state', $state))
+        'store', $store, 'base_ref', $baseRef, 'plan', $plan, 'state', $state))
 } else {
     FlOut "Feature: $intent"
     FlOut ("  branch:   $branch" + $(if ($createdBranch -eq 'true') { ' (created)' } else { '' }))
-    FlOut ("  design:   $design" + $(if ($createdDesign -eq 'true') { ' (stub)' } else { '' }))
-    FlOut "  sessions: $feature/sessions/"
+    FlOut "  store:    $store"
     if ($plan) { FlOut "  plan:     $plan" }
     FlOut "  state:    $state (stage: design, base: $baseRef)"
 }
