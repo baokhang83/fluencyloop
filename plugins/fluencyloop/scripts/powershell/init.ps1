@@ -74,7 +74,7 @@ if ($jsonMode) {
     FlOut 'Initialised FluencyLoop'
     if ($gitInitialized -eq 'true') { FlOut "  git:          initialised a repository in $root" }
     FlOut "  state:        $fluency (scripts + templates)"
-    FlOut "  docs:         $docs (constitution, designs, session journals)"
+    FlOut "  docs:         $docs (constitution and append-only store)"
     if ($autoRemoteSet -eq 'true') { FlOut '  git:          push.autoSetupRemote=true (feature branches push without --set-upstream)' }
     if ($createdConstitution -eq 'true') { FlOut "  constitution: $constitution (empty — written from your first plan or feature)" }
 }

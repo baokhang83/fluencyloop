@@ -126,17 +126,22 @@ feature_path() {
 plan_path() { printf '%s/plans/%s' "$(docs_dir)" "$1"; }
 
 # --- feature numbering ------------------------------------------------------
-# Every feature dir is prefixed so `features/` sorts and scans instead of reading as a flat,
-# unordered pile: a ticket id, a PR number (patched in after the fact — see
-# rename-feature-dir.sh), or, absent either, a zero-padded sequential counter. This is the
-# fallback used whenever the caller doesn't supply an explicit --prefix.
+# Every feature slug is prefixed with a ticket id, PR number, or a zero-padded counter. Since 0.3
+# no longer creates feature directories, count the committed per-feature store files and local
+# feature branches as well as legacy dirs. This stays structural: it never reads JSONL.
 next_feature_number() {
-    local dir n
+    local dir store n dirs stores branches
     dir="$(docs_dir)/features"
-    n=0
+    store="$(store_dir)/features"
+    dirs=0; stores=0; branches=0
     if [ -d "$dir" ]; then
-        n="$(find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
+        dirs="$(find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
     fi
+    if [ -d "$store" ]; then
+        stores="$(find "$store" -mindepth 1 -maxdepth 1 -name '*.jsonl' 2>/dev/null | wc -l | tr -d ' ')"
+    fi
+    branches="$(git for-each-ref --format='%(refname)' refs/heads/feature 2>/dev/null | wc -l | tr -d ' ')"
+    n="$dirs"; [ "$stores" -gt "$n" ] && n="$stores"; [ "$branches" -gt "$n" ] && n="$branches"
     printf '%03d' "$((n + 1))"
 }
 
@@ -240,6 +245,32 @@ store_append() {
     mkdir -p "$(dirname "$f")"
     # Guard the expansion: on bash < 4.4 (macOS ships 3.2) "${arr[@]}" errors under `set -u`.
     emit_json ${pairs[@]+"${pairs[@]}"} >> "$f"
+}
+
+# Append a schema-complete record. Store writers supply the contextual fields that vary per call;
+# this wrapper owns the invariant envelope so no future writer can forget it. Keep store_append
+# generic: it is also the low-level primitive A1 promises to callers.
+store_commit() {
+    git rev-parse --verify --quiet HEAD 2>/dev/null || printf 'uncommitted'
+}
+
+#   store_append_record "$(feature_store_path add-caching)" decision add-caching 001-wire-cache \
+#       title "Keep the cache bounded" where src/cache.js why "..."
+store_append_record() {
+    local f="${1:-}" type="${2:-}" feature="${3:-}" session="${4:-}"
+    shift 4 || true
+    if [ -z "$f" ] || [ -z "$type" ] || [ -z "$feature" ] || [ -z "$session" ]; then
+        echo "Error: store_append_record requires file, type, feature, and session." >&2
+        return 1
+    fi
+    store_append "$f" \
+        schema_version "$FLUENCYLOOP_SCHEMA_VERSION" \
+        type "$type" \
+        ts "$(today)" \
+        feature "$feature" \
+        session "$session" \
+        commit "$(store_commit)" \
+        "$@"
 }
 
 # --- calibration ----------------------------------------------------------

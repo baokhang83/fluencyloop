@@ -1,5 +1,5 @@
-# new-session.ps1 — PowerShell port of new-session.sh. Open a session in the active feature and
-# move state to the build stage. Matches new-session.sh --json.
+# new-session.ps1 — PowerShell port of new-session.sh. Open a session in the active feature,
+# record it in the store, and move state to the build stage. Matches new-session.sh --json.
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -22,44 +22,35 @@ if (-not $featureSlug) {
     exit 1
 }
 
-$feature = FlFeaturePath $featureSlug
-if (-not (Test-Path -LiteralPath $feature -PathType Container)) {
-    [Console]::Error.WriteLine("Error: feature '$featureSlug' not found at $feature. Run 'fluencyloop feature' first.")
-    exit 1
-}
-
 $intent = ($rest -join ' ').Trim()
 if (-not $intent) {
     [Console]::Error.WriteLine("Error: a session needs an intent, e.g. 'wiring the Redis store'.")
     exit 1
 }
 
-# Numbered so sessions/ sorts in build order at a glance, instead of alphabetically by intent.
-$sessionSlug = FlNumberedSlug (FlNextSessionNumber "$feature/sessions") $intent
-$session = "$feature/sessions/$sessionSlug.md"
-
-$created = 'false'
-if (-not (Test-Path -LiteralPath $session)) {
-    $tmpl = "$(FlFluencyDir)/templates/session.md"
-    $content = [System.IO.File]::ReadAllText($tmpl)
-    $content = $content.Replace('{{SESSION}}', $intent).Replace('{{INTENT}}', $intent).Replace('{{DATE}}', (FlToday))
-    FlWriteText $session $content
-    $created = 'true'
-}
+# Session sequence persists in state now that there are no markdown filenames to count. A
+# pre-0.3 path is accepted too: basename + .md stripping makes the transition harmless.
+$previousSession = FlStateGet 'last_session'
+$previousSession = [System.IO.Path]::GetFileNameWithoutExtension($previousSession)
+if ($previousSession -match '^(\d{3})-') { $sessionNumber = '{0:d3}' -f (([int]$matches[1]) + 1) }
+else { $sessionNumber = '001' }
+$sessionSlug = FlNumberedSlug $sessionNumber $intent
 
 # write_state replaces the whole file, so carry forward every field, not just the ones this
-# script cares about (feature_dir/plan are set by new-feature.ps1).
+# script cares about.
 $baseRef = FlStateGet 'base_ref'; if (-not $baseRef) { $baseRef = 'main' }
 FlWriteState @('feature', $featureSlug, 'branch', (FlBranchFor $featureSlug), 'stage', 'build',
-    'last_session', (FlRepoRel $session), 'base_ref', $baseRef,
+    'last_session', $sessionSlug, 'base_ref', $baseRef,
     'feature_dir', (FlStateGet 'feature_dir'), 'plan', (FlStateGet 'plan'), 'updated', (FlToday))
 $state = FlStatePath
+$store = FlFeatureStorePath $featureSlug
+FlStoreAppendRecord $store 'session' $featureSlug $sessionSlug @('slug', $sessionSlug, 'intent', $intent)
 
 if ($jsonMode) {
     FlOut (FlEmitJson @('feature', $featureSlug, 'session_slug', $sessionSlug, 'intent', $intent,
-        'session', $session, 'created', $created, 'state', $state))
+        'store', $store, 'state', $state))
 } else {
     FlOut "Session: $intent"
-    FlOut ("  file:  $session" + $(if ($created -eq 'true') { ' (created)' } else { '' }))
+    FlOut "  store: $store"
     FlOut "  state: $state (stage: build)"
 }

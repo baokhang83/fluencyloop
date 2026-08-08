@@ -11,19 +11,24 @@ Describe 'add-decision.ps1' {
         $script:repo = Initialize-TestRepo
         & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add caching' | Out-Null
         & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-add-caching' 'wire the cache' | Out-Null
-        $script:session = "$script:repo/docs/fluencyloop/features/001-add-caching/sessions/001-wire-the-cache.md"
+        $script:store = "$script:repo/docs/fluencyloop/store/features/001-add-caching.jsonl"
     }
 
-    It 'appends a fully-formatted block, session resolved from state' {
+    It 'appends one schema-complete decision, resolved from state' {
         (Invoke-FlExit 'add-decision.ps1' '--title' 'chose LRU over unbounded map' '--where' 'src/cache.js' `
             '--why' 'memory must stay bounded' '--alternative' 'unbounded Map — rejected: leaks' `
             '--constitution' '§2' '--trust' 'unverified') | Should -Be 0
-        $c = Get-Content -Raw $script:session
-        $c | Should -Match '## Decision: chose LRU over unbounded map'
-        $c | Should -Match '- \*\*where:\*\* `src/cache\.js`'
-        $c | Should -Match '- \*\*why:\*\* memory must stay bounded'
-        $c | Should -Match '- \*\*constitution:\*\* §2'
-        $c | Should -Match '- \*\*trust:\*\* ⚠ not independently verified'
+        @([System.IO.File]::ReadAllLines($script:store)).Count | Should -Be 3
+        $record = ([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json
+        $record.type | Should -Be 'decision'
+        $record.title | Should -Be 'chose LRU over unbounded map'
+        $record.where | Should -Be 'src/cache.js'
+        $record.why | Should -Be 'memory must stay bounded'
+        $record.alternative | Should -Be 'unbounded Map — rejected: leaks'
+        $record.constitution | Should -Be '§2'
+        $record.trust | Should -Be 'unverified'
+        $record.feature | Should -Be '001-add-caching'
+        $record.session | Should -Be '001-wire-the-cache'
     }
 
     It 'requires --where and --why' {
@@ -31,19 +36,27 @@ Describe 'add-decision.ps1' {
         (Invoke-FlExit 'add-decision.ps1' '--where' 'y') | Should -Not -Be 0
     }
 
-    It 'trust: verified renders the check; default is unverified' {
+    It 'trust: verified and default unverified are stored' {
         & $script:PwshExe -NoProfile -File "$script:Bin/add-decision.ps1" '--where' 'a' '--why' 'b' '--trust' 'verified' | Out-Null
-        (Get-Content -Raw $script:session) | Should -Match '- \*\*trust:\*\* ✓ verified'
+        (([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json).trust | Should -Be 'verified'
+        & $script:PwshExe -NoProfile -File "$script:Bin/add-decision.ps1" '--where' 'c' '--why' 'd' | Out-Null
+        (([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json).trust | Should -Be 'unverified'
     }
 
-    It 'optional fields are omitted when not supplied' {
+    It 'omits optional fields rather than writing empty values' {
         & $script:PwshExe -NoProfile -File "$script:Bin/add-decision.ps1" '--where' 'a' '--why' 'b' | Out-Null
-        # Check the APPENDED block (after the last "## Decision:"), not the whole file — the
-        # template's example comment legitimately mentions alternative:/design:.
-        $block = (Get-Content -Raw $script:session) -split '## Decision:' | Select-Object -Last 1
-        $block | Should -Not -Match 'alternative:'
-        $block | Should -Not -Match 'constitution:'
-        $block | Should -Not -Match 'design:'
+        $record = ([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json
+        foreach ($field in @('alternative', 'constitution', 'design')) {
+            $record.PSObject.Properties.Name | Should -Not -Contain $field
+        }
+    }
+
+    It 'pre-existing markdown stays untouched' {
+        $legacy = "$script:repo/docs/fluencyloop/features/001-add-caching/sessions/legacy.md"
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $legacy) | Out-Null
+        Set-Content -NoNewline -LiteralPath $legacy -Value '# Legacy session'
+        & $script:PwshExe -NoProfile -File "$script:Bin/add-decision.ps1" '--session' $legacy '--where' 'a' '--why' 'b' | Out-Null
+        (Get-Content -Raw $legacy) | Should -Be '# Legacy session'
     }
 
     It 'errors clearly when there is no session to append to' {

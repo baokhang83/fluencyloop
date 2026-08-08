@@ -28,13 +28,19 @@ EXCLUDE=(-- . ':!.fluencyloop' ':!docs/fluencyloop')
 FEATURE="$(state_get feature)"; [ -z "$FEATURE" ] && FEATURE="$(current_feature_slug)"
 BASE_REF="$(state_get base_ref)"; [ -z "$BASE_REF" ] && BASE_REF="main"
 
-# Where the slice starts: the last journaled session, else the feature's base ref, else HEAD.
+# Where the slice starts: the last committed session record, else the feature's base ref, else
+# HEAD. Legacy markdown remains a read-only fallback until it is imported.
 # A repository created by `fluencyloop init` may not have its first commit yet. In that unborn
 # state there is no HEAD to diff against, so every project file is part of the first slice.
 SINCE=""; BASE_KIND="base-ref"
-if [ -n "$FEATURE" ]; then
-    SDIR="$(feature_path "$FEATURE")/sessions"
-    LAST_JOURNAL="$(git log -1 --format=%H -- "$SDIR" 2>/dev/null || true)"
+if [ -n "$FEATURE" ] && [ -n "$(state_get last_session)" ]; then
+    STORE="$(feature_store_path "$FEATURE")"
+    if [ -f "$STORE" ]; then
+        LAST_JOURNAL="$(git log -1 --format=%H -- "$STORE" 2>/dev/null || true)"
+    else
+        SDIR="$(feature_path "$FEATURE")/sessions"
+        LAST_JOURNAL="$(git log -1 --format=%H -- "$SDIR" 2>/dev/null || true)"
+    fi
     [ -n "$LAST_JOURNAL" ] && { SINCE="$LAST_JOURNAL"; BASE_KIND="last-session"; }
 fi
 [ -z "$SINCE" ] && SINCE="$BASE_REF"

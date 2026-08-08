@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# new-session.sh — open a session inside the active feature (Stage 3). A session is a
-# slice of the build; the skill appends decision blocks to it as it teaches. Deterministic:
-# creates the file from the template; the LLM supplies the content.
+# new-session.sh — open a session inside the active feature (Stage 3). A session is a slice of
+# the build. It is recorded in the feature store; no session markdown is created.
 #
 # Usage: new-session.sh [--json] [--slug <feature-slug>] <session-intent...>
 
@@ -31,12 +30,6 @@ if [ -z "$FEATURE_SLUG" ]; then
     exit 1
 fi
 
-FEATURE="$(feature_path "$FEATURE_SLUG")"
-if [ ! -d "$FEATURE" ]; then
-    echo "Error: feature '$FEATURE_SLUG' not found at $FEATURE. Run 'fluencyloop feature' first." >&2
-    exit 1
-fi
-
 INTENT="${ARGS[*]:-}"
 INTENT="$(printf '%s' "$INTENT" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
 if [ -z "$INTENT" ]; then
@@ -44,46 +37,47 @@ if [ -z "$INTENT" ]; then
     exit 1
 fi
 
-# Numbered so sessions/ sorts in build order at a glance, instead of alphabetically by intent.
-SESSION_SLUG="$(numbered_slug "$(next_session_number "$FEATURE/sessions")" "$INTENT")"
-SESSION="$FEATURE/sessions/$SESSION_SLUG.md"
-
-CREATED=false
-if [ ! -f "$SESSION" ]; then
-    TEMPLATE="$(fluency_dir)/templates/session.md"
-    esc_intent="$(printf '%s' "$INTENT" | sed 's/[&/\]/\\&/g')"
-    sed -e "s/{{SESSION}}/$esc_intent/g" \
-        -e "s/{{INTENT}}/$esc_intent/g" \
-        -e "s/{{DATE}}/$(today)/g" \
-        "$TEMPLATE" > "$SESSION"
-    CREATED=true
+# Session sequence persists in state now that there are no markdown filenames to count. A
+# pre-0.3 path is accepted too: basename + .md stripping makes the transition harmless.
+PREVIOUS_SESSION="$(state_get last_session)"
+PREVIOUS_SESSION="${PREVIOUS_SESSION##*/}"
+PREVIOUS_SESSION="${PREVIOUS_SESSION%.md}"
+PREVIOUS_NUMBER="$(printf '%s' "$PREVIOUS_SESSION" | sed -n 's/^\([0-9][0-9][0-9]\)-.*/\1/p')"
+if [ -n "$PREVIOUS_NUMBER" ]; then
+    SESSION_NUMBER="$(printf '%03d' "$((10#$PREVIOUS_NUMBER + 1))")"
+else
+    SESSION_NUMBER="001"
 fi
+SESSION_SLUG="$(numbered_slug "$SESSION_NUMBER" "$INTENT")"
 
-# Update loop state: opening a session moves the feature to the build stage and points at the
-# current session file. write_state replaces the whole file, so carry forward every field, not
-# just the ones this script cares about (feature_dir/plan are set by new-feature.sh).
+# Update loop state: opening a session moves the feature to the build stage and records its slug.
+# write_state replaces the whole file, so carry forward every field, not just the ones this script
+# cares about.
 BASE_REF="$(state_get base_ref)"; [ -z "$BASE_REF" ] && BASE_REF="main"
 write_state \
     feature "$FEATURE_SLUG" \
     branch "$(branch_for "$FEATURE_SLUG")" \
     stage "build" \
-    last_session "$(repo_rel "$SESSION")" \
+    last_session "$SESSION_SLUG" \
     base_ref "$BASE_REF" \
     feature_dir "$(state_get feature_dir)" \
     plan "$(state_get plan)" \
     updated "$(today)"
 STATE="$(state_path)"
+STORE="$(feature_store_path "$FEATURE_SLUG")"
+store_append_record "$STORE" session "$FEATURE_SLUG" "$SESSION_SLUG" \
+    slug "$SESSION_SLUG" \
+    intent "$INTENT"
 
 if $JSON_MODE; then
     emit_json \
         feature "$FEATURE_SLUG" \
         session_slug "$SESSION_SLUG" \
         intent "$INTENT" \
-        session "$SESSION" \
-        created "$CREATED" \
+        store "$STORE" \
         state "$STATE"
 else
     echo "Session: $INTENT"
-    echo "  file:  $SESSION$($CREATED && echo ' (created)')"
+    echo "  store: $STORE"
     echo "  state: $STATE (stage: build)"
 fi

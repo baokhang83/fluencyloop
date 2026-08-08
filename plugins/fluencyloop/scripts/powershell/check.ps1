@@ -26,11 +26,20 @@ $stage = FlStateGet 'stage'
 $base = FlStateGet 'base_ref'; if (-not $base) { $base = 'main' }
 $lastSession = FlStateGet 'last_session'
 
-# Un-journaled drift: commits since the last commit touching the sessions dir; else since base.
+# Un-journaled drift: commits since the last committed session record; else since base. Legacy
+# session markdown remains a read-only fallback for projects that have not imported it yet.
 $unjournaled = 0
 if ($root -and $feature) {
-    $sdir = "$(FlFeaturePath $feature)/sessions"
-    $lastJournal = & git log -1 --format=%H -- $sdir 2>$null
+    $lastJournal = ''
+    if ($lastSession) {
+        $store = FlFeatureStorePath $feature
+        if (Test-Path -LiteralPath $store -PathType Leaf) {
+            $lastJournal = & git log -1 --format=%H -- $store 2>$null
+        } else {
+            $sdir = "$(FlFeaturePath $feature)/sessions"
+            $lastJournal = & git log -1 --format=%H -- $sdir 2>$null
+        }
+    }
     if ($LASTEXITCODE -eq 0 -and $lastJournal) {
         $lastJournal = ($lastJournal | Select-Object -First 1)
         $c = & git rev-list --count "$lastJournal..HEAD" 2>$null

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# add-decision.sh — deterministic assembly of `## Decision:` blocks (the model supplies values).
+# add-decision.sh — one schema-complete decision line per call, never a markdown edit.
 
 load test_helper
 
@@ -7,22 +7,35 @@ setup() {
     setup_initialized_repo
     bash "$BIN/new-feature.sh" "add caching" >/dev/null
     bash "$BIN/new-session.sh" --slug 001-add-caching "wire the cache" >/dev/null
-    SESSION="$TESTREPO/docs/fluencyloop/features/001-add-caching/sessions/001-wire-the-cache.md"
+    STORE="$TESTREPO/docs/fluencyloop/store/features/001-add-caching.jsonl"
 }
 
 dec() { bash "$BIN/add-decision.sh" "$@"; }
 
-@test "appends a fully-formatted block, session resolved from state" {
+decision_field() {
+    python3 - "$STORE" "$1" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    record = json.loads(list(fh)[-1])
+print(record.get(sys.argv[2], ''))
+PY
+}
+
+@test "appends one schema-complete decision, resolved from state" {
     run dec --title "chose LRU over unbounded map" --where "src/cache.js" \
             --why "memory must stay bounded" \
-            --alternative "unbounded Map — rejected: leaks" --constitution "§2" --trust unverified
+            --alternative "unbounded Map - rejected: leaks" --constitution "section-2" --trust unverified
     [ "$status" -eq 0 ]
-    grep -qF -- '## Decision: chose LRU over unbounded map' "$SESSION"
-    grep -qF -- '- **where:** `src/cache.js`' "$SESSION"
-    grep -qF -- '- **why:** memory must stay bounded' "$SESSION"
-    grep -qF -- '- **alternative:** unbounded Map — rejected: leaks' "$SESSION"
-    grep -qF -- '- **constitution:** §2' "$SESSION"
-    grep -qF -- '- **trust:** ⚠ not independently verified' "$SESSION"
+    [ "$(wc -l < "$STORE")" -eq 3 ]
+    [ "$(decision_field type)" = "decision" ]
+    [ "$(decision_field title)" = "chose LRU over unbounded map" ]
+    [ "$(decision_field where)" = "src/cache.js" ]
+    [ "$(decision_field why)" = "memory must stay bounded" ]
+    [ "$(decision_field alternative)" = "unbounded Map - rejected: leaks" ]
+    [ "$(decision_field constitution)" = "section-2" ]
+    [ "$(decision_field trust)" = "unverified" ]
+    [ "$(decision_field feature)" = "001-add-caching" ]
+    [ "$(decision_field session)" = "001-wire-the-cache" ]
 }
 
 @test "requires --where and --why" {
@@ -30,16 +43,30 @@ dec() { bash "$BIN/add-decision.sh" "$@"; }
     run dec --where "y";  [ "$status" -ne 0 ]
 }
 
-@test "trust: verified renders the check; default is unverified" {
+@test "trust: verified and default unverified are stored" {
     dec --where a --why b --trust verified
-    grep -qF -- '- **trust:** ✓ verified' "$SESSION"
+    [ "$(decision_field trust)" = "verified" ]
+    dec --where c --why d
+    [ "$(decision_field trust)" = "unverified" ]
 }
 
-@test "optional fields are omitted when not supplied" {
+@test "optional fields are absent rather than empty" {
     dec --where a --why b
-    ! grep -q "alternative:" "$SESSION"
-    ! grep -q "constitution:" "$SESSION"
-    ! grep -q "design:" "$SESSION"
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    record = json.loads(list(fh)[-1])
+for field in ('alternative', 'constitution', 'design'):
+    assert field not in record, (field, record)
+PY
+}
+
+@test "pre-existing markdown stays untouched" {
+    legacy="$TESTREPO/docs/fluencyloop/features/001-add-caching/sessions/legacy.md"
+    mkdir -p "$(dirname "$legacy")"
+    printf '# Legacy session\n' > "$legacy"
+    dec --session "$legacy" --where a --why b
+    [ "$(cat "$legacy")" = "# Legacy session" ]
 }
 
 @test "errors clearly when there is no session to append to" {

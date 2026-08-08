@@ -31,8 +31,7 @@ if [ -z "$FEATURE_SLUG" ]; then
     exit 1
 fi
 
-FEATURE="$(feature_path "$FEATURE_SLUG")"
-[ -d "$FEATURE" ] || { echo "Error: feature '$FEATURE_SLUG' not found." >&2; exit 1; }
+STORE="$(feature_store_path "$FEATURE_SLUG")"
 
 # Resolve the base ref for the commit range (best-effort): explicit --base, else the base the
 # feature recorded in state.json, else the repo's main/master.
@@ -49,39 +48,17 @@ if [ -n "$BASE" ] && git rev-parse --verify --quiet "$BASE" >/dev/null; then
     COMMIT_COUNT="$(git rev-list --count "$RANGE" 2>/dev/null || echo 0)"
 fi
 
-# Collect the sessions.
-shopt -s nullglob
-SESSIONS=("$FEATURE/sessions/"*.md)
-shopt -u nullglob
-
 if $JSON_MODE; then
-    files=""
-    # Guard the expansion: on bash < 4.4 (macOS ships 3.2) "${arr[@]}" errors under `set -u`
-    # when the array is empty — which it is for a feature with no sessions yet.
-    if [ "${#SESSIONS[@]}" -gt 0 ]; then
-        for s in "${SESSIONS[@]}"; do files+="${files:+, }\"$(json_escape "$s")\""; done
-    fi
-    printf '{"feature":"%s","feature_dir":"%s","base":"%s","range":"%s","commits":%s,"session_count":%s,"sessions":[%s]}\n' \
-        "$(json_escape "$FEATURE_SLUG")" "$(json_escape "$FEATURE")" \
+    # The model/site reads the store; this script intentionally does not parse JSONL.
+    printf '{"feature":"%s","store":"%s","base":"%s","range":"%s","commits":%s,"session_count":0,"sessions":[]}\n' \
+        "$(json_escape "$FEATURE_SLUG")" "$(json_escape "$STORE")" \
         "$(json_escape "$BASE")" "$(json_escape "$RANGE")" \
-        "$COMMIT_COUNT" "${#SESSIONS[@]}" "$files"
+        "$COMMIT_COUNT"
     exit 0
 fi
 
 # Human/markdown form: the raw material for the reviewer summary.
-FEATURE_TITLE="$(sed -n 's/^# Design: //p' "$FEATURE/design.md" 2>/dev/null | head -1)"
-[ -z "$FEATURE_TITLE" ] && FEATURE_TITLE="$FEATURE_SLUG"
-
-echo "# PR view — $FEATURE_TITLE"
+echo "# PR view — $FEATURE_SLUG"
 echo
 [ -n "$RANGE" ] && echo "_$COMMIT_COUNT commit(s) over \`$RANGE\`; feature branch \`$(branch_for "$FEATURE_SLUG")\`._" && echo
-if [ "${#SESSIONS[@]}" -eq 0 ]; then
-    echo "_No sessions journaled yet for this feature._"
-else
-    for s in "${SESSIONS[@]}"; do
-        echo "---"
-        echo
-        cat "$s"
-        echo
-    done
-fi
+echo "_Session and decision records: \`$STORE\`._"

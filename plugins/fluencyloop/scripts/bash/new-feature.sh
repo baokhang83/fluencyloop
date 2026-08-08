@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# new-feature.sh — declare a feature (Stage 2 entry). Deterministic: creates the branch
-# and the feature dir with a design.md stub, then reports paths for the skill to fill in.
-# A feature IS a branch (feature/<slug>); the design/build/journal all live under it.
+# new-feature.sh — declare a feature (Stage 2 entry). Deterministic: creates the branch, records
+# it in state, and appends the feature declaration to the store. A feature IS a branch.
 #
 # Usage: new-feature.sh [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] <intent...>
 #
@@ -65,7 +64,6 @@ if [ -z "$SLUG" ]; then
     fi
 fi
 BRANCH="$(branch_for "$SLUG")"
-FEATURE="$(feature_path "$SLUG")"
 
 # Switch to the feature branch (create it if new, from the current HEAD). Capture what we
 # forked from as the base ref (used later for the PR-view diff).
@@ -95,43 +93,25 @@ if [ -z "$BASE_REF" ]; then
     done
 fi
 
-mkdir -p "$FEATURE/sessions"
-
-DESIGN="$FEATURE/design.md"
-CREATED_DESIGN=false
-if [ ! -f "$DESIGN" ]; then
-    TEMPLATE="$(fluency_dir)/templates/design.md"
-    sed -e "s/{{FEATURE}}/$(printf '%s' "$INTENT" | sed 's/[&/\]/\\&/g')/g" \
-        -e "s/{{DATE}}/$(today)/g" \
-        "$TEMPLATE" > "$DESIGN"
-    # branch: is recorded here (not just in state.json) because the dir can later be renamed
-    # to carry a PR number — see rename-feature-dir.sh — while the branch name stays put. The
-    # index needs a durable way to map a feature dir back to its branch for merge status.
-    awk -v line="branch: $BRANCH" '{print} /^started: /{print line}' "$DESIGN" > "$DESIGN.tmp" \
-        && mv "$DESIGN.tmp" "$DESIGN"
-    if [ -n "$PLAN" ]; then
-        awk -v line="plan: $PLAN" '{print} /^branch: /{print line}' "$DESIGN" > "$DESIGN.tmp" \
-            && mv "$DESIGN.tmp" "$DESIGN"
-    fi
-    CREATED_DESIGN=true
-fi
-
 # Record loop state: the single source of truth a skill reads instead of re-scanning git.
-# Declaring a feature lands it at the design stage, with no session yet. feature_dir is stored
-# explicitly (not just derived from slug) so the dir can later be renamed — e.g. once a PR
-# number exists — without needing the branch name to change too.
+# Declaring a feature lands it at the design stage, with no session yet. `feature_dir` stays
+# empty for compatibility with existing state readers; 0.3 creates no feature markdown path.
 write_state \
     feature "$SLUG" \
     branch "$BRANCH" \
     stage "design" \
     last_session "" \
     base_ref "$BASE_REF" \
-    feature_dir "$(repo_rel "$FEATURE")" \
+    feature_dir "" \
     plan "$PLAN" \
     updated "$(today)"
 STATE="$(state_path)"
-
-"$SCRIPT_DIR/index.sh" >/dev/null
+STORE="$(feature_store_path "$SLUG")"
+store_append_record "$STORE" feature "$SLUG" none \
+    slug "$SLUG" \
+    intent "$INTENT" \
+    branch "$BRANCH" \
+    base_ref "$BASE_REF"
 
 if $JSON_MODE; then
     emit_json \
@@ -139,18 +119,14 @@ if $JSON_MODE; then
         intent "$INTENT" \
         branch "$BRANCH" \
         branch_created "$CREATED_BRANCH" \
-        feature_dir "$FEATURE" \
-        design "$DESIGN" \
-        design_created "$CREATED_DESIGN" \
-        sessions_dir "$FEATURE/sessions" \
+        store "$STORE" \
         base_ref "$BASE_REF" \
         plan "$PLAN" \
         state "$STATE"
 else
     echo "Feature: $INTENT"
     echo "  branch:   $BRANCH$($CREATED_BRANCH && echo ' (created)')"
-    echo "  design:   $DESIGN$($CREATED_DESIGN && echo ' (stub)')"
-    echo "  sessions: $FEATURE/sessions/"
+    echo "  store:    $STORE"
     [ -n "$PLAN" ] && echo "  plan:     $PLAN"
     echo "  state:    $STATE (stage: design, base: $BASE_REF)"
 fi

@@ -22,11 +22,7 @@ if (-not $featureSlug) {
     exit 1
 }
 
-$feature = FlFeaturePath $featureSlug
-if (-not (Test-Path -LiteralPath $feature -PathType Container)) {
-    [Console]::Error.WriteLine("Error: feature '$featureSlug' not found.")
-    exit 1
-}
+$store = FlFeatureStorePath $featureSlug
 
 # Resolve base: explicit --base, else the recorded base_ref, else main/master.
 if (-not $base) { $base = FlStateGet 'base_ref' }
@@ -46,44 +42,19 @@ if ($base) {
     }
 }
 
-$sessions = @()
-if (Test-Path -LiteralPath "$feature/sessions") {
-    $sessions = @(Get-ChildItem -LiteralPath "$feature/sessions" -Filter '*.md' -File -ErrorAction SilentlyContinue |
-        Sort-Object Name | ForEach-Object { "$feature/sessions/$($_.Name)" })
-}
-
 if ($jsonMode) {
-    $files = ($sessions | ForEach-Object { '"' + (FlJsonEscape $_) + '"' }) -join ', '
-    $json = '{"feature":"' + (FlJsonEscape $featureSlug) + '","feature_dir":"' + (FlJsonEscape $feature) +
+    # The model/site reads the store; this script intentionally does not parse JSONL.
+    $json = '{"feature":"' + (FlJsonEscape $featureSlug) + '","store":"' + (FlJsonEscape $store) +
             '","base":"' + (FlJsonEscape $base) + '","range":"' + (FlJsonEscape $range) +
-            '","commits":' + $commitCount + ',"session_count":' + $sessions.Count + ',"sessions":[' + $files + ']}'
+            '","commits":' + $commitCount + ',"session_count":0,"sessions":[]}'
     FlOut $json
     exit 0
 }
 
-# Human/markdown form.
-$title = ''
-$dpath = "$feature/design.md"
-if (Test-Path -LiteralPath $dpath) {
-    foreach ($l in [System.IO.File]::ReadAllLines($dpath)) {
-        if ($l -match '^# Design: ') { $title = $l -replace '^# Design: ', ''; break }
-    }
-}
-if (-not $title) { $title = $featureSlug }
-
-FlOut "# PR view — $title"
+FlOut "# PR view — $featureSlug"
 FlOut ''
 if ($range) {
     FlOut ("_$commitCount commit(s) over ``$range``; feature branch ``$(FlBranchFor $featureSlug)``._")
     FlOut ''
 }
-if ($sessions.Count -eq 0) {
-    FlOut '_No sessions journaled yet for this feature._'
-} else {
-    foreach ($s in $sessions) {
-        FlOut '---'
-        FlOut ''
-        [Console]::Out.Write([System.IO.File]::ReadAllText($s))
-        FlOut ''
-    }
-}
+FlOut "_Session and decision records: ``$store``._"
