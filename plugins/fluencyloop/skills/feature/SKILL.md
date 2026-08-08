@@ -357,6 +357,18 @@ visible; the journal is its durable byproduct.
      `where` is a file/area, never a line number; `trust` is about the **decision**, never the
      person — `unverified` unless you independently checked it.
 
+   - **Architectural concepts** — when the slice genuinely establishes or changes a product idea
+     that a new joiner would need explained (not merely a decision or component inventory), append
+     it to the global concept stream. Do this selectively, never once per feature as a ritual:
+
+     ```bash
+     fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...]
+     fluencyloop concept --relate "<from>|<to>|<kind>"
+     ```
+
+     Re-stating a name records the refined concept; use relations to connect concepts to each
+     other, their realizing components, or the feature that changed them.
+
 4. **Log the engagement signal** *(cheap: one append, no level-guessing)*. Levels *adapt from
    demonstrated engagement* — you don't hand-edit them each slice. For each decision you just
    taught, judge how the developer engaged and append **one signal per domain dimension** it

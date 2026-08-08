@@ -104,6 +104,18 @@ Persist the same diagrams as **Mermaid** in `plan.md` under `## Architecture` (b
 the constitution; if one conflicts with a principle, say so plainly in `## Constitution check` —
 do not silently "fix" it. Refine once with the user's input, then move on.
 
+When the plan genuinely establishes or changes an architectural concept a new joiner would need
+explained, capture it in the global stream — not as a once-per-plan ritual and not for ordinary
+component inventory:
+
+```bash
+fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...]
+fluencyloop concept --relate "<from>|<to>|<kind>"
+```
+
+Use a later record with the same name to refine it as the implementation teaches more; relations
+may connect concepts to other concepts, components, or planned features.
+
 **GitHub's Mermaid parser is strict — a diagram that renders locally can still fail on
 github.com.** Before committing, re-read every `Note over`/`Note left/right of` and arrow label
 for a bare `;` — Mermaid treats `;` as a statement terminator even inside note/label text, so
