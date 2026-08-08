@@ -28,7 +28,14 @@ assert claude_plugin["license"] == codex_plugin["license"] == "Apache-2.0"
 assert claude_marketplace["name"] == codex_marketplace["name"] == "fluencyloop"
 
 claude_entry, = claude_marketplace["plugins"]
-assert claude_entry["source"] == "."
+# Pinned to the stable channel, not to main: the SessionStart hook updates unconditionally, so
+# a plugin served from the default branch ships every merge to every install. The bare "."
+# path form carries no ref, which is why this is the object form. See RELEASING.md.
+assert claude_entry["source"] == {
+    "source": "github",
+    "repo": "baokhang83/fluencyloop",
+    "ref": "stable",
+}
 assert claude_entry["version"] == version
 codex_entry, = codex_marketplace["plugins"]
 assert codex_entry["name"] == "fluencyloop"
