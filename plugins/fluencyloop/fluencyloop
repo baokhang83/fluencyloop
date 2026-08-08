@@ -13,6 +13,7 @@
 #   fluencyloop feature "<intent>"         declare a feature (branch + design stub)
 #   fluencyloop session "<intent>"         open a session in the active feature
 #   fluencyloop decision --where … --why … append a formatted decision block to the session
+#   fluencyloop concept --name …           capture an architectural concept or relation
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
 #   fluencyloop check [--json]             doctor: loop state + un-journaled drift
 #   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
@@ -63,6 +64,7 @@ case "$cmd" in
     feature)  exec bash "$BIN/new-feature.sh" "$@" ;;
     session)  exec bash "$BIN/new-session.sh" "$@" ;;
     decision) exec bash "$BIN/add-decision.sh" "$@" ;;
+    concept)  exec bash "$BIN/add-concept.sh" "$@" ;;
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
     check)    exec bash "$BIN/check.sh" "$@" ;;
     slice-context) exec bash "$BIN/slice-context.sh" "$@" ;;

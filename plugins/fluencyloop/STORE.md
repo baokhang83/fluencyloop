@@ -142,7 +142,7 @@ but retain the feature and session that last established them.
 | `name` | Stable concept name. | A5 |
 | `problem` | Product problem the concept solves. | A5 |
 | `how` | How the concept works. | A5 |
-| `realized_by` | Components or code that realize it. | A5 |
+| `realized_by` | One or more components or code areas that realize it, newline-delimited. | A5 |
 
 ```json
 {"schema_version":"1","type":"concept","ts":"2026-08-08","feature":"a2-store-schema","session":"001-schema-contract","commit":"7f8ff2e","name":"supersede on read","problem":"correct append-only records without rewriting history","how":"the reader keeps the last record for an identity","realized_by":"the site store reader"}
