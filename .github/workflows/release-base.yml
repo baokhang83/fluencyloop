@@ -1,0 +1,57 @@
+name: Release base
+
+# Merging to main ships to every installed user on their next SessionStart, unpinned and with no
+# rollback on their side (see RELEASING.md). The flow that keeps that safe is
+# `feature/<slug> -> dev -> main`, but GitHub bases new PRs on the default branch, so the way to
+# get this wrong is to click the button and not notice. This guard makes that a red check rather
+# than a release.
+#
+# It lives in its own workflow rather than as a job in ci.yml so it can listen for `labeled` and
+# `edited` without re-running the two Windows runners every time someone touches a label.
+
+on:
+  pull_request:
+    branches: [main]
+    # `edited` fires when the base branch is changed, so retargeting a PR at dev clears the check
+    # without a push; `labeled`/`unlabeled` do the same for the escape hatch below.
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  base:
+    name: PR into main comes from dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Head must be dev, or the PR must be labelled direct-release
+        env:
+          # Read through env, not `${{ }}` interpolation: head_ref is attacker-controlled on a
+          # fork PR and would otherwise be pasted into the shell as code.
+          HEAD_REF: ${{ github.head_ref }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          set -euo pipefail
+
+          if [ "$HEAD_REF" = "dev" ]; then
+            echo "Head is dev — this is the 0.x promotion path."
+            exit 0
+          fi
+
+          case ",$LABELS," in
+            *,direct-release,*)
+              echo "Labelled direct-release: '$HEAD_REF' -> main is a deliberate single-commit release."
+              echo "Bump the version and add the CHANGELOG entry before merging, per RELEASING.md."
+              exit 0
+              ;;
+          esac
+
+          echo "::error::'$HEAD_REF' -> main. Work reaches main through dev: feature/<slug> -> dev -> main."
+          echo "Merging to main releases to everyone immediately, so a partial branch cannot land here."
+          echo
+          echo "Retarget this PR at dev:"
+          echo "    gh pr edit ${{ github.event.pull_request.number }} --base dev"
+          echo
+          echo "If this really is a self-contained fix shipping as its own release, the way 0.2.27 did,"
+          echo "label it 'direct-release' to record that as a decision rather than an accident."
+          exit 1
