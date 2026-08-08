@@ -64,8 +64,16 @@ PY
     # Still exactly one line: the embedded newline is escaped, not written raw.
     [ "$(wc -l < "$f")" -eq 1 ]
     assert_valid_jsonl "$f"
-    [ "$(python3 -c 'import json,sys;print(json.load(sys.stdin)["text"])' < "$f")" = 'he said "no" \ then left' ]
-    [ "$(python3 -c 'import json,sys;print(json.load(sys.stdin)["body"])' < "$f")" = "$(printf 'one\ntwo')" ]
+    # Compared inside python rather than by capturing its stdout: python's text mode rewrites \n
+    # to \r\n on Windows, so a value with a newline in it comes back through the shell mangled
+    # and the test fails on a platform where the stored data is perfectly correct.
+    python3 - "$f" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    obj = json.loads(fh.readline())
+assert obj["text"] == 'he said "no" \\ then left', repr(obj["text"])
+assert obj["body"] == "one\ntwo", repr(obj["body"])
+PY
 }
 
 @test "store_append with no pairs writes an empty object rather than failing" {
