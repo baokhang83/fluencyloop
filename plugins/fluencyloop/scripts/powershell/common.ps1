@@ -152,6 +152,11 @@ function FlCurrentFeatureSlug {
 
 # --- loop state -----------------------------------------------------------
 
+# The state file's data-model generation. Bump only when the on-disk shape changes in a way a
+# reader has to branch on — it is how a later version tells an old project from a new one
+# without guessing from which files happen to be present. Mirrors common.sh.
+function FlSchemaVersion { 1 }
+
 function FlStatePath { $d = FlFluencyDir; if ($d) { "$d/state.json" } else { '' } }
 
 function FlRepoRel([string]$path) {
@@ -171,11 +176,20 @@ function FlStateGet([string]$key) {
     return ''
 }
 
+# The generation of the state file on disk. A file written before the field existed has none,
+# and reads as 1 — so every pre-existing project is a valid schema 1 without being rewritten.
+function FlStateSchemaVersion {
+    $v = FlStateGet 'schema_version'
+    if ($v) { $v } else { '1' }
+}
+
 # Write state.json from an alternating key/value array (all string-valued).
 function FlWriteState([string[]]$kv) {
     $f = FlStatePath
     if (-not $f) { return }
-    $parts = @()
+    # schema_version leads every state file, written here rather than by each caller so no
+    # write path can omit it. Quoted like every other value — FlStateGet only reads strings.
+    $parts = @('  "schema_version": "' + (FlSchemaVersion) + '"')
     for ($i = 0; $i + 1 -lt $kv.Count; $i += 2) {
         $parts += '  "' + $kv[$i] + '": "' + (FlJsonEscape ([string]$kv[$i + 1])) + '"'
     }
