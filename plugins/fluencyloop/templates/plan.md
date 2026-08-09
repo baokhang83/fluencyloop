@@ -15,6 +15,13 @@ started: {{DATE}}
 - **In scope:** <what this plan covers>
 - **Out of scope / non-goals:** <what it deliberately does not>
 
+## Open questions
+
+<!-- Material requirement gaps left unanswered after the single batched question round. Record
+them rather than silently assuming an answer; say why each answer would change the work. -->
+
+- <unanswered gap> — <why it matters / what remains undecided>
+
 ## Architecture
 
 <!-- The big shapes at initiative altitude — components/modules and the main flow. Not the

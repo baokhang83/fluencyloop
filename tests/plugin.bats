@@ -115,6 +115,17 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert 'explaining it "in your own words,"' in plan_skill_text
     assert "topic-specific question" in plan_skill_text
     assert "standalone comprehension" not in plan_skill_text
+    assert "## 1.5 Requirements analysis — surface material gaps" in plan_skill_text
+    assert "Unstated requirements" in plan_skill_text
+    assert "Contradictions with an existing explicit rule" in plan_skill_text
+    assert "Forks whose different answers lead to materially different work" in plan_skill_text
+    assert "Do **not** ask about anything with an obvious default" in plan_skill_text
+    assert "Ask all material gaps **once, batched**" in plan_skill_text
+    assert "Never resolve an unanswered gap silently" in plan_skill_text
+    assert "Reuse **Question delivery — preserve the pause** above" in plan_skill_text
+plan_template = read_text(dist / "templates" / "plan.md")
+assert "## Open questions" in plan_template
+assert "rather than silently assuming an answer" in plan_template
 codex_backfill_text = read_text(dist / "skills" / "backfill" / "SKILL.md")
 assert "## 0. Preconditions" in codex_backfill_text
 assert "state required by `fluencyloop feature`" in codex_backfill_text
