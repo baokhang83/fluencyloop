@@ -40,10 +40,34 @@ function Write-ImportWarning([string]$source) {
     $script:skipped++
 }
 
+# `where:` is written as a single backtick-quoted path by add-decision.sh, but backfilled
+# decisions sometimes name two paths as two separate spans on the same line. Strip a wrapping
+# pair only when the whole value is exactly that shape; otherwise keep the line as written rather
+# than mis-strip and lose structure.
+function ConvertFrom-WrappingBacktick([string]$s) {
+    if ($s -match '^`([^`]*)`$') { return $matches[1] }
+    return $s
+}
+
 function Clear-DecisionState {
     $script:inDecision = $false; $script:decisionTitle = ''; $script:decisionWhere = ''
     $script:decisionWhy = ''; $script:decisionAlt = ''; $script:decisionDesign = ''
     $script:decisionConst = ''; $script:decisionTrust = ''; $script:decisionBad = $false
+    $script:lastField = ''
+}
+
+# Appends a wrapped continuation line to whichever decision field last matched. `trust` has
+# nowhere to put prose (the store field is the binary verified/unverified the marker already set)
+# so its continuation is consumed and discarded rather than accumulated.
+function Add-Continuation([string]$text) {
+    switch ($script:lastField) {
+        'where' { $script:decisionWhere = "$script:decisionWhere $text" }
+        'why' { $script:decisionWhy = "$script:decisionWhy $text" }
+        'alternative' { $script:decisionAlt = "$script:decisionAlt $text" }
+        'design' { $script:decisionDesign = "$script:decisionDesign $text" }
+        'constitution' { $script:decisionConst = "$script:decisionConst $text" }
+        default { } # 'trust', or empty: nothing to append to
+    }
 }
 
 function Complete-ImportedDecision {
@@ -61,6 +85,42 @@ function Complete-ImportedDecision {
     Clear-DecisionState
 }
 
+# A components/hard-won-condition bullet ends wherever `· status: (documented|follow-up)` lands,
+# which the legacy writer sometimes put on the opening line and sometimes several wrapped lines
+# later. Complete-KnowledgeBullet is only ever called once that suffix is present (or the bullet
+# is abandoned by a heading/new bullet/EOF, in which case it is reported as malformed).
+function Complete-KnowledgeBullet {
+    if (-not $script:inKnowledge) { return }
+    $marker = $null
+    if ($script:knSection -eq 'components') {
+        $script:componentNumber++
+        $marker = "$script:sourceBase#component-$script:componentNumber"
+    } else {
+        $script:conditionNumber++
+        $marker = "$script:sourceBase#condition-$script:conditionNumber"
+    }
+    $status = $null
+    if ($script:knBody -match '^(.*)· status: (documented|follow-up)$') {
+        $script:knBody = $matches[1].Trim()
+        $status = $matches[2]
+    }
+    if (-not $script:knName -or -not $script:knBody -or -not $status) {
+        Write-ImportWarning $marker
+    } elseif ($script:knSection -eq 'components') {
+        # The legacy template kept role and conditions in one prose field. Preserve that exact
+        # text in both schema fields rather than guessing a split that was never encoded.
+        Add-ImportedRecord $script:store 'component' $script:feature $script:session $marker @(
+            'name', $script:knName, 'role', $script:knBody, 'conditions', $script:knBody, 'status', $status)
+    } else {
+        Add-ImportedRecord $script:store 'condition' $script:feature $script:session $marker @('subject', $script:knName, 'why', $script:knBody)
+    }
+    $script:inKnowledge = $false; $script:knName = ''; $script:knBody = ''; $script:knSection = ''
+}
+
+function Complete-KnowledgeBulletIfClosed {
+    if ($script:knBody -match '· status: (documented|follow-up)$') { Complete-KnowledgeBullet }
+}
+
 function Import-LegacySession([string]$file) {
     $script:feature = Split-Path -Leaf (Split-Path -Parent (Split-Path -Parent $file))
     $script:session = [System.IO.Path]::GetFileNameWithoutExtension($file)
@@ -70,9 +130,8 @@ function Import-LegacySession([string]$file) {
     $script:decisionNumber = 0; $script:componentNumber = 0; $script:conditionNumber = 0
     $script:inComment = $false; $section = ''
     Clear-DecisionState
-    $verifiedTrust = ([string][char]0x2713) + ' verified'
-    $unverifiedTrust = ([string][char]0x26A0) + ' not independently verified'
-    $bulletPattern = '^- \*\*(.+)\*\* ' + [char]0x2014 + ' (.+) ' + [char]0x00B7 + ' status: (documented|follow-up)$'
+    $script:inKnowledge = $false; $script:knName = ''; $script:knBody = ''; $script:knSection = ''
+    $bulletPattern = '^- \*\*(.+)\*\* ' + [char]0x2014 + ' (.*)$'
 
     foreach ($line in [System.IO.File]::ReadAllLines($file)) {
         if ($script:inComment) {
@@ -85,6 +144,7 @@ function Import-LegacySession([string]$file) {
         }
         if ($line.StartsWith('## Decision: ')) {
             Complete-ImportedDecision
+            Complete-KnowledgeBullet
             $script:inDecision = $true
             $script:decisionTitle = $line.Substring('## Decision: '.Length)
             $section = ''
@@ -94,35 +154,58 @@ function Import-LegacySession([string]$file) {
             if ($line.StartsWith('## ')) {
                 Complete-ImportedDecision
             } else {
-                if ($line -eq "- **trust:** $verifiedTrust") { $script:decisionTrust = 'verified' }
-                elseif ($line -eq "- **trust:** $unverifiedTrust") { $script:decisionTrust = 'unverified' }
-                elseif ($line.StartsWith('- **trust:** ')) { $script:decisionBad = $true }
-                elseif ($line -match '^- \*\*where:\*\* `([^`]*)`$') { $script:decisionWhere = $matches[1] }
-                elseif ($line -match '^- \*\*why:\*\* (.*)$') { $script:decisionWhy = $matches[1] }
-                elseif ($line -match '^- \*\*alternative:\*\* (.*)$') { $script:decisionAlt = $matches[1] }
-                elseif ($line -match '^- \*\*design:\*\* (.*)$') { $script:decisionDesign = $matches[1] }
-                elseif ($line -match '^- \*\*constitution:\*\* (.*)$') { $script:decisionConst = $matches[1] }
-                elseif ($line.StartsWith('- **')) { $script:decisionBad = $true }
+                # Trust only needs the leading ✓/⚠ marker; a backfilled decision often appends a
+                # review note after it ("✓ verified — maintainer-confirmed …"), which the exact
+                # string match this used to be would have flagged as malformed.
+                if ($line.StartsWith('- **trust:** ' + [char]0x2713)) { $script:decisionTrust = 'verified'; $script:lastField = 'trust' }
+                elseif ($line.StartsWith('- **trust:** ' + [char]0x26A0)) { $script:decisionTrust = 'unverified'; $script:lastField = 'trust' }
+                elseif ($line.StartsWith('- **trust:** ')) { $script:decisionBad = $true; $script:lastField = '' }
+                elseif ($line -match '^- \*\*where:\*\* (.*)$') { $script:decisionWhere = ConvertFrom-WrappingBacktick $matches[1]; $script:lastField = 'where' }
+                elseif ($line -match '^- \*\*why:\*\* (.*)$') { $script:decisionWhy = $matches[1]; $script:lastField = 'why' }
+                elseif ($line -match '^- \*\*alternative:\*\* (.*)$') { $script:decisionAlt = $matches[1]; $script:lastField = 'alternative' }
+                elseif ($line -match '^- \*\*design:\*\* (.*)$') { $script:decisionDesign = $matches[1]; $script:lastField = 'design' }
+                elseif ($line -match '^- \*\*constitution:\*\* (.*)$') { $script:decisionConst = $matches[1]; $script:lastField = 'constitution' }
+                elseif ($line.StartsWith('- **')) {
+                    # A well-formed field this schema doesn't define — e.g. a hand-added
+                    # `- **note:**` on a backfilled decision. STORE.md has no slot for it, but
+                    # every other field on this decision is still real, so drop just this bullet
+                    # rather than fail the whole record the way a genuinely malformed line does.
+                    if ($line -match '^- \*\*[A-Za-z][A-Za-z _-]*:\*\* ') { $script:lastField = '' }
+                    else { $script:decisionBad = $true; $script:lastField = '' }
+                } elseif ($script:lastField -and $line.Trim()) {
+                    # A soft-wrapped continuation of the previous field's prose: markdown reflows
+                    # a line break inside a paragraph as a space, so join the same way.
+                    Add-Continuation $line.Trim()
+                }
                 continue
             }
         }
-        if ($line.StartsWith('### Components')) { $section = 'components'; continue }
-        if ($line.StartsWith('### Hard-won conditions')) { $section = 'conditions'; continue }
-        if ($line.StartsWith('## ')) { $section = ''; continue }
-        if ($line -match $bulletPattern) {
-            if ($section -eq 'components') {
-                $script:componentNumber++
-                Add-ImportedRecord $script:store 'component' $script:feature $script:session "$script:sourceBase#component-$script:componentNumber" @(
-                    'name', $matches[1], 'role', $matches[2], 'conditions', $matches[2], 'status', $matches[3])
-            } elseif ($section -eq 'conditions') {
-                $script:conditionNumber++
-                Add-ImportedRecord $script:store 'condition' $script:feature $script:session "$script:sourceBase#condition-$script:conditionNumber" @('subject', $matches[1], 'why', $matches[2])
+        if ($line.StartsWith('### Components')) { Complete-KnowledgeBullet; $section = 'components'; continue }
+        if ($line.StartsWith('### Hard-won conditions')) { Complete-KnowledgeBullet; $section = 'conditions'; continue }
+        if ($line.StartsWith('## ')) { Complete-KnowledgeBullet; $section = ''; continue }
+        if ($section -eq 'components' -or $section -eq 'conditions') {
+            if ($line -match $bulletPattern) {
+                # A new bullet opening mid-accumulation means the previous one never reached its
+                # status marker; complete it now so it is reported rather than silently discarded.
+                Complete-KnowledgeBullet
+                $script:inKnowledge = $true; $script:knSection = $section
+                $script:knName = $matches[1]; $script:knBody = $matches[2]
+                Complete-KnowledgeBulletIfClosed
+            } elseif ($script:inKnowledge -and $line.StartsWith('- **')) {
+                # A bullet-looking line broke the accumulation before its status marker.
+                # Complete-KnowledgeBullet already reports the abandoned bullet with its own
+                # numbered marker — do not warn twice.
+                Complete-KnowledgeBullet
+            } elseif ($script:inKnowledge -and $line.Trim()) {
+                $script:knBody = "$script:knBody $($line.Trim())"
+                Complete-KnowledgeBulletIfClosed
+            } elseif ($line.StartsWith('- **')) {
+                Write-ImportWarning "$script:sourceBase#knowledge"
             }
-        } elseif ($line.StartsWith('- **') -and ($section -eq 'components' -or $section -eq 'conditions')) {
-            Write-ImportWarning "$script:sourceBase#knowledge"
         }
     }
     Complete-ImportedDecision
+    Complete-KnowledgeBullet
 }
 
 foreach ($featureDir in @(Get-ChildItem -LiteralPath $legacyRoot -Directory -ErrorAction SilentlyContinue)) {

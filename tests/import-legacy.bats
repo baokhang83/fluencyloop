@@ -72,3 +72,111 @@ PY
     [ "$status" -eq 0 ]
     [ -f "$STORE" ]
 }
+
+# The four cases below are regressions found by running the importer against a real 47-feature
+# corpus (blastradius): none are synthetic edge cases. Backfilled decisions there wrap `why:` and
+# `alternative:` across lines, cite more than one file in `where:`, annotate `trust:` with a
+# review note, and add a hand-written `- **note:**` field the schema doesn't define. Before this
+# fix, each of those independently caused the whole decision — or, compounded, the whole feature
+# — to import as zero records with no summary indicating a total loss.
+@test "reflows a why/alternative field the legacy writer wrapped across lines" {
+    printf '%s\n' \
+        '## Decision: JGit in-process for commit traversal' \
+        '- **where:** `git/CommitCheckout.java`' \
+        '- **why:** JGit walks the commit range and materializes each commit' \
+        '  in-process, never touching the target repo'"'"'s HEAD.' \
+        '- **alternative:** shell out to the `git` CLI — rejected: harder to' \
+        '  unit test and brittle across git versions.' \
+        '- **trust:** ✓ verified' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"skipped malformed"* ]]
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    record = json.loads(fh.readline())
+assert record['why'] == "JGit walks the commit range and materializes each commit in-process, never touching the target repo's HEAD.", record['why']
+assert record['alternative'] == "shell out to the `git` CLI — rejected: harder to unit test and brittle across git versions.", record['alternative']
+PY
+}
+
+@test "accepts a where field naming more than one path" {
+    printf '%s\n' \
+        '## Decision: shared resolver for two files' \
+        '- **where:** `git/CommitCheckout.java`, `git/CommitWindowResolver.java`' \
+        '- **why:** one resolver keeps both in lockstep' \
+        '- **trust:** ✓ verified' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"skipped malformed"* ]]
+    where="$(python3 -c "import json; print(json.loads(open('$STORE').readline())['where'])")"
+    [ "$where" = '`git/CommitCheckout.java`, `git/CommitWindowResolver.java`' ]
+}
+
+@test "normalizes an annotated trust line and does not fail the decision" {
+    printf '%s\n' \
+        '## Decision: annotated trust' \
+        '- **where:** `src/x.java`' \
+        '- **why:** because' \
+        '- **trust:** ✓ verified — maintainer-confirmed on backfill review (2026-07-12)' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"skipped malformed"* ]]
+    [ "$(python3 -c "import json;print(json.loads(open('$STORE').readline())['trust'])")" = "verified" ]
+}
+
+@test "drops an unrecognized well-formed field instead of failing the whole decision" {
+    printf '%s\n' \
+        '## Decision: has an extra note' \
+        '- **where:** `src/x.java`' \
+        '- **why:** because' \
+        '- **note:** shipped as a binary classifier; a later refinement is separate work.' \
+        '- **trust:** ✓ verified' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"skipped malformed"* ]]
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    record = json.loads(fh.readline())
+assert record['why'] == 'because', record
+assert 'note' not in record, record
+PY
+}
+
+@test "reflows a components bullet the legacy writer wrapped across lines, ending in the status marker" {
+    printf '%s\n' \
+        '# Session' \
+        '### Components (role, conditions)' \
+        '- **`BuildCache`** — a disk-backed store of successful builds keyed by' \
+        '  a sha, living at `<report>.cache/`. `store` writes atomically so a' \
+        '  crash mid-write never leaves a truncated file. · status: documented' \
+        '### Hard-won conditions (gotchas, root causes, limitations)' \
+        '- **linear heap growth, not a leak in one build** — Phase 1' \
+        '  accumulated every commit into one map held for the whole run. · status: documented' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"skipped malformed"* ]]
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    records = [json.loads(line) for line in fh]
+component = next(r for r in records if r['type'] == 'component')
+condition = next(r for r in records if r['type'] == 'condition')
+assert component['name'] == '`BuildCache`', component
+assert component['role'].endswith('never leaves a truncated file.'), component
+assert component['status'] == 'documented'
+assert condition['why'].endswith('held for the whole run.'), condition
+PY
+}
+
+@test "a components bullet abandoned by a heading with no status marker is reported, not silently dropped" {
+    printf '%s\n' \
+        '# Session' \
+        '### Components (role, conditions)' \
+        '- **Broken** — this bullet never reaches its status marker' \
+        '## Next section' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"skipped malformed legacy record"*"#component-1"* ]]
+}
