@@ -27,20 +27,29 @@ Describe 'fluencyloop site' {
         $script:repo = Initialize-TestRepo
         $script:siteLog = Join-Path $script:repo 'site.stdout'
         $script:siteError = Join-Path $script:repo 'site.stderr'
+        $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+        $listener.Start()
+        $port = ([System.Net.IPEndPoint]$listener.LocalEndpoint).Port
+        $listener.Stop()
         $script:siteProcess = Start-Process -FilePath $script:PwshExe `
-            -ArgumentList @('-NoProfile', '-File', $script:Cli, 'site', '--port', '0') `
+            -ArgumentList @('-NoProfile', '-File', $script:Cli, 'site', '--port', $port) `
             -WorkingDirectory $script:repo -RedirectStandardOutput $script:siteLog `
             -RedirectStandardError $script:siteError -PassThru
 
-        $url = ''
+        $url = "http://127.0.0.1:$port"
+        $ready = $false
         for ($i = 0; $i -lt 100; $i++) {
-            if (Test-Path -LiteralPath $script:siteLog) {
-                $line = Get-Content -LiteralPath $script:siteLog -Raw -ErrorAction SilentlyContinue
-                if ($line -match 'FluencyLoop site: (http://127\.0\.0\.1:\d+)') { $url = $matches[1]; break }
-            }
+            try {
+                $health = Invoke-WebRequest -Uri "$url/health" -UseBasicParsing -ErrorAction Stop
+                if ($health.StatusCode -eq 200) { $ready = $true; break }
+            } catch { }
             Start-Sleep -Milliseconds 100
         }
-        $url | Should -Match '^http://127\.0\.0\.1:\d+$'
+        if (-not $ready) {
+            $stdout = if (Test-Path -LiteralPath $script:siteLog) { Get-Content -LiteralPath $script:siteLog -Raw } else { '' }
+            $stderr = if (Test-Path -LiteralPath $script:siteError) { Get-Content -LiteralPath $script:siteError -Raw } else { '' }
+            throw "Site did not bind to $url. stdout: $stdout stderr: $stderr"
+        }
 
         $home = Invoke-WebRequest -Uri "$url/" -UseBasicParsing
         $home.StatusCode | Should -Be 200
