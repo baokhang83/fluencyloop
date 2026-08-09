@@ -313,7 +313,7 @@ function renderConceptList(data) {
     ? `<ul>${data.navigation.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
     : emptyState('No architectural concepts have been recorded yet. The product overview remains available while the store is empty.');
   const relationships = data.navigation.relations.length
-    ? `<ul>${data.navigation.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} → ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
+    ? `<ul>${data.navigation.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
     : emptyState('No relationships have been recorded yet.');
   return layout(data, 'Architectural concepts', `<h1>Architectural concepts</h1><section><h2>Concepts</h2>${concepts}</section><section><h2>Relationship graph</h2>${relationships}</section>`, [
     { href: '/', label: 'Product overview' }, { label: 'Architectural concepts' },
@@ -331,7 +331,7 @@ function endpointLink(navigation, endpoint) {
 function renderConcept(data, concept) {
   const realizedBy = String(concept.realized_by || '').split(/\r?\n/).filter(Boolean);
   const relationships = concept.relations.length
-    ? `<ul>${concept.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} → ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
+    ? `<ul>${concept.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
     : emptyState('This concept has no recorded relationships yet.');
   const features = concept.features.length
     ? `<ul>${concept.features.map((feature) => `<li>${link(featurePath(feature), feature.slug)}</li>`).join('')}</ul>`
