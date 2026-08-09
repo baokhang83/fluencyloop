@@ -15,6 +15,7 @@
 #   fluencyloop decision --where … --why … append a formatted decision block to the session
 #   fluencyloop knowledge --component …    batch session knowledge records
 #   fluencyloop concept --name …           capture an architectural concept or relation
+#   fluencyloop import                     import legacy session markdown into the store
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
 #   fluencyloop check [--json]             doctor: loop state + un-journaled drift
 #   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
@@ -67,6 +68,7 @@ case "$cmd" in
     decision) exec bash "$BIN/add-decision.sh" "$@" ;;
     knowledge) exec bash "$BIN/add-knowledge.sh" "$@" ;;
     concept)  exec bash "$BIN/add-concept.sh" "$@" ;;
+    import)   exec bash "$BIN/import-legacy.sh" "$@" ;;
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
     check)    exec bash "$BIN/check.sh" "$@" ;;
     slice-context) exec bash "$BIN/slice-context.sh" "$@" ;;

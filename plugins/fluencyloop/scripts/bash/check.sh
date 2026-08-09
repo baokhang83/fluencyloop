@@ -28,6 +28,7 @@ IN_GIT_REPO=false
 FLUENCY_DIR="$(fluency_dir)"
 FLUENCY_PRESENT=false
 [ -n "$FLUENCY_DIR" ] && [ -d "$FLUENCY_DIR" ] && FLUENCY_PRESENT=true
+[ "$FLUENCY_PRESENT" = true ] && maybe_import_legacy
 
 # --- active feature: from state.json, falling back to the branch ---
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"

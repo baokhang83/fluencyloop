@@ -16,6 +16,7 @@ $gitRepoStr = if ($root) { 'true' } else { 'false' }
 
 $fdir = FlFluencyDir
 $fluencyStr = if ($fdir -and (Test-Path -LiteralPath $fdir -PathType Container)) { 'true' } else { 'false' }
+if ($fluencyStr -eq 'true') { FlMaybeImportLegacy }
 
 $branch = & git rev-parse --abbrev-ref HEAD 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $branch) { $branch = '' } else { $branch = ($branch | Select-Object -First 1) }

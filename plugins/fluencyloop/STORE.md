@@ -54,6 +54,10 @@ All payload fields below are written by the named 0.3 issue; none are reserved i
 Writers omit optional payload values rather than writing empty strings, as required by the append
 primitive. Identity fields and the common envelope are never optional.
 
+`imported_from` is an optional A6 payload marker on records reconstructed from legacy Markdown. It
+is the stable source file plus record ordinal; the importer scans only for that literal marker to
+avoid writing a duplicate on a later run.
+
 ## Records
 
 ### `feature`

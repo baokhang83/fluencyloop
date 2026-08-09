@@ -37,6 +37,27 @@ function FlRequireFluency {
         [Console]::Error.WriteLine("Error: FluencyLoop is not initialised here. Run 'fluencyloop init' first.")
         exit 1
     }
+    FlMaybeImportLegacy
+}
+
+# First 0.3 use must carry legacy history forward without asking. import-legacy.ps1 sets the
+# guard too, so a direct import never re-enters this hook.
+function FlMaybeImportLegacy {
+    if ($env:FLUENCYLOOP_IMPORTING -eq '1') { return }
+    $legacy = "$(FlDocsDir)/features"
+    $store = FlStoreDir
+    if (-not (Test-Path -LiteralPath $legacy -PathType Container) -or (Test-Path -LiteralPath $store -PathType Container)) { return }
+    $importer = Join-Path $PSScriptRoot 'import-legacy.ps1'
+    if (-not (Test-Path -LiteralPath $importer -PathType Leaf)) { return }
+    $previous = $env:FLUENCYLOOP_IMPORTING
+    try {
+        $env:FLUENCYLOOP_IMPORTING = '1'
+        & (Get-Process -Id $PID).Path -NoProfile -File $importer --auto
+        if ($LASTEXITCODE -ne 0) { throw "legacy import failed with exit code $LASTEXITCODE" }
+    } finally {
+        if ($null -eq $previous) { Remove-Item Env:FLUENCYLOOP_IMPORTING -ErrorAction SilentlyContinue }
+        else { $env:FLUENCYLOOP_IMPORTING = $previous }
+    }
 }
 
 # --- text helpers ---------------------------------------------------------
