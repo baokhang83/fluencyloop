@@ -27,6 +27,17 @@ Describe 'fluencyloop site' {
         $script:repo = Initialize-TestRepo
         $script:siteLog = Join-Path $script:repo 'site.stdout'
         $script:siteError = Join-Path $script:repo 'site.stderr'
+        $storeDir = Join-Path $script:repo 'docs/fluencyloop/store'
+        New-Item -ItemType Directory -Force -Path (Join-Path $storeDir 'features') | Out-Null
+        [System.IO.File]::WriteAllLines((Join-Path $storeDir 'features/ps-navigation.jsonl'), @(
+            '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"ps-navigation","session":"none","commit":"abc","slug":"ps-navigation","intent":"prove native route dispatch","branch":"feature/ps-navigation","base_ref":"dev"}',
+            '{"schema_version":"1","type":"requirement","ts":"2026-08-09","feature":"ps-navigation","session":"none","commit":"abc","gap":"Can deep links load directly?","answer":"Yes, via server routes.","consequence":"Links are durable."}',
+            '{"schema_version":"1","type":"decision","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","title":"deep-route","where":"site","why":"the dispatcher shares the bundled reader"}'
+        ), [System.Text.UTF8Encoding]::new($false))
+        [System.IO.File]::WriteAllLines((Join-Path $storeDir 'concepts.jsonl'), @(
+            '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","name":"PowerShell concept","problem":"verify the Windows entry point","how":"serve the same local routes","realized_by":"fluencyloop.ps1"}',
+            '{"schema_version":"1","type":"relation","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","from":"PowerShell concept","to":"ps-navigation","kind":"realized_by"}'
+        ), [System.Text.UTF8Encoding]::new($false))
         $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
         $listener.Start()
         $port = ([System.Net.IPEndPoint]$listener.LocalEndpoint).Port
@@ -60,5 +71,19 @@ Describe 'fluencyloop site' {
         $data.StatusCode | Should -Be 200
         $data.Headers['Content-Type'] | Should -Match 'application/json'
         ($data.Content | ConvertFrom-Json).project | Should -Not -BeNullOrEmpty
+
+        $conceptPage = Invoke-WebRequest -Uri "$url/concepts/powershell-concept" -UseBasicParsing
+        $conceptPage.StatusCode | Should -Be 200
+        $conceptPage.Content | Should -Match 'PowerShell concept'
+        $conceptPage.Content | Should -Match 'href="/features/ps-navigation"'
+
+        $featurePage = Invoke-WebRequest -Uri "$url/features/ps-navigation" -UseBasicParsing
+        $featurePage.StatusCode | Should -Be 200
+        $featurePage.Content | Should -Match 'Can deep links load directly?'
+        $featurePage.Content | Should -Match 'href="/decisions/ps-navigation/001/site/deep-route"'
+
+        $decisionPage = Invoke-WebRequest -Uri "$url/decisions/ps-navigation/001/site/deep-route" -UseBasicParsing
+        $decisionPage.StatusCode | Should -Be 200
+        $decisionPage.Content | Should -Match 'the dispatcher shares the bundled reader'
     }
 }

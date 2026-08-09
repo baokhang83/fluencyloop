@@ -136,3 +136,75 @@ PY
     start_site
     [ "$SITE_URL" = "http://127.0.0.1:4174" ]
 }
+
+@test "site renders an empty store and a concept without relationships" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No architectural concepts have been recorded yet."* ]]
+
+    mkdir -p "$TESTREPO/docs/fluencyloop/store"
+    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"global","session":"none","commit":"abc","name":"standalone reader","problem":"make the store legible","how":"serve its current records","realized_by":"site server"}' >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+
+    run request /concepts/standalone-reader
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"standalone reader"* ]]
+    [[ "$output" == *"This concept has no recorded relationships yet."* ]]
+}
+
+@test "site navigates product, concepts, features, and current decisions" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    store="$TESTREPO/docs/fluencyloop/store/features/site-navigation.jsonl"
+    mkdir -p "$(dirname "$store")" "$TESTREPO/docs/fluencyloop/store" "$TESTREPO/docs/fluencyloop/distillations/concepts" "$TESTREPO/docs/fluencyloop/distillations/features"
+    printf '%s\n' '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"site-navigation","session":"none","commit":"abc","slug":"site-navigation","intent":"make the project readable","branch":"feature/site-navigation","base_ref":"dev"}' >> "$store"
+    printf '%s\n' '{"schema_version":"1","type":"requirement","ts":"2026-08-09","feature":"site-navigation","session":"none","commit":"abc","gap":"How should developers descend through detail?","answer":"Use linked levels.","consequence":"Every detail view needs up-navigation."}' >> "$store"
+    printf '%s\n' '{"schema_version":"1","type":"open_question","ts":"2026-08-09","feature":"site-navigation","session":"none","commit":"abc","gap":"Which graph layout best explains relations?","why_it_matters":"The model-chosen visual is future work."}' >> "$store"
+    printf '%s\n' '{"schema_version":"1","type":"decision","ts":"2026-08-09","feature":"site-navigation","session":"001-routes","commit":"abc","title":"render deep routes","where":"site/server.js","why":"old rationale"}' >> "$store"
+    printf '%s\n' '{"schema_version":"1","type":"decision","ts":"2026-08-10","feature":"site-navigation","session":"001-routes","commit":"def","title":"render deep routes","where":"site/server.js","why":"the URL is the durable navigation contract"}' >> "$store"
+    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"site-navigation","session":"001-routes","commit":"abc","name":"concept graph","problem":"show how the product ideas fit together","how":"link concepts, features, and decisions","realized_by":"site/server.js"}' >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"relation","ts":"2026-08-09","feature":"site-navigation","session":"001-routes","commit":"abc","from":"concept graph","to":"site-navigation","kind":"realized_by"}' >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+    printf '%s\n' '# Product overview' 'The product is navigable.' > "$TESTREPO/docs/fluencyloop/distillations/product.md"
+    printf '%s\n' '# Concept graph' 'Relationships carry architectural meaning.' > "$TESTREPO/docs/fluencyloop/distillations/concepts/concept-graph.md"
+    printf '%s\n' '# Site navigation' 'Before: a record list. After: linked levels.' > "$TESTREPO/docs/fluencyloop/distillations/features/site-navigation.md"
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"The product is navigable."* ]]
+    [[ "$output" == *'href="/concepts/concept-graph"'* ]]
+    [[ "$output" == *'href="/features/site-navigation"'* ]]
+
+    run request /concepts
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Relationship graph"* ]]
+    [[ "$output" == *"realized_by"* ]]
+    [[ "$output" == *'href="/concepts/concept-graph"'* ]]
+    [[ "$output" == *'href="/features/site-navigation"'* ]]
+
+    run request /concepts/concept-graph
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Relationships carry architectural meaning."* ]]
+    [[ "$output" == *"realized_by"* ]]
+    [[ "$output" == *'href="/concepts/concept-graph"'* ]]
+    [[ "$output" == *'href="/features/site-navigation"'* ]]
+
+    run request /features/site-navigation
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Before: a record list. After: linked levels."* ]]
+    [[ "$output" == *"Use linked levels."* ]]
+    [[ "$output" == *"Which graph layout best explains relations?"* ]]
+    [[ "$output" == *"the URL is the durable navigation contract"* ]]
+    [[ "$output" != *"old rationale"* ]]
+    [[ "$output" == *'href="/decisions/site-navigation/001-routes/site%2Fserver.js/render%20deep%20routes"'* ]]
+
+    run request /decisions/site-navigation/001-routes/site%2Fserver.js/render%20deep%20routes
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"the URL is the durable navigation contract"* ]]
+    [[ "$output" == *'href="/features/site-navigation"'* ]]
+    [[ "$output" == *'href="/concepts/concept-graph"'* ]]
+    [[ "$output" == *'href="/"'* ]]
+}
