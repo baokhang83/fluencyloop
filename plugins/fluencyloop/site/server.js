@@ -10,6 +10,12 @@ const os = require('node:os');
 const path = require('node:path');
 
 const DEFAULT_PORT = 4173;
+const SITE_ASSETS = {
+  '/assets/site.css': { file: 'site.css', contentType: 'text/css; charset=utf-8' },
+  '/assets/site.js': { file: 'site.js', contentType: 'application/javascript; charset=utf-8' },
+  '/assets/fonts/dm-sans.woff2': { file: 'fonts/dm-sans.woff2.b64', contentType: 'font/woff2', encoding: 'base64' },
+  '/assets/fonts/fraunces.woff2': { file: 'fonts/fraunces.woff2.b64', contentType: 'font/woff2', encoding: 'base64' },
+};
 const IDENTITY_FIELDS = {
   feature: ['slug'],
   session: ['feature', 'slug'],
@@ -262,14 +268,15 @@ function layout(data, title, body, crumbs = []) {
     : '';
   return `<!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} — ${escapeHtml(data.project)} — FluencyLoop</title></head>
-  <body>
-    <main>
-      <nav aria-label="Primary">${link('/', 'Product overview')} · ${link('/concepts', 'Architectural concepts')} · ${link('/features', 'Features')}</nav>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} — ${escapeHtml(data.project)} — FluencyLoop</title><link rel="stylesheet" href="/assets/site.css"></head>
+  <body data-depth="${Math.min(crumbs.length, 3)}">
+    <main id="content" tabindex="-1">
+      <nav aria-label="Primary">${link('/', 'Product overview')} · ${link('/concepts', 'Architectural concepts')} · ${link('/features', 'Features')}<button type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">Theme</button></nav>
       ${breadcrumb}
       ${storeWarning}
       ${body}
     </main>
+    <script src="/assets/site.js" defer></script>
   </body>
 </html>`;
 }
@@ -407,6 +414,13 @@ function createServer(root) {
       const pathname = new URL(request.url, 'http://127.0.0.1').pathname;
       if (pathname === '/health') {
         send(response, 200, 'application/json; charset=utf-8', request.method === 'HEAD' ? '' : '{"status":"ok"}\n');
+        return;
+      }
+      const asset = SITE_ASSETS[pathname];
+      if (asset) {
+        const source = request.method === 'HEAD' ? '' : fs.readFileSync(path.join(__dirname, asset.file), asset.encoding ? 'utf8' : undefined);
+        const body = asset.encoding ? Buffer.from(source, asset.encoding) : source;
+        send(response, 200, asset.contentType, body);
         return;
       }
       const data = readSiteData(root);

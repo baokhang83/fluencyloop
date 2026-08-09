@@ -208,3 +208,42 @@ PY
     [[ "$output" == *'href="/concepts/concept-graph"'* ]]
     [[ "$output" == *'href="/"'* ]]
 }
+
+@test "site serves its visual layer locally with theme and motion safeguards" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    start_site --port 0
+
+    for resource in / /assets/site.css /assets/site.js; do
+        run request "$resource"
+        [ "$status" -eq 0 ]
+        [[ "$output" != *"http://"* ]]
+        [[ "$output" != *"https://"* ]]
+    done
+
+    run request /assets/site.css
+    [ "$status" -eq 0 ]
+    [[ "$output" == *":root[data-theme=\"light\"]"* ]]
+    [[ "$output" == *":root[data-theme=\"dark\"]"* ]]
+    [[ "$output" == *"@font-face"* ]]
+    [[ "$output" == *'url("/assets/fonts/dm-sans.woff2")'* ]]
+    [[ "$output" == *"prefers-reduced-motion"* ]]
+    [[ "$output" == *"overflow-x: hidden"* ]]
+
+    run python3 - "$SITE_URL/assets/fonts/dm-sans.woff2" <<'PY'
+import sys
+import urllib.request
+
+with urllib.request.urlopen(sys.argv[1]) as response:
+    assert response.status == 200
+    assert response.headers["Content-Type"].startswith("font/woff2")
+    assert len(response.read()) > 1000
+PY
+    [ "$status" -eq 0 ]
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'href="/assets/site.css"'* ]]
+    [[ "$output" == *'src="/assets/site.js"'* ]]
+    [[ "$output" == *"data-theme-toggle"* ]]
+}

@@ -66,6 +66,23 @@ Describe 'fluencyloop site' {
         $page.StatusCode | Should -Be 200
         $page.Headers['Content-Type'] | Should -Match 'text/html'
         $page.Content | Should -Match 'FluencyLoop'
+        $page.Content | Should -Match 'href="/assets/site.css"'
+        $page.Content | Should -Match 'data-theme-toggle'
+
+        $styles = Invoke-WebRequest -Uri "$url/assets/site.css" -UseBasicParsing
+        $styles.StatusCode | Should -Be 200
+        $styles.Headers['Content-Type'] | Should -Match 'text/css'
+        $styles.Content | Should -Not -Match 'http://|https://'
+        $styles.Content | Should -Match '@font-face'
+
+        $font = Invoke-WebRequest -Uri "$url/assets/fonts/dm-sans.woff2" -UseBasicParsing
+        $font.StatusCode | Should -Be 200
+        $font.Headers['Content-Type'] | Should -Match 'font/woff2'
+
+        $scripts = Invoke-WebRequest -Uri "$url/assets/site.js" -UseBasicParsing
+        $scripts.StatusCode | Should -Be 200
+        $scripts.Headers['Content-Type'] | Should -Match 'javascript'
+        $scripts.Content | Should -Not -Match 'http://|https://'
 
         $data = Invoke-WebRequest -Uri "$url/api/site-data" -UseBasicParsing
         $data.StatusCode | Should -Be 200
