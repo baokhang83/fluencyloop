@@ -219,25 +219,41 @@ Order the tasks by dependency into `## Roadmap & critical path`:
   finish. Call it out explicitly (`T1 → T3 → T6`) so it's scheduled first and watched. Teach
   *why* it's the critical path — that's an architectural insight worth the developer holding.
 
-## 5. Seed the constitution — if it's still the empty stub
+## 5. Elicit the constitution — every project needs a stated position
 
-Read `docs/fluencyloop/constitution.md`. **If it's still the empty stub** (`init` seeds an empty
-`## Principles` — no real principles yet), this plan is the constitution's **birth**: the
-architecture (§2) and roadmap (§4) you just drew are the richest early signal of what this
-codebase values. Draft **3–5 initial principles** from them — the constraints and stances the
-design actually evidences (a boundary the author insisted on, a coupling they refused, a quality
-bar the roadmap protects). Each: a short **title**, the **non-negotiable** in a sentence or two,
-and the **why** (the failure it prevents). Keep them **checkable** (*"no synchronous cross-service
-calls in the request path"*), not platitudes. Show them, confirm, and write them into
-`## Principles` numbered `§1, §2, …` — features cite these numbers.
+Read `docs/fluencyloop/constitution.md`. If it contains a `Source of truth:` pointer, leave
+that pointer in place and amend the cited source instead, following its conventions. In particular,
+amend SpecKit's `.specify/memory/constitution.md` rather than forking a second constitution; keep
+its version and Sync Impact Report conventions intact. Otherwise amend the existing local
+constitution in place — whether it is the empty stub or already has principles.
 
-- **Never author cold or pad to a count** — only principles the architecture evidences; fewer,
-  sharper wins.
-- **If a real constitution already exists** — a `Source of truth:` pointer, or SpecKit's
-  `.specify/memory/constitution.md` — do **not** fork a second one; amend that in place following
-  its own conventions (SpecKit carries a version + a Sync Impact Report).
-- After birth it **grows** as features harvest principles from decisions (`$fluencyloop:feature` §3)
-  — you don't need to make it complete here.
+Raise the following **fixed areas**. The model raises each area; it never supplies the stance.
+Ask the developer for their position on every area in one clearly labelled, batched set of
+questions, using **Question delivery — preserve the pause** above:
+
+1. **Guardrails** — what must never happen in this codebase?
+2. **Architecture principles** — which boundaries, coupling, or layering rules matter?
+3. **Test methodology** — what must be tested, and how, before work is done?
+4. **Data and state** — what is persisted, derived, or never stored?
+5. **Dependencies** — what earns a new dependency?
+6. **Security and privacy** — what never leaves the machine or is never committed?
+
+Do not infer, fill, or soften an answer from the architecture, existing code, or general best
+practice. A question with no answer is still useful: retain that area in `constitution.md` as
+`_No stance recorded yet._` so the gap stays visible. Do not pad it with a platitude.
+
+For every developer-stated stance, distill only what they supplied into a checkable principle:
+a short title, a non-negotiable `rule`, and the failure its `why` prevents. Append it to the
+active constitution under `## Principles` using the next matching citation `§N`, then append
+the same values to the store:
+
+```bash
+fluencyloop principle --number "§N" --title "<title>" --rule "<developer-stated rule>" --why "<failure it prevents>"
+```
+
+The Markdown citation and record `number` must match exactly. Later corrections append another
+`principle` record with the same number; do not rewrite the earlier JSONL line. The constitution
+may grow from later decisions, but the model must always ask rather than invent a new stance.
 
 ## 6. GitHub tickets — create them live, or offer a one-time `gh` setup
 

@@ -127,9 +127,28 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "fluencyloop requirement --open" in plan_skill_text
     assert "Record the same outcome in the store exactly once per gap" in plan_skill_text
     assert "Never edit or delete the earlier `open_question`" in plan_skill_text
+    assert "## 5. Elicit the constitution" in plan_skill_text
+    for area in [
+        "Guardrails", "Architecture principles", "Test methodology", "Data and state",
+        "Dependencies", "Security and privacy",
+    ]:
+        assert area in plan_skill_text
+    assert "The model raises each area; it never supplies the stance." in plan_skill_text
+    assert "_No stance recorded yet._" in plan_skill_text
+    assert "fluencyloop principle --number" in plan_skill_text
+    assert "Source of truth:" in plan_skill_text
+    assert "SpecKit" in plan_skill_text
+    assert "Never author cold" not in plan_skill_text
 plan_template = read_text(dist / "templates" / "plan.md")
 assert "## Open questions" in plan_template
 assert "rather than silently assuming an answer" in plan_template
+constitution_template = read_text(dist / "templates" / "constitution.md")
+for area in [
+    "Guardrails", "Architecture principles", "Test methodology", "Data and state",
+    "Dependencies", "Security and privacy",
+]:
+    assert area in constitution_template
+assert constitution_template.count("_No stance recorded yet._") == 6
 codex_backfill_text = read_text(dist / "skills" / "backfill" / "SKILL.md")
 assert "## 0. Preconditions" in codex_backfill_text
 assert "state required by `fluencyloop feature`" in codex_backfill_text

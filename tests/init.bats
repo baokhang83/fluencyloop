@@ -54,6 +54,7 @@ setup() { setup_repo; }
     run cat "$TESTREPO/docs/fluencyloop/constitution.md"
     [ "$status" -eq 0 ]
     [[ "$output" == *"None yet"* ]]
+    [ "$(grep -c '^_No stance recorded yet\._$' "$TESTREPO/docs/fluencyloop/constitution.md")" -eq 6 ]
     # no pre-filled §1/§2/§3 authoring scaffold
     ! grep -qE '^### §[0-9]' "$TESTREPO/docs/fluencyloop/constitution.md"
 }
