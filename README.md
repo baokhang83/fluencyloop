@@ -54,7 +54,7 @@ only person-neutral knowledge-transfer notes about the software enter the docume
 
 ### Software documentation that follows the code
 
-Plans, Mermaid design diagrams, feature sessions, and review summaries live beside the code under
+Plans, architecture concepts and relationships, feature sessions, and review summaries live beside the code under
 `docs/fluencyloop/`. They are created from the actual branch and its changes, so documentation is
 produced during delivery rather than reconstructed after context has been lost.
 
