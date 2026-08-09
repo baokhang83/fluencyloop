@@ -6,10 +6,11 @@ description: 'FluencyLoop planning stage. Plan a large chunk of work before buil
 # Plan — map a big chunk before you build it
 
 Sits **upstream of `$fluencyloop:feature`**. A *feature* is one branch; a **plan** is an
-*initiative* that will spawn several features. You will: (1) frame the chunk, (2) design and
-show the overall architecture, (3) break it into task items, (4) sequence them into a roadmap
-with a critical path, (5) offer to open GitHub tickets under a milestone, (6) hand each task
-off to `$fluencyloop:feature`. The plan is a **map you build against, not a spec to ratify** —
+*initiative* that will spawn several features. You will: (1) frame the chunk, (2) analyse
+requirements and surface material gaps, (3) design and show the overall architecture, (4) break
+it into task items, (5) sequence them into a roadmap with a critical path, (6) offer to open
+GitHub tickets under a milestone, (7) hand each task off to `$fluencyloop:feature`. The plan is a
+**map you build against, not a spec to ratify** —
 do not over-invest. Keep the developer the architect.
 
 ## Bundled CLI (Codex)
@@ -75,6 +76,39 @@ This creates `docs/fluencyloop/plans/<slug>/plan.md` from the template **on the 
 
 Nail down **goal, in-scope, and non-goals** with the user before designing — a plan's value is
 mostly in what it excludes. Fill the `## Goal & scope` section from that exchange.
+
+## 1.5 Requirements analysis — surface material gaps
+
+Before §2, analyse the initiative intent against all three sources of evidence:
+
+- **The codebase** — the relevant existing behavior, boundaries, and conventions.
+- **The constitution** — including the source file behind a `Source of truth:` pointer, as read
+  in §0.
+- **The store** — the existing records under `docs/fluencyloop/store/`, which may capture
+  established concepts, decisions, requirements, and open questions that the intent does not
+  repeat.
+
+Identify only gaps whose answer would materially change the work. Name the category for each:
+
+1. **Unstated requirements** — work the intent implies but never names.
+2. **Contradictions with an existing explicit rule** — the intent requires something the codebase,
+   constitution, or a skill file currently forbids. These are the highest-value gaps: changing
+   the rule is a decision, not a quiet violation.
+3. **Forks whose different answers lead to materially different work** — real technical choices,
+   not preferences with an obvious default.
+
+Do **not** ask about anything with an obvious default. This is a focused analysis pass, not a
+ritual that turns every plan into a questionnaire.
+
+### Ask once, then design
+
+Reuse **Question delivery — preserve the pause** above; do not invent a second delivery
+mechanism. Gap questions are real technical choices. Ask all material gaps **once, batched** in
+one round, then continue to §2 with the answers. Do not trickle questions through architecture,
+decomposition, and roadmap work.
+
+If the developer explicitly leaves a gap unanswered, or directs you to proceed without resolving
+it, add it to `## Open questions` in `plan.md` with why it matters. Never resolve an unanswered gap silently or convert it into an assumed requirement.
 
 ## 2. Design the architecture — *shown*, at initiative altitude
 
@@ -216,7 +250,8 @@ The plan is complete either way — no friction.
 ## 7. Hand off to the build loop
 
 The plan is the map; each task item is built with **`$fluencyloop:feature`** (one branch per
-task, from `main`), in roadmap order along the critical path first. Tell the user that — and that
+task, from the active development branch — `dev` for the 0.3 milestone), in roadmap order along
+the critical path first. Tell the user that — and that
 `$fluencyloop:review` assembles each feature's PR view when it's done. Do not open feature
 branches yourself here; §7 hands off, it doesn't build.
 
