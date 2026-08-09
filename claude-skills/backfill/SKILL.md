@@ -1,6 +1,6 @@
 ---
 name: backfill
-description: 'FluencyLoop safety net. Reconstruct journal entries for work that shipped without going through the loop — reads a merged diff, drafts a feature + session with decision blocks, renders a fluency briefing that maps each decision onto the design diagrams, then confirms them with the human one decision at a time. Marks every entry trust: ⚠ unverified until confirmed. Use post-merge, or when the user says "fluencyloop backfill", "document this PR after the fact", or "we skipped the loop on this one".'
+description: 'FluencyLoop safety net. Reconstruct store records for work that shipped without going through the loop — reads a merged diff, records the feature, session, decisions, knowledge, and architectural concepts, then leaves reconstructed decisions unverified until independently confirmed. Use post-merge, or when the user says "fluencyloop backfill", "document this PR after the fact", or "we skipped the loop on this one".'
 ---
 
 # fluencyloop-backfill — reconstruct, make fluent, then flag
@@ -13,10 +13,10 @@ most at risk of plausible post-hoc fiction — which is why every backfilled ent
 record *does* exist outside the loop — see step 1 — which strengthens, but does not replace, that
 review.)
 
-Backfill is not just bookkeeping. Its job is to **make the human fluent again** in the
-components the work touched — the fluency the missing real-time loop never gave them. So you
-don't just draft and ask "ok?"; you *show them the shapes, rendered,* map each decision onto
-them, and confirm decision-by-decision.
+Backfill is not just bookkeeping. Its job is to recover the durable explanation of the
+components the work touched — the fluency the missing real-time loop never gave them. Record
+that explanation as the same feature, session, decision, knowledge, and concept records a live
+loop would write, then confirm reconstructed decisions one at a time.
 
 ## Bundled CLI (Claude Code)
 
@@ -90,105 +90,53 @@ fluencyloop decision --title "chose X over Y" --where "<file/area>" --why "<reco
   --alternative "<rejected — why, or 'unknown'>" [--constitution §N] --trust unverified
 ```
 
-These also write `.fluencyloop/state.json` (feature, branch, `stage: build`, the session as
-`last_session`, `base_ref`), so the backfilled feature carries the **same committed state record**
-as one built through the loop — commit it with the reconstructed journal. If the work's real base
-wasn't the branch you ran this from, correct `base_ref` to the ref your §1 diff used.
+These commands write `.fluencyloop/state.json` (feature, branch, `stage: build`, the session as
+`last_session`, `base_ref`) and the same feature/session/decision records as a live loop. If the
+work's real base was not the branch you ran this from, correct `base_ref` to the ref your §1 diff
+used. **Do not create or edit session journals, `design.md`, diagrams, or any other Markdown.**
 
-Sketch the feature's `design.md` diagrams (class + sequence) from the code you just read —
-these are what the briefing renders.
+## 3. Capture the knowledge and concepts the code now embodies
 
-**GitHub's Mermaid parser is strict.** Before committing a backfilled `design.md`, inspect every
-sequence-diagram arrow label and every `Note` for a bare `;`. GitHub treats `;` as a statement
-terminator even inside label text, so `Agent->>Agent: record baseline; guard checksum recursion`
-can fail with `Parse error ... got 'INVALID'`. Rewrite it with a comma, dash, or `<br/>` line
-break, then validate the exact diagram in https://mermaid.live when it was added or changed.
-
-## 3. Make the reviewer fluent — a rendered briefing
-
-Reconstruction on its own asks the human to rubber-stamp prose. Instead, show them the
-components, **rendered**, with each decision tied to what it touches. Load the
-`artifact-design` skill, then publish a **self-contained Artifact** the user opens in a browser:
-
-- **Render the diagrams, don't link source.** Artifacts render Mermaid **natively** — no CDN
-  pull, no hand-authored SVG substitute needed. In the HTML page, put the exact same source
-  that's already in `design.md` inside `<pre class="mermaid">...</pre>`. That specific wrapper
-  is required: a ` ```mermaid ` fence, or a plain `<pre><code>` block, is left untouched by the
-  renderer and shows up as literal text instead of a diagram. The committed `design.md` keeps
-  the Mermaid as the canonical source; the Artifact is the rendered view.
-- **If no visual Artifact can be published, say so and attempt an ASCII rendering in chat.** Use
-  a fenced `text` block with only ASCII characters to show the important nodes and relationships
-  or flow. It is a visual sketch derived from the diagram, not Mermaid source. If the full
-  diagram is too complex for text, show the core topology and say what was omitted. Never paste
-  Mermaid source as the substitute. Point to `design.md` for GitHub/browser rendering, and leave
-  the relevant `trust: ⚠` markers unconfirmed until the human can review the visual.
-- **Map every decision onto the diagram.** For each decision, name the exact nodes it concerns
-  and make the link visible (e.g. hovering a decision highlights those nodes). A decision the
-  human can't see located on a rendered diagram teaches nothing.
-- **Teach, briefly.** One or two plain sentences per component bringing them up to date on what
-  it does and why — this is the fluency the real-time loop would have given.
-
-**Byte-check before every publish** — the Artifact deploy rejects content with invalid or
-unpaired escape sequences (lone surrogates / `U+FFFD`). Validate the file first and only
-publish if clean:
+Backfill the feature's component inventory and hard-won conditions in one batched store write.
+Cover the whole relevant pipeline, not just the files that contained a decision; this is the
+durable explanation a later reader needs:
 
 ```bash
-python3 - "$FILE" <<'PY'
-import sys
-raw=open(sys.argv[1],'rb').read(); txt=raw.decode('utf-8','surrogatepass')
-import json
-lone=sum(1 for c in txt if 0xD800<=ord(c)<=0xDFFF); repl=txt.count('�')
-try: json.dumps(txt); ok=True
-except Exception: ok=False
-na=sum(1 for b in raw if b>127)
-print(f"non-ascii={na} lone-surrogates={lone} FFFD={repl} json-roundtrip={ok}")
-print("PUBLISH-SAFE" if (lone==0 and repl==0 and ok) else "DIRTY — do not publish")
-PY
+fluencyloop knowledge \
+  --component "<name>|<role>|<conditions>" \
+  --component "<name>|<role>|<conditions>|follow-up" \
+  --gotcha "<subject>|<why it is this way or what breaks otherwise>"
 ```
 
-Prefer pure ASCII (HTML entities over literal box-drawing/dashes). If it reports `DIRTY`,
-sanitize (or drop the offending inlined content) before calling the Artifact tool.
+Then ask whether the already-shipped code establishes an architectural concept a new joiner would
+need explained. This is often more valuable in backfill than another decision: the code exists, so
+the transferable thing is how the product works. Capture only genuine concepts, never a ritual
+concept per feature:
 
-**Persist the coverage — make it rich, not a token list.** The components you brief become the
-session's `## Knowledge transfer` record, and this is where the durable fluency lives, so invest
-in it. A thin one-liner per class is not enough. Aim to cover:
+```bash
+fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...]
+fluencyloop concept --relate "<from>|<to>|<kind>"
+```
 
-- **The whole pipeline / component inventory**, grouped by area (not just the 3–4 classes a
-  decision touched) — each with its *role* and *the conditions under which it does its job*.
-- **The hard-won, non-obvious mechanism lessons** — the bugs found and fixed, the gotchas, the
-  "why it's done this odd way," the documented limitations. These are the highest-value fluency
-  and are exactly what a contemporaneous log (step 1) captures; mine it for them.
-- Each bullet: *subject* / *what it does and under what conditions* / *status:* `documented` or
-  `follow-up`.
+Both commands append store records; neither creates Markdown. Keep their prose person-neutral:
+record what the code does and why, never anyone's competence or prior knowledge.
 
-Keep it strictly person-neutral: it records what the code does and why, never anyone's
-competence, prior knowledge, or "who knew what" (GDPR — these files are committed and name an
-identifiable author via git).
+## 4. Confirm corrections without rewriting history
 
-Give the user the rendered URL and let them read before you ask anything.
-
-## 4. Confirm — interactively, one decision at a time
-
-Do **not** ask for a blanket "looks good." Confirm **decision by decision**, using an
-interactive prompt with **one tab per decision in Claude Code** (up to 4 per call; batch further
-decisions in follow-up calls). In Codex, ask one clearly labelled decision at a time in chat and
-wait for the answer. For each decision offer:
-
-- **Confirm → ✓** — they can vouch for it firsthand; upgrade `trust: ⚠` to `✓`.
-- **Keep as ⚠** — accurate enough, but they can't personally verify it; leave it flagged.
-- **Needs fixing** — rationale is off; capture their correction (the free-text option) and rewrite.
-- **Delete** — not a real decision; drop it.
-
-Apply their verdicts to the session file (flip trust markers, rewrite corrected `why`/
-`alternative`, resolve any noted constitution-numbering drift), reconcile the design.md
-backfill banner, and only then commit. Nothing lands unreviewed.
+Do not ask for a blanket "looks good." If the developer can independently verify or correct a
+reconstructed decision, append a new `fluencyloop decision` record with the same `title` and
+`where` identity, the confirmed or corrected values, and `--trust verified` when they can vouch
+for it firsthand. A later line supersedes the earlier unverified record on read; never edit or
+delete the original JSONL line. If they cannot verify it, leave the existing `trust: unverified`
+record honest.
 
 ## Rules
 
-- **Every backfilled entry is `trust: ⚠` until a human confirms it.** The interactive
-  confirmation is the gate on the *marker*, never on the merge.
-- **Show, then ask.** Render the diagrams and map decisions onto them before requesting sign-off.
-- **Byte-check every Artifact before publishing** — never ship content that fails the check.
+- **Every backfilled decision defaults to `trust: unverified`.** It was reconstructed after the
+  fact and must not overstate what was independently checked.
+- **Store parity, no Markdown.** Use `fluencyloop decision`, `fluencyloop knowledge`, and
+  `fluencyloop concept` so a backfilled feature reads exactly like a live one; never hand-write a
+  journal, design, or other Markdown artifact.
 - **Reconstruct, don't fabricate.** "Alternative unknown" is a truthful entry; a plausible
   invented tradeoff is not.
 - **Describe the work, never the person.** Knowledge-transfer and decision entries record what
