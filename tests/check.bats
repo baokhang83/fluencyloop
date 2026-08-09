@@ -64,6 +64,14 @@ load test_helper
     [[ "$output" == *"no constitution yet"* ]]
 }
 
+@test "check: Node presence is informational" {
+    setup_initialized_repo
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+    node_value="$(echo "$output" | json_field node)"
+    [ "$node_value" = "True" ] || [ "$node_value" = "False" ] || [ "$node_value" = "true" ] || [ "$node_value" = "false" ]
+}
+
 store_record() {
     printf '%s\n' "$1" >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
 }

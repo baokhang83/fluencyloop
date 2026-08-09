@@ -57,6 +57,9 @@ if ($root -and $feature) {
 $calFile = FlCalibrationFile
 $calStr = if (Test-Path -LiteralPath $calFile) { 'true' } else { 'false' }
 
+# Informational only: Node.js is optional for the loop and needed solely by `fluencyloop site`.
+$nodeStr = if (Get-Command node -CommandType Application -ErrorAction SilentlyContinue) { 'true' } else { 'false' }
+
 # Constitution: absent / empty stub / a pointer / populated. Absent-or-empty is normal.
 $const = FlConstitutionPath
 $cstate = 'absent'
@@ -181,6 +184,7 @@ if ($jsonMode) {
             ',"last_session":"' + (FlJsonEscape $lastSession) + '"' +
             ',"unjournaled_commits":' + $unjournaled +
             ',"calibration":' + $calStr +
+            ',"node":' + $nodeStr +
             ',"constitution":"' + $cstate + '"' +
             ',"store_errors":' + $storeErrorsJson + '}'
     FlOut $json
@@ -206,6 +210,11 @@ if ($unjournaled -gt 0) {
     FlOut '  ok  no un-journaled drift'
 }
 FlOut ("  $(Mark $calStr) calibration profile ($calFile)")
+if ($nodeStr -eq 'true') {
+    FlOut '  --  Node.js available (only needed for fluencyloop site)'
+} else {
+    FlOut '  --  Node.js not installed (only needed for fluencyloop site)'
+}
 switch ($cstate) {
     'present' { FlOut '  ok  constitution: populated' }
     'pointer' { FlOut '  ok  constitution: points to a source of truth' }

@@ -155,6 +155,11 @@ FluencyLoop requires [Claude Code](https://claude.com/claude-code) or
 [Codex](https://developers.openai.com/codex/), `git`, and either Bash on macOS/Linux/Git Bash/WSL
 or PowerShell (`pwsh`) on native Windows.
 
+Node.js is **optional**. The feature loop, planning, store, importer, review, and doctor work
+without it. Only the local `fluencyloop site` viewer needs **Node.js 18 or newer**, using built-in
+Node modules; when it is missing, that command explains how to install it without interrupting the
+rest of the loop.
+
 ## More detail
 
 Read [MANIFESTO.md](MANIFESTO.md) for the product principles, calibration and privacy model, and

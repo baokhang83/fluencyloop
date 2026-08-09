@@ -65,6 +65,10 @@ CAL_FILE="$(calibration_file)"
 CAL_PRESENT=false
 [ -f "$CAL_FILE" ] && CAL_PRESENT=true
 
+# Informational only: Node.js is optional for the loop and needed solely by `fluencyloop site`.
+NODE_PRESENT=false
+command -v node >/dev/null 2>&1 && NODE_PRESENT=true
+
 # --- constitution: absent / empty stub / a pointer / populated. It's born from the first plan
 # or feature and grows by harvest, so an absent-or-empty constitution is normal, never an error. ---
 CONSTITUTION="$(constitution_path)"
@@ -230,7 +234,7 @@ if [ -n "$STORE_ROOT" ] && [ -d "$STORE_ROOT" ]; then
 fi
 
 if $JSON_MODE; then
-    printf '{"git_repo":%s,"fluency":%s,"branch":"%s","feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"constitution":"%s","store_errors":[%s]}\n' \
+    printf '{"git_repo":%s,"fluency":%s,"branch":"%s","feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"node":%s,"constitution":"%s","store_errors":[%s]}\n' \
         "$IN_GIT_REPO" \
         "$FLUENCY_PRESENT" \
         "$(json_escape "$BRANCH")" \
@@ -240,6 +244,7 @@ if $JSON_MODE; then
         "$(json_escape "$LAST_SESSION")" \
         "$UNJOURNALED" \
         "$CAL_PRESENT" \
+        "$NODE_PRESENT" \
         "$CONSTITUTION_STATE" \
         "$(store_errors_json)"
     [ "$STORE_ERROR_COUNT" -eq 0 ] && exit 0 || exit 1
@@ -263,6 +268,11 @@ else
     echo "  ok  no un-journaled drift"
 fi
 echo "  $(mark "$CAL_PRESENT") calibration profile ($CAL_FILE)"
+if $NODE_PRESENT; then
+    echo "  --  Node.js available (only needed for fluencyloop site)"
+else
+    echo "  --  Node.js not installed (only needed for fluencyloop site)"
+fi
 case "$CONSTITUTION_STATE" in
     present) echo "  ok  constitution: populated" ;;
     pointer) echo "  ok  constitution: points to a source of truth" ;;
