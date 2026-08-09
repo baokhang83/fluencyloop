@@ -15,6 +15,7 @@ load test_helper
     [[ "$output" == *"feature"* ]]
     [[ "$output" == *"knowledge"* ]]
     [[ "$output" == *"concept"* ]]
+    [[ "$output" == *"requirement"* ]]
     [[ "$output" == *"import"* ]]
     [[ "$output" == *"check"* ]]
     [[ "$output" == *"site"* ]]
