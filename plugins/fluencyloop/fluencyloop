@@ -16,6 +16,7 @@
 #   fluencyloop knowledge --component …    batch session knowledge records
 #   fluencyloop concept --name …           capture an architectural concept or relation
 #   fluencyloop requirement --gap …        capture a planning requirement or open question
+#   fluencyloop principle --number §N …    capture a constitution principle
 #   fluencyloop import                     import legacy session markdown into the store
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
 #   fluencyloop check [--json]             doctor: loop state + un-journaled drift
@@ -99,6 +100,7 @@ case "$cmd" in
     knowledge) exec bash "$BIN/add-knowledge.sh" "$@" ;;
     concept)  exec bash "$BIN/add-concept.sh" "$@" ;;
     requirement) exec bash "$BIN/add-requirement.sh" "$@" ;;
+    principle) exec bash "$BIN/add-principle.sh" "$@" ;;
     import)   exec bash "$BIN/import-legacy.sh" "$@" ;;
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
     check)    exec bash "$BIN/check.sh" "$@" ;;

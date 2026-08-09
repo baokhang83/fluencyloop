@@ -19,6 +19,7 @@ Describe 'init.ps1' {
         $script:repo = Initialize-TestRepo
         $c = Get-Content -Raw "$script:repo/docs/fluencyloop/constitution.md"
         $c | Should -Match 'None yet'
+        [regex]::Matches($c, '(?m)^_No stance recorded yet\._\r?$').Count | Should -Be 6
         $c | Should -Not -Match '(?m)^### §[0-9]'
     }
 

@@ -37,6 +37,7 @@ Usage:
   fluencyloop knowledge --component ..    batch session knowledge records
   fluencyloop concept --name ..           capture an architectural concept or relation
   fluencyloop requirement --gap ..        capture a planning requirement or open question
+  fluencyloop principle --number §N ..    capture a constitution principle
   fluencyloop import                     import legacy session markdown into the store
   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
   fluencyloop check [--json]             doctor: loop state + un-journaled drift
@@ -94,6 +95,7 @@ switch -Regex ($cmd) {
     '^knowledge$'     { Run 'add-knowledge.ps1' }
     '^concept$'       { Run 'add-concept.ps1' }
     '^requirement$'   { Run 'add-requirement.ps1' }
+    '^principle$'     { Run 'add-principle.ps1' }
     '^import$'        { Run 'import-legacy.ps1' }
     '^review$'        { Run 'assemble-pr-view.ps1' }
     '^check$'         { Run 'check.ps1' }
