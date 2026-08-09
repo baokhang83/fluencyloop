@@ -103,6 +103,11 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "**Feature delta**" in feature_skill_text
     assert "**no overview rewrite**" in feature_skill_text
     assert "when this feature newly establishes a concept" in feature_skill_text
+    assert "### Optional explanatory diagrams" in feature_skill_text
+    assert "Prose always carries the explanation." in feature_skill_text
+    assert "**every feature gets one** is exactly the failure this option replaces." in feature_skill_text
+    assert "Diagram: The reader selects the last record" in feature_skill_text
+    assert "caption + prose" in feature_skill_text
     assert "**Do not distill decisions.**" in feature_skill_text
     assert "person-neutral" in feature_skill_text
 claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
@@ -176,9 +181,7 @@ assert "feature-handoff: automatic" in codex_review_text
 assert "without a second" in codex_review_text
 assert 'gh pr create --base "<base_ref>"' in codex_review_text
 for path in [
-    dist / "skills" / "feature" / "SKILL.md",
     dist / "skills" / "plan" / "SKILL.md",
-    root / "claude-skills" / "feature" / "SKILL.md",
     root / "claude-skills" / "plan" / "SKILL.md",
 ]:
     text = read_text(path)

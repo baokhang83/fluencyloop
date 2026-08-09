@@ -251,8 +251,38 @@ function link(href, label) {
   return `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
 }
 
+function prose(content) {
+  return content.trim() ? `<pre class="distillation-prose">${escapeHtml(content.trim())}</pre>` : '';
+}
+
+function diagramCaption(value) {
+  return value && value.trim()
+    ? value.trim()
+    : 'Diagram supporting the surrounding written explanation.';
+}
+
+function isSupportedDiagram(source) {
+  return /^(?:flowchart|graph)\s+(?:TD|TB|BT|LR|RL)\b/i.test(source.trim()) ||
+    /^sequenceDiagram\b/i.test(source.trim());
+}
+
 function markdown(content) {
-  return `<pre>${escapeHtml(content)}</pre>`;
+  const pattern = /\`\`\`mermaid[^\n]*\r?\n([\s\S]*?)\`\`\`(?:\r?\n(?:Diagram|Caption):[ \t]*(.+))?/gi;
+  let cursor = 0;
+  let match;
+  let rendered = '';
+  while ((match = pattern.exec(content))) {
+    rendered += prose(content.slice(cursor, match.index));
+    const source = match[1].trim();
+    const caption = diagramCaption(match[2]);
+    if (isSupportedDiagram(source)) {
+      rendered += `<figure class="diagram" data-mermaid="${escapeHtml(encodeURIComponent(source))}"><div class="diagram-canvas" aria-hidden="true">Rendering diagram…</div><figcaption>${escapeHtml(caption)}</figcaption></figure>`;
+    } else {
+      rendered += `<aside class="diagram-unavailable" role="note"><strong>Diagram unavailable.</strong><p>${escapeHtml(caption)}</p></aside>`;
+    }
+    cursor = pattern.lastIndex;
+  }
+  return rendered + prose(content.slice(cursor));
 }
 
 function emptyState(message) {

@@ -29,6 +29,8 @@ Describe 'fluencyloop site' {
         $script:siteError = Join-Path $script:repo 'site.stderr'
         $storeDir = Join-Path $script:repo 'docs/fluencyloop/store'
         New-Item -ItemType Directory -Force -Path (Join-Path $storeDir 'features') | Out-Null
+        $distillationDir = Join-Path $script:repo 'docs/fluencyloop/distillations'
+        New-Item -ItemType Directory -Force -Path (Join-Path $distillationDir 'features') | Out-Null
         [System.IO.File]::WriteAllLines((Join-Path $storeDir 'features/ps-navigation.jsonl'), @(
             '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"ps-navigation","session":"none","commit":"abc","slug":"ps-navigation","intent":"prove native route dispatch","branch":"feature/ps-navigation","base_ref":"dev"}',
             '{"schema_version":"1","type":"requirement","ts":"2026-08-09","feature":"ps-navigation","session":"none","commit":"abc","gap":"Can deep links load directly?","answer":"Yes, via server routes.","consequence":"Links are durable."}',
@@ -37,6 +39,21 @@ Describe 'fluencyloop site' {
         [System.IO.File]::WriteAllLines((Join-Path $storeDir 'concepts.jsonl'), @(
             '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","name":"PowerShell concept","problem":"verify the Windows entry point","how":"serve the same local routes","realized_by":"fluencyloop.ps1"}',
             '{"schema_version":"1","type":"relation","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","from":"PowerShell concept","to":"ps-navigation","kind":"realized_by"}'
+        ), [System.Text.UTF8Encoding]::new($false))
+        [System.IO.File]::WriteAllLines((Join-Path $distillationDir 'product.md'), @(
+            'The prose explains the reader before the diagram supports it.',
+            '```mermaid',
+            'flowchart LR',
+            '  Writer[Writer] --> Reader[Reader]',
+            '```',
+            'Diagram: The reader observes records after the writer appends them.'
+        ), [System.Text.UTF8Encoding]::new($false))
+        [System.IO.File]::WriteAllLines((Join-Path $distillationDir 'features/ps-navigation.md'), @(
+            'The feature still has a written explanation.',
+            '```mermaid',
+            'not a supported diagram',
+            '```',
+            'Diagram: A bad visual never hides the written explanation.'
         ), [System.Text.UTF8Encoding]::new($false))
         $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
         $listener.Start()
@@ -68,6 +85,8 @@ Describe 'fluencyloop site' {
         $page.Content | Should -Match 'FluencyLoop'
         $page.Content | Should -Match 'href="/assets/site.css"'
         $page.Content | Should -Match 'data-theme-toggle'
+        $page.Content | Should -Match 'class="diagram"'
+        $page.Content | Should -Match 'The reader observes records after the writer appends them.'
 
         $styles = Invoke-WebRequest -Uri "$url/assets/site.css" -UseBasicParsing
         $styles.StatusCode | Should -Be 200
@@ -98,6 +117,9 @@ Describe 'fluencyloop site' {
         $featurePage.StatusCode | Should -Be 200
         $featurePage.Content | Should -Match 'Can deep links load directly?'
         $featurePage.Content | Should -Match 'href="/decisions/ps-navigation/001/site/deep-route"'
+        $featurePage.Content | Should -Match 'class="diagram-unavailable"'
+        $featurePage.Content | Should -Match 'A bad visual never hides the written explanation.'
+        $featurePage.Content | Should -Not -Match 'not a supported diagram'
 
         $decisionPage = Invoke-WebRequest -Uri "$url/decisions/ps-navigation/001/site/deep-route" -UseBasicParsing
         $decisionPage.StatusCode | Should -Be 200

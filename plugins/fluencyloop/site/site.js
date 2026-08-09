@@ -1,5 +1,145 @@
 'use strict';
 
+// A small, bundled Mermaid reader. It intentionally accepts only the diagram forms that are
+// useful in a distillation: relationship flowcharts and message sequences. Unknown or malformed
+// input becomes a caption-only note instead of exposing source or breaking the page.
+const svgNamespace = 'http:' + '//' + 'www.w3.org/2000/svg';
+
+function svgElement(name, attributes = {}) {
+  const element = document.createElementNS(svgNamespace, name);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
+  return element;
+}
+
+function appendText(parent, value, x, y, attributes = {}) {
+  const text = svgElement('text', { x, y, ...attributes });
+  text.textContent = value;
+  parent.append(text);
+  return text;
+}
+
+function parseEndpoint(token) {
+  const match = token.trim().match(/^([A-Za-z0-9_-]+)(?:\[([^\]]+)\]|\(([^)]+)\)|\{([^}]+)\})?$/);
+  if (!match) throw new Error('invalid node');
+  return { id: match[1], label: match[2] || match[3] || match[4] || match[1] };
+}
+
+function parseFlowchart(source) {
+  const lines = source.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith('%%'));
+  const heading = lines.shift()?.match(/^(?:flowchart|graph)\s+(TD|TB|BT|LR|RL)$/i);
+  if (!heading) throw new Error('unsupported flowchart');
+  const nodes = new Map();
+  const edges = [];
+  for (const line of lines) {
+    const edge = line.match(/^(.+?)\s*(?:-->|---|==>|-\.->)\s*(.+?)(?:\s*:\s*.*)?$/);
+    if (!edge) continue;
+    const from = parseEndpoint(edge[1]);
+    const to = parseEndpoint(edge[2]);
+    nodes.set(from.id, from);
+    nodes.set(to.id, to);
+    edges.push({ from: from.id, to: to.id });
+  }
+  if (!edges.length) throw new Error('flowchart has no links');
+  return { direction: heading[1].toUpperCase(), nodes: [...nodes.values()], edges };
+}
+
+function parseSequence(source) {
+  const lines = source.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith('%%'));
+  if (lines.shift() !== 'sequenceDiagram') throw new Error('unsupported sequence');
+  const actors = new Map();
+  const messages = [];
+  for (const line of lines) {
+    const participant = line.match(/^participant\s+([A-Za-z0-9_-]+)(?:\s+as\s+(.+))?$/i);
+    if (participant) {
+      actors.set(participant[1], participant[2] || participant[1]);
+      continue;
+    }
+    const message = line.match(/^([A-Za-z0-9_-]+)\s*[-=]+>+\s*([A-Za-z0-9_-]+)\s*:\s*(.+)$/);
+    if (!message) continue;
+    actors.set(message[1], actors.get(message[1]) || message[1]);
+    actors.set(message[2], actors.get(message[2]) || message[2]);
+    messages.push({ from: message[1], to: message[2], label: message[3] });
+  }
+  if (!messages.length) throw new Error('sequence has no messages');
+  return { actors: [...actors].map(([id, label]) => ({ id, label })), messages };
+}
+
+function diagramSvg(width, height) {
+  const svg = svgElement('svg', { viewBox: '0 0 ' + width + ' ' + height, role: 'img', focusable: 'false' });
+  const defs = svgElement('defs');
+  const marker = svgElement('marker', { id: 'diagram-arrow', markerWidth: 8, markerHeight: 8, refX: 7, refY: 4, orient: 'auto' });
+  marker.append(svgElement('path', { d: 'M 0 0 L 8 4 L 0 8 z', class: 'diagram-arrow' }));
+  defs.append(marker);
+  svg.append(defs);
+  return svg;
+}
+
+function renderFlowchart(model) {
+  const horizontal = model.direction === 'LR' || model.direction === 'RL';
+  const count = model.nodes.length;
+  const width = horizontal ? Math.max(480, count * 190 + 70) : 640;
+  const height = horizontal ? 220 : Math.max(220, count * 105 + 60);
+  const svg = diagramSvg(width, height);
+  const points = new Map();
+  model.nodes.forEach((node, index) => {
+    const x = horizontal ? 105 + index * 190 : width / 2;
+    const y = horizontal ? height / 2 : 65 + index * 105;
+    points.set(node.id, { x, y });
+  });
+  for (const edge of model.edges) {
+    const from = points.get(edge.from);
+    const to = points.get(edge.to);
+    if (!from || !to) continue;
+    svg.append(svgElement('line', { x1: from.x, y1: from.y, x2: to.x, y2: to.y, class: 'diagram-link', 'marker-end': 'url(#diagram-arrow)' }));
+  }
+  for (const node of model.nodes) {
+    const point = points.get(node.id);
+    svg.append(svgElement('rect', { x: point.x - 72, y: point.y - 25, width: 144, height: 50, rx: 12, class: 'diagram-node' }));
+    appendText(svg, node.label, point.x, point.y + 5, { class: 'diagram-label', 'text-anchor': 'middle' });
+  }
+  return svg;
+}
+
+function renderSequence(model) {
+  const width = Math.max(460, model.actors.length * 170 + 80);
+  const height = Math.max(230, model.messages.length * 58 + 120);
+  const svg = diagramSvg(width, height);
+  const points = new Map();
+  model.actors.forEach((actor, index) => {
+    const x = 85 + index * ((width - 170) / Math.max(1, model.actors.length - 1));
+    points.set(actor.id, x);
+    svg.append(svgElement('rect', { x: x - 58, y: 16, width: 116, height: 36, rx: 10, class: 'diagram-node' }));
+    appendText(svg, actor.label, x, 39, { class: 'diagram-label', 'text-anchor': 'middle' });
+    svg.append(svgElement('line', { x1: x, y1: 58, x2: x, y2: height - 22, class: 'diagram-lifeline' }));
+  });
+  model.messages.forEach((message, index) => {
+    const y = 94 + index * 58;
+    const from = points.get(message.from);
+    const to = points.get(message.to);
+    svg.append(svgElement('line', { x1: from, y1: y, x2: to, y2: y, class: 'diagram-link', 'marker-end': 'url(#diagram-arrow)' }));
+    appendText(svg, message.label, (from + to) / 2, y - 8, { class: 'diagram-message', 'text-anchor': 'middle' });
+  });
+  return svg;
+}
+
+function renderDiagram(figure) {
+  const canvas = figure.querySelector('.diagram-canvas');
+  const caption = figure.querySelector('figcaption')?.textContent || 'Supporting diagram';
+  try {
+    const source = decodeURIComponent(figure.dataset.mermaid || '');
+    const svg = /^sequenceDiagram\b/.test(source.trim())
+      ? renderSequence(parseSequence(source))
+      : renderFlowchart(parseFlowchart(source));
+    svg.setAttribute('aria-label', caption);
+    canvas.replaceChildren(svg);
+    figure.dataset.diagramState = 'rendered';
+  } catch (_) {
+    canvas.replaceChildren();
+    canvas.hidden = true;
+    figure.dataset.diagramState = 'unavailable';
+  }
+}
+
 // Keep personal presentation preferences in the browser, never in the project store.
 (() => {
   const root = document.documentElement;
@@ -35,4 +175,5 @@
   });
 
   requestAnimationFrame(() => { document.body.dataset.motion = 'ready'; });
+  document.querySelectorAll('.diagram[data-mermaid]').forEach(renderDiagram);
 })();
