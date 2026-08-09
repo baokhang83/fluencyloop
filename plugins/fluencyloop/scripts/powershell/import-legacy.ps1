@@ -131,7 +131,13 @@ function Import-LegacySession([string]$file) {
     $script:inComment = $false; $section = ''
     Clear-DecisionState
     $script:inKnowledge = $false; $script:knName = ''; $script:knBody = ''; $script:knSection = ''
-    $bulletPattern = '^- \*\*(.+)\*\* ' + [char]0x2014 + ' (.*)$'
+    # The legacy writer separates a bullet's bolded name from its prose two ways: most bullets
+    # use an em dash ("**Name** — prose"), but some end the bold span in its own sentence-closing
+    # punctuation and run straight into the prose with just a space ("**Name.** prose"). Both are
+    # accepted here; a leading em dash left over from the first style is stripped below so a
+    # bullet parsed either way produces the same role/subject text.
+    $bulletPattern = '^- \*\*(.+)\*\* (.*)$'
+    $emDashPrefix = [string][char]0x2014 + ' '
 
     foreach ($line in [System.IO.File]::ReadAllLines($file)) {
         if ($script:inComment) {
@@ -190,6 +196,7 @@ function Import-LegacySession([string]$file) {
                 Complete-KnowledgeBullet
                 $script:inKnowledge = $true; $script:knSection = $section
                 $script:knName = $matches[1]; $script:knBody = $matches[2]
+                if ($script:knBody.StartsWith($emDashPrefix)) { $script:knBody = $script:knBody.Substring($emDashPrefix.Length) }
                 Complete-KnowledgeBulletIfClosed
             } elseif ($script:inKnowledge -and $line.StartsWith('- **')) {
                 # A bullet-looking line broke the accumulation before its status marker.
