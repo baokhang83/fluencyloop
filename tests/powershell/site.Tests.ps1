@@ -87,6 +87,9 @@ Describe 'fluencyloop site' {
         $page.Content | Should -Match 'data-theme-toggle'
         $page.Content | Should -Match 'class="diagram"'
         $page.Content | Should -Match 'The reader observes records after the writer appends them.'
+        $page.Content | Should -Match 'data-topic-collection'
+        $page.Content | Should -Match 'data-topic-filter="powershell-concept"'
+        $page.Content | Should -Match 'Recorded <time datetime="2026-08-09">2026-08-09</time>'
 
         $styles = Invoke-WebRequest -Uri "$url/assets/site.css" -UseBasicParsing
         $styles.StatusCode | Should -Be 200
@@ -102,6 +105,7 @@ Describe 'fluencyloop site' {
         $scripts.StatusCode | Should -Be 200
         $scripts.Headers['Content-Type'] | Should -Match 'javascript'
         $scripts.Content | Should -Not -Match 'http://|https://'
+        $scripts.Content | Should -Match 'installTopicFilters'
 
         $data = Invoke-WebRequest -Uri "$url/api/site-data" -UseBasicParsing
         $data.StatusCode | Should -Be 200
