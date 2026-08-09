@@ -178,6 +178,36 @@ Describe 'import-legacy.ps1' {
             $condition.why | Should -Match 'held for the whole run\.$'
         }
 
+        It 'accepts a condition bullet whose name ends its own sentence instead of using an em dash' {
+            $text = @(
+                '# Session',
+                '### Hard-won conditions (gotchas, root causes, limitations)',
+                '- **The OOM was linear heap growth, not a leak in one build.** Phase 1',
+                "  accumulated every commit into one map held for the whole run. $dot status: documented"
+            ) -join "`n"
+            [System.IO.File]::WriteAllText($script:legacy, $text + "`n", (New-Object System.Text.UTF8Encoding($false)))
+
+            $out = Invoke-FlAll 'import-legacy.ps1'
+            $out | Should -Not -Match 'skipped malformed'
+            $record = [System.IO.File]::ReadAllLines($script:store) | Select-Object -First 1 | ConvertFrom-Json
+            $record.subject | Should -Be 'The OOM was linear heap growth, not a leak in one build.'
+            $record.why | Should -Match 'held for the whole run\.$'
+        }
+
+        It "an em-dash-separated bullet's role text has no leftover leading dash" {
+            $text = @(
+                '# Session',
+                '### Components (role, conditions)',
+                "- **``Widget``** $em does the thing $dot status: documented"
+            ) -join "`n"
+            [System.IO.File]::WriteAllText($script:legacy, $text + "`n", (New-Object System.Text.UTF8Encoding($false)))
+
+            $out = Invoke-FlAll 'import-legacy.ps1'
+            $out | Should -Not -Match 'skipped malformed'
+            $record = [System.IO.File]::ReadAllLines($script:store) | Select-Object -First 1 | ConvertFrom-Json
+            $record.role | Should -Be 'does the thing'
+        }
+
         It 'reports a components bullet abandoned by a heading with no status marker, without double-counting' {
             $text = @(
                 '# Session',

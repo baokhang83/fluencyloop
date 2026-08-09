@@ -164,7 +164,12 @@ import_session() {
     DECISION_TITLE=""; DECISION_WHERE=""; DECISION_WHY=""; DECISION_ALT=""
     DECISION_DESIGN=""; DECISION_CONST=""; DECISION_TRUST=""; DECISION_BAD=false
     IN_KNOWLEDGE=false; KN_NAME=""; KN_BODY=""; KN_SECTION=""
-    local line bullet_re='^- \*\*(.+)\*\* — (.*)$'
+    # The legacy writer separates a bullet's bolded name from its prose two ways: most bullets
+    # use an em dash ("**Name** — prose"), but some end the bold span in its own sentence-closing
+    # punctuation and run straight into the prose with just a space ("**Name.** prose"). Both are
+    # accepted here; a leading em dash left over from the first style is stripped below so a
+    # bullet parsed either way produces the same role/subject text.
+    local line bullet_re='^- \*\*(.+)\*\* (.*)$'
     while IFS= read -r line || [ -n "$line" ]; do
         if $IN_COMMENT; then
             [[ "$line" == *"-->"* ]] && IN_COMMENT=false
@@ -230,6 +235,7 @@ import_session() {
                 flush_knowledge
                 IN_KNOWLEDGE=true; KN_SECTION="$SECTION"
                 KN_NAME="${BASH_REMATCH[1]}"; KN_BODY="${BASH_REMATCH[2]}"
+                KN_BODY="${KN_BODY#"— "}"
                 maybe_flush_knowledge
             elif $IN_KNOWLEDGE && [[ "$line" == '- **'* ]]; then
                 # A bullet-looking line broke the accumulation before its status marker. flush_knowledge

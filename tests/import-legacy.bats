@@ -170,6 +170,34 @@ assert condition['why'].endswith('held for the whole run.'), condition
 PY
 }
 
+@test "accepts a condition bullet whose name ends its own sentence instead of using an em dash" {
+    printf '%s\n' \
+        '# Session' \
+        '### Hard-won conditions (gotchas, root causes, limitations)' \
+        '- **The OOM was linear heap growth, not a leak in one build.** Phase 1' \
+        '  accumulated every commit into one map held for the whole run. · status: documented' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"skipped malformed"* ]]
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    record = json.loads(fh.readline())
+assert record['subject'] == 'The OOM was linear heap growth, not a leak in one build.', record
+assert record['why'].endswith('held for the whole run.'), record
+PY
+}
+
+@test "an em-dash-separated bullet's role text has no leftover leading dash" {
+    printf '%s\n' \
+        '# Session' \
+        '### Components (role, conditions)' \
+        '- **`Widget`** — does the thing · status: documented' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [ "$(python3 -c "import json; print(json.loads(open('$STORE').readline())['role'])")" = "does the thing" ]
+}
+
 @test "a components bullet abandoned by a heading with no status marker is reported, not silently dropped" {
     printf '%s\n' \
         '# Session' \
