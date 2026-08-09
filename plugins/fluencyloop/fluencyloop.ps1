@@ -31,7 +31,7 @@ backfill) are driven by the skills supplied by the installed Claude Code or Code
 Usage:
   fluencyloop init                       scaffold .fluencyloop/ state + docs/fluencyloop/
   fluencyloop plan "<intent>"            declare a plan (architecture + roadmap for a big chunk)
-  fluencyloop feature "<intent>"         declare a feature (branch + design stub)
+  fluencyloop feature "<intent>"         declare a feature (branch + store record)
   fluencyloop session "<intent>"         open a session in the active feature
   fluencyloop decision --where .. --why ..  append a formatted decision block to the session
   fluencyloop knowledge --component ..    batch session knowledge records
@@ -41,7 +41,7 @@ Usage:
   fluencyloop import                     import legacy session markdown into the store
   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
   fluencyloop check [--json]             doctor: loop state + un-journaled drift
-  fluencyloop site                       open the local 0.3 site (requires Node.js 18+)
+  fluencyloop site [--port <port>]       serve the local 0.3 site (requires Node.js 18+)
   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
   fluencyloop index                      regenerate docs/fluencyloop/README.md
@@ -71,8 +71,9 @@ function RequireNodeForSite {
         exit 1
     }
     $version = (& $nodeCommand.Source --version 2>$null | Select-Object -First 1)
+    $nodeExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
     $versionMatch = [regex]::Match([string]$version, '^v?(\d+)')
-    if ($LASTEXITCODE -ne 0 -or -not $version -or -not $versionMatch.Success) {
+    if ($nodeExitCode -ne 0 -or -not $version -or -not $versionMatch.Success) {
         [Console]::Error.WriteLine("Could not determine the installed Node.js version for 'fluencyloop site'.")
         [Console]::Error.WriteLine('Node.js 18 or newer is required only for the local site. Install or update it at https://nodejs.org/.')
         exit 1
@@ -82,8 +83,19 @@ function RequireNodeForSite {
         [Console]::Error.WriteLine('The rest of FluencyLoop works without Node.js. Update it at https://nodejs.org/.')
         exit 1
     }
-    [Console]::Error.WriteLine("Node.js $version is available, but the local site server is not included in this build yet.")
-    exit 1
+    return $nodeCommand.Source
+}
+
+function StartSite {
+    $nodeExe = RequireNodeForSite
+    $projectRoot = (& git rev-parse --show-toplevel 2>$null | Select-Object -First 1)
+    $gitExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+    if ($gitExitCode -ne 0 -or -not $projectRoot) {
+        [Console]::Error.WriteLine("Error: 'fluencyloop site' must run inside a Git repository.")
+        exit 1
+    }
+    & $nodeExe (Join-Path $SELF 'site/server.js') '--root' $projectRoot @rest
+    exit $LASTEXITCODE
 }
 
 switch -Regex ($cmd) {
@@ -99,7 +111,7 @@ switch -Regex ($cmd) {
     '^import$'        { Run 'import-legacy.ps1' }
     '^review$'        { Run 'assemble-pr-view.ps1' }
     '^check$'         { Run 'check.ps1' }
-    '^site$'          { RequireNodeForSite }
+    '^site$'          { StartSite }
     '^slice-context$' { Run 'slice-context.ps1' }
     '^calibration$'   { Run 'calibration.ps1' }
     '^index$'         { Run 'index.ps1' }

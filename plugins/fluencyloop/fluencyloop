@@ -10,7 +10,7 @@
 # Usage:
 #   fluencyloop init                       scaffold .fluencyloop/ state + docs/fluencyloop/
 #   fluencyloop plan "<intent>"            declare a plan (architecture + roadmap for a big chunk)
-#   fluencyloop feature "<intent>"         declare a feature (branch + design stub)
+#   fluencyloop feature "<intent>"         declare a feature (branch + store record)
 #   fluencyloop session "<intent>"         open a session in the active feature
 #   fluencyloop decision --where … --why … append a formatted decision block to the session
 #   fluencyloop knowledge --component …    batch session knowledge records
@@ -20,7 +20,7 @@
 #   fluencyloop import                     import legacy session markdown into the store
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
 #   fluencyloop check [--json]             doctor: loop state + un-journaled drift
-#   fluencyloop site                       open the local 0.3 site (requires Node.js 18+)
+#   fluencyloop site [--port <port>]       serve the local 0.3 site (requires Node.js 18+)
 #   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
 #   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
 #   fluencyloop index                      regenerate docs/fluencyloop/README.md
@@ -86,8 +86,18 @@ require_node_for_site() {
         echo "The rest of FluencyLoop works without Node.js. Update it at https://nodejs.org/." >&2
         return 1
     fi
-    echo "Node.js $node_version is available, but the local site server is not included in this build yet." >&2
-    return 1
+    NODE_BIN="$node_bin"
+}
+
+start_site() {
+    require_node_for_site
+    local project_root
+    project_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+    if [ -z "$project_root" ]; then
+        echo "Error: 'fluencyloop site' must run inside a Git repository." >&2
+        return 1
+    fi
+    exec "$NODE_BIN" "$SELF/site/server.js" --root "$project_root" "$@"
 }
 
 cmd="${1:-help}"; shift || true
@@ -104,7 +114,7 @@ case "$cmd" in
     import)   exec bash "$BIN/import-legacy.sh" "$@" ;;
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
     check)    exec bash "$BIN/check.sh" "$@" ;;
-    site)     require_node_for_site "$@" ;;
+    site)     start_site "$@" ;;
     slice-context) exec bash "$BIN/slice-context.sh" "$@" ;;
     calibration) exec bash "$BIN/calibration.sh" "$@" ;;
     index)    exec bash "$BIN/index.sh" "$@" ;;
