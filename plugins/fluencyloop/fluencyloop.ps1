@@ -71,8 +71,9 @@ function RequireNodeForSite {
         exit 1
     }
     $version = (& $nodeCommand.Source --version 2>$null | Select-Object -First 1)
+    $nodeExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
     $versionMatch = [regex]::Match([string]$version, '^v?(\d+)')
-    if ($LASTEXITCODE -ne 0 -or -not $version -or -not $versionMatch.Success) {
+    if ($nodeExitCode -ne 0 -or -not $version -or -not $versionMatch.Success) {
         [Console]::Error.WriteLine("Could not determine the installed Node.js version for 'fluencyloop site'.")
         [Console]::Error.WriteLine('Node.js 18 or newer is required only for the local site. Install or update it at https://nodejs.org/.')
         exit 1
