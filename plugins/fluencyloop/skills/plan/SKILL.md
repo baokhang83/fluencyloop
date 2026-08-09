@@ -130,40 +130,34 @@ When a later planning round resolves an earlier open question, append the answer
 `requirement` for the same gap. Never edit or delete the earlier `open_question`; readers
 supersede it on read.
 
-## 2. Design the architecture — *shown*, at initiative altitude
+## 2. Design the architecture — concepts and relationships at initiative altitude
 
-Draft the **big shapes**: the components/modules and their relationships, and the main flow(s).
-This is coarser than a feature's `design.md` — the load-bearing structure the features will fill
-in, not the per-feature detail.
+Draft the **big concepts**: the components/modules, their boundaries and relationships, and the
+main flow(s). This is coarser than feature-level implementation detail — the load-bearing structure
+the features will fill in.
 
-**Show it rendered — don't just write a file and point at it.** Publish the architecture as a
-**self-contained Artifact** (load the `artifact-design` skill first). Artifacts render Mermaid
-**natively** — no CDN pull, no hand-authored SVG substitute needed. In the HTML page, put the
-exact same source that's going into `plan.md` inside `<pre class="mermaid">...</pre>`. That
-specific wrapper is required: a ` ```mermaid ` fence, or a plain `<pre><code>` block, is left
-untouched by the renderer and shows up as literal text instead of a diagram. **Byte-check before
-publishing:** valid UTF-8, no lone surrogates / `U+FFFD`, JSON-round-trips (prefer ASCII in prose
-— HTML entities over literal dashes/box-drawing). Then walk the user through it and invite
-reactions — this is a conversation.
+Architecture is a model of concepts and relationships, not a fixed visual form. Capture the
+reasoning directly in `plan.md` under `## Architecture`: name the concepts, state how they connect
+or depend on one another, and describe the important flow and choice. A small relationship table
+is fine when it is clearer than prose.
 
-**If the Artifact tool isn't available** (the environment can't publish one, or the deploy keeps
-bouncing), **say so explicitly** — never silently skip the visual-design step. If this surface can
-show a local self-contained inline-SVG/HTML preview, use that. Otherwise, do **not** substitute an
-ASCII diagram or paste Mermaid source in chat. Point the user to **`plan.md`** and ask them to open
-it in an IDE Markdown preview, for example VS Code's **Markdown: Open Preview** (`Cmd+Shift+V` on
-macOS), where the Mermaid is rendered properly.
+Do not require class or sequence diagrams, publish a rendered artifact, or direct the developer to
+a preview. Diagrams are not banned: F5 may later choose one for the site when it genuinely explains
+the subject better than prose or a table. Check the concepts and relationships against the
+constitution; if one conflicts with a principle, say so plainly in `## Constitution check`. Refine
+once with the user's input, then move on.
 
 ### Codex architecture teaching gate - before decomposition
 
-After the architecture is rendered or sketched and before writing the task breakdown, roadmap,
+After the architecture is reasoned through and before writing the task breakdown, roadmap,
 constitution principles, or tickets, send a **user-visible architecture teaching turn**. This is a
 hard ordering rule for Codex, not a status update:
 
 This is a conversation pause, not a build or merge gate.
 
-1. Walk through the main components, their boundaries, and the load-bearing flow. Explain the
-   architectural choice and its rejected alternative, anchored to the rendered Artifact or Mermaid
-   diagram in `plan.md`. "I have the architecture" is not teaching.
+1. Walk through the main concepts, their boundaries and relationships, and the load-bearing flow.
+   Explain the architectural choice and its rejected alternative, anchored to the named concepts in
+   `plan.md`. "I have the architecture" is not teaching.
 2. Set depth from calibration. If an architectural domain is absent from calibration, it is
    **unknown**: ask a neutral standalone probe and stop. Treat an answer such as "I am not
    comfortable" as `new`. For `learning` and `new`, explain the building blocks, the system flow,
@@ -174,14 +168,9 @@ This is a conversation pause, not a build or merge gate.
    before the plan becomes a task table. Capture the same rationale in `plan.md` only after that
    teaching turn.
 
-The forbidden sequence is: draft diagrams in tools, then immediately write the architecture and
-task table without explaining the architecture in the conversation. The durable plan records the
-teaching; it does not replace it.
-
-Persist the same diagrams as **Mermaid** in `plan.md` under `## Architecture` (blocks
-**top-level**, never nested in another fence, so GitHub renders them). Check the shapes against
-the constitution; if one conflicts with a principle, say so plainly in `## Constitution check` —
-do not silently "fix" it. Refine once with the user's input, then move on.
+The forbidden sequence is: draft an architecture in tools, then immediately write the architecture
+and task table without explaining the architecture in the conversation. The durable plan records
+the teaching; it does not replace it.
 
 When the plan genuinely establishes or changes an architectural concept a new joiner would need
 explained, capture it in the global stream — not as a once-per-plan ritual and not for ordinary
@@ -194,14 +183,6 @@ fluencyloop concept --relate "<from>|<to>|<kind>"
 
 Use a later record with the same name to refine it as the implementation teaches more; relations
 may connect concepts to other concepts, components, or planned features.
-
-**GitHub's Mermaid parser is strict — a diagram that renders locally can still fail on
-github.com.** Before committing, re-read every `Note over`/`Note left/right of` and arrow label
-for a bare `;` — Mermaid treats `;` as a statement terminator even inside note/label text, so
-`Note over X: did the lookup; then called Y()` silently truncates at the `;` and the remainder
-parses as garbage (`Parse error ... got 'INVALID'`). Rewrite with a comma, dash, or `<br/>` line
-break instead of `;`. If a diagram was just added or edited, paste its source into
-https://mermaid.live (or check for `;` by eye) as a final check.
 
 ## 3. Break it into task items
 

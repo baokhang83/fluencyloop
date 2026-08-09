@@ -3,8 +3,9 @@
 <!--
 FluencyLoop planning stage — one plan.md per large initiative (an "epic" that will spawn
 several feature branches). This is a committed doc on the current branch, not a spec to ratify:
-it is the map you build against. Keep the Mermaid blocks TOP-LEVEL (not nested in another code
-fence) so GitHub renders them. Delete the example rows and this comment once the plan is real.
+it is the map you build against. Describe the architecture as concepts, relationships, and flows;
+use a table only when it makes those relationships clearer. Delete the example rows and this
+comment once the plan is real.
 -->
 
 started: {{DATE}}
@@ -24,19 +25,19 @@ them rather than silently assuming an answer; say why each answer would change t
 
 ## Architecture
 
-<!-- The big shapes at initiative altitude — components/modules and the main flow. Not the
-per-feature detail (that belongs in each feature's design.md); the load-bearing structure. -->
+<!-- The big concepts at initiative altitude — components/modules, their relationships, and the
+main flow. Name the boundaries and the load-bearing choices; leave per-feature detail to the
+feature work. -->
 
-```mermaid
-classDiagram
-  class Example
-```
+### Concepts
 
-```mermaid
-sequenceDiagram
-  Caller->>Example: request
-  Example-->>Caller: response
-```
+- <concept> — <responsibility and boundary>
+
+### Relationships and flows
+
+| from | relationship | to | why it matters |
+|------|--------------|----|----------------|
+| <concept> | <depends on / invokes / owns / emits> | <concept> | <load-bearing reason> |
 
 ## Task breakdown
 

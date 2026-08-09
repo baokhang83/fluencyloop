@@ -1,13 +1,13 @@
 ---
 name: feature
-description: 'FluencyLoop Stage 2–3. Declare a feature and build it while staying fluent: creates the feature branch + design diagrams, then builds in slices, teaching the why of each real decision at the slice boundary and journaling it. Probes the concepts the work needs up front, adapts explanation depth to the developer''s knowledge, and builds/maintains a per-developer knowledge base in ~/.fluencyloop. Use when starting a new unit of work in a repo that has a .fluencyloop/ directory, or when the user says "fluencyloop feature", "start a feature", or describes something they want to build with FluencyLoop.'
+description: 'FluencyLoop Stage 2–3. Declare a feature and build it while staying fluent: creates the feature branch, frames its concepts and relationships, then builds in slices, teaching the why of each real decision at the slice boundary and journaling it. Probes the concepts the work needs up front, adapts explanation depth to the developer''s knowledge, and builds/maintains a per-developer knowledge base in ~/.fluencyloop. Use when starting a new unit of work in a repo that has a .fluencyloop/ directory, or when the user says "fluencyloop feature", "start a feature", or describes something they want to build with FluencyLoop.'
 ---
 
 # Feature — declare a feature, build it fluent
 
 This is the contributor's entry point. A **feature is a branch** (`feature/<slug>`); it owns
-the design diagrams and the session journals. You will: (1) declare the feature, (2) sketch
-its design, (3) build it in slices — teaching and journaling one or two real decisions at
+its design reasoning and session journals. You will: (1) declare the feature, (2) frame its
+concepts and relationships, (3) build it in slices — teaching and journaling one or two real decisions at
 each slice boundary. Never block a build or merge; pause only for a required learning response.
 Never lecture. Keep the developer the author.
 
@@ -151,44 +151,30 @@ fluencyloop feature --json "<intent>"                      # sequential mode
 fluencyloop feature --json --prefix "<ticket-id>" "<intent>"  # ticket mode
 ```
 
-This creates the `feature/<slug>` branch (switching to it), the feature dir, and a
-`design.md` stub. Parse the JSON for `slug`, `branch`, `design`, `sessions_dir`.
+This creates the `feature/<slug>` branch (switching to it) and its store record. Parse the JSON
+for `slug`, `branch`, `store`, `base_ref`, and `plan`.
 
-## 2. Design (Stage 2) — diagrams first, *shown* not filed
+## 2. Design (Stage 2) — concepts and relationships before implementation
 
-Draft the two defaults from the intent and the codebase:
+Draft the design reasoning the implementation needs from the intent and codebase: the main
+concepts/components, their boundaries and relationships, the load-bearing flow, and a key choice
+with its rejected alternative. Keep this proportional to the feature; the goal is a model to build
+against, not a speculative specification.
 
-- a **class diagram** (the shapes and their relationships), and
-- a **sequence diagram** (the main flow).
-
-**Show them rendered — don't just write a file and point at it.** Publish the diagrams as a
-**self-contained Artifact** (a web page the user opens in a browser tab and actually sees) —
-load the `artifact-design` skill first. Artifacts render Mermaid **natively** — no CDN pull, no
-hand-authored SVG substitute needed. In the HTML page, put the exact same source that's going
-into `design.md` inside `<pre class="mermaid">...</pre>`. That specific wrapper is required: a
-` ```mermaid ` fence, or a plain `<pre><code>` block, is left untouched by the renderer and shows
-up as literal text instead of a diagram. **Byte-check before publishing:** the file must be valid
-UTF-8 with no lone surrogates / `U+FFFD` and must JSON-round-trip (prefer pure ASCII in prose —
-HTML entities over literal dashes/box-drawing); publish only if the check is clean, or the deploy
-bounces. Then walk the user through what they're looking at and invite reactions — this is a
-conversation, not a handoff.
-
-**If the Artifact tool isn't available** (the environment can't publish one, or the deploy keeps
-bouncing), **say so explicitly** — don't silently skip the visual-design step. If this surface can
-show a local self-contained inline-SVG/HTML preview, use that. Otherwise, do **not** substitute an
-ASCII diagram or paste Mermaid source in chat. Point the user to the feature's **`design.md`** and
-ask them to open it in an IDE Markdown preview, for example VS Code's **Markdown: Open Preview**
-(`Cmd+Shift+V` on macOS), where the Mermaid is rendered properly.
+Do not require class or sequence diagrams, publish a rendered artifact, or direct the developer to
+a preview. Diagrams are not banned: F5 may later choose one for the site when it genuinely explains
+the subject better than prose or a table. Check the concepts and relationships against the
+constitution; if one conflicts with a principle, say so plainly. Refine once with the user's input,
+then move on.
 
 ### Codex design teaching gate - before implementation
 
-After the design is rendered or persisted for Markdown preview and before writing feature code, constitution principles,
+After the design is reasoned through and before writing feature code, constitution principles,
 or a build session, send a **user-visible design teaching turn**. This is a hard ordering rule for
 Codex, not a status update:
 
-1. Walk through the main shapes, their relationships, and the load-bearing flow. Explain the key
-   design choice and rejected alternative, anchored to the rendered Artifact or Mermaid diagram in
-   `design.md`.
+1. Walk through the main concepts, their relationships, and the load-bearing flow. Explain the key
+   design choice and rejected alternative, anchored to the named concepts and changed code.
    "The design is ready" is not teaching.
 2. Set depth from calibration. If the relevant domain is absent from calibration, it is
    **unknown**: ask a neutral standalone probe and stop. Treat an answer such as "I am not
@@ -197,28 +183,17 @@ Codex, not a status update:
    self-report understanding check and wait. Do not implement, birth the constitution, or open a
    build session until the developer replies.
 3. For `fluent` or `familiar` domains, the explanation may be brief, but it must still be visible
-   before implementation. Persist the same rationale in `design.md` only after that teaching turn.
+   before implementation. Record any durable rationale in the store only after that teaching turn.
 
-This is a conversation pause, not a build or merge gate. The forbidden sequence is: draft diagrams
-in tools, then write code or constitution principles without explaining the design in the
+This is a conversation pause, not a build or merge gate. The forbidden sequence is: draft design
+reasoning in tools, then write code or constitution principles without explaining the design in the
 conversation. The durable design records the teaching; it does not replace it.
 
-Persist the same diagrams as **Mermaid** in `design.md` (blocks **top-level**, never nested
-in another fence, so GitHub renders them) — that's the durable, committed copy. The Artifact
-is the "see it now" view; `design.md` is the record.
-
-**GitHub's Mermaid parser is strict — a diagram that renders locally can still fail on
-github.com.** Before committing, re-read every `Note over`/`Note left/right of` and arrow label
-for a bare `;` — Mermaid treats `;` as a statement terminator even inside note/label text, so
-`Note over X: did the lookup; then called Y()` silently truncates at the `;` and the remainder
-parses as garbage (`Parse error ... got 'INVALID'`). Rewrite with a comma, dash, or `<br/>` line
-break instead of `;`. If a diagram was just added or edited, paste its source into
-https://mermaid.live (or check for `;` by eye) as a final check.
-
-Refine once with the user's input. Check the design against the constitution — read
+**Check the design against the constitution** — read
 `docs/fluencyloop/constitution.md`, and **if it's a pointer** (a `Source of truth:` line naming
 another file, e.g. `.specify/memory/constitution.md`), read *that* file for the real
-principles. If a shape conflicts with a principle, say so plainly; do not silently "fix" it.
+principles. If a concept or relationship conflicts with a principle, say so plainly; do not
+silently "fix" it.
 
 **Birth the constitution if it's still the empty stub.** If it has no real principles yet and no
 plan ran to seed it, this first feature is the constitution's **guaranteed backstop birth**
@@ -304,9 +279,9 @@ visible; the journal is its durable byproduct.
      this code takes the chosen path, and the rejected alternative before asking anything; for
      `familiar` give the one-line why; for `fluent` just name the call. Never replace the core
      explanation with "if you want, I can explain more."
-   - **Anchor it to the rendered design diagram** — point back to the Artifact from §2 and name
-     the exact shape the decision concerns, so the *why* lands on something they can see, not
-     just prose. If the decision changed the design, re-render and re-check the diagram.
+   - **Anchor it to the design reasoning** — name the concept, relationship, or flow the decision
+     concerns, so the *why* lands on the system model rather than isolated prose. If the decision
+     changes that model, update the relevant concept or relationship record.
    - **Real questions must be unmistakable, never buried in prose.** Any genuine question you put
      to the developer — a decision to sign off, a fork to choose, "which way do you want this?" —
      uses `AskUserQuestion` in Claude Code (one tab per decision/question). In Codex, ask it as a
@@ -501,8 +476,8 @@ same choice run after run.
 
 FluencyLoop is meant to be **cheap to run**. Treat these as smell tests, not hard caps:
 
-- **Design (§2):** skim the codebase to the *shapes*, not exhaustively — a few K tokens. You're
-  sketching diagrams, not auditing.
+- **Design (§2):** skim the codebase to the concepts and relationships, not exhaustively — a few K
+  tokens. You're framing the model, not auditing.
 - **Build, per slice (§3):** read the **slice context** (the diff via `slice-context`), not whole
   files — typically a few hundred to ~2K tokens. If a slice's context balloons well past that, the
   slice is too big — split it. Open a full file only when a hunk lacks the context to judge a

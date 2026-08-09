@@ -69,7 +69,7 @@ for alias, source in {
 feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
-assert "must be paths under `docs/fluencyloop/`" in feature_text
+assert "`store` must be a path under `docs/fluencyloop/`" in feature_text
 codex_feature_text = read_text(dist / "skills" / "feature" / "SKILL.md")
 assert "### Codex teaching gate - visible before the journal" in codex_feature_text
 assert "before any `fluencyloop decision`" in codex_feature_text
@@ -175,9 +175,6 @@ codex_review_text = read_text(dist / "skills" / "review" / "SKILL.md")
 assert "feature-handoff: automatic" in codex_review_text
 assert "without a second" in codex_review_text
 assert 'gh pr create --base "<base_ref>"' in codex_review_text
-for text in [codex_feature_text, codex_plan_text]:
-    assert "attempt an ASCII rendering" not in text
-    assert "Markdown: Open Preview" in text
 for path in [
     dist / "skills" / "feature" / "SKILL.md",
     dist / "skills" / "plan" / "SKILL.md",
@@ -185,8 +182,19 @@ for path in [
     root / "claude-skills" / "plan" / "SKILL.md",
 ]:
     text = read_text(path)
-    assert "ASCII" in text
-    assert "Mermaid source" in text
+    assert "concepts and relationships" in text
+    assert "Do not require class or sequence diagrams" in text
+    assert "Diagrams are not banned" in text
+    assert "artifact-design" not in text
+    assert "Markdown: Open Preview" not in text
+    assert "Mermaid" not in text
+    assert "ASCII" not in text
+plan_template = read_text(dist / "templates" / "plan.md")
+assert "### Concepts" in plan_template
+assert "### Relationships and flows" in plan_template
+assert "```mermaid" not in plan_template
+assert "classDiagram" not in plan_template
+assert "sequenceDiagram" not in plan_template
 readme = read_text(root / "README.md")
 assert "**Enable auto-update**" in readme
 assert "`/reload-plugins` to activate it in the current session" in readme
