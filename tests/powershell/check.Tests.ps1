@@ -48,4 +48,74 @@ Describe 'check.ps1' {
         (Invoke-FlExit 'check.ps1') | Should -Be 0
         (Invoke-Fl 'check.ps1') | Should -Match 'no constitution yet'
     }
+
+    It 'accepts a clean store' {
+        $script:repo = Initialize-TestRepo
+        $store = "$script:repo/docs/fluencyloop/store/concepts.jsonl"
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $store) | Out-Null
+        [System.IO.File]::AppendAllText($store, "{`"schema_version`":`"1`",`"type`":`"concept`",`"ts`":`"2026-08-09`",`"feature`":`"global`",`"session`":`"none`",`"commit`":`"abc`",`"name`":`"cache`",`"problem`":`"slow reads`",`"how`":`"reuse results`",`"realized_by`":`"CacheClient`"}`n")
+
+        $result = Get-FlJson 'check.ps1' '--json'
+        $result.store_errors.Count | Should -Be 0
+    }
+
+    It 'reports unparseable store JSON with file and line' {
+        $script:repo = Initialize-TestRepo
+        $store = "$script:repo/docs/fluencyloop/store/concepts.jsonl"
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $store) | Out-Null
+        [System.IO.File]::WriteAllText($store, '{"schema_version":"1"')
+
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 1
+        $result = Get-FlJson 'check.ps1' '--json'
+        $result.store_errors[0].file | Should -Match 'concepts\.jsonl'
+        $result.store_errors[0].line | Should -Be 1
+        $result.store_errors[0].message | Should -Be 'unparseable JSON'
+    }
+
+    It 'reports an unknown store record type' {
+        $script:repo = Initialize-TestRepo
+        $store = "$script:repo/docs/fluencyloop/store/concepts.jsonl"
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $store) | Out-Null
+        [System.IO.File]::WriteAllText($store, '{"schema_version":"1","type":"invented","ts":"2026-08-09","feature":"global","session":"none","commit":"abc"}')
+
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 1
+        $result = Get-FlJson 'check.ps1' '--json'
+        $result.store_errors[0].line | Should -Be 1
+        $result.store_errors[0].message | Should -Be 'unknown record type: invented'
+    }
+
+    It 'reports a missing required envelope field' {
+        $script:repo = Initialize-TestRepo
+        $store = "$script:repo/docs/fluencyloop/store/concepts.jsonl"
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $store) | Out-Null
+        [System.IO.File]::WriteAllText($store, '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"global","session":"none","name":"cache"}')
+
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 1
+        $result = Get-FlJson 'check.ps1' '--json'
+        $result.store_errors[0].line | Should -Be 1
+        $result.store_errors[0].message | Should -Be 'missing required envelope field: commit'
+    }
+
+    It 'reports a dangling relation with file and line' {
+        $script:repo = Initialize-TestRepo
+        $store = "$script:repo/docs/fluencyloop/store/concepts.jsonl"
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $store) | Out-Null
+        [System.IO.File]::WriteAllText($store, "{`"schema_version`":`"1`",`"type`":`"concept`",`"ts`":`"2026-08-09`",`"feature`":`"global`",`"session`":`"none`",`"commit`":`"abc`",`"name`":`"known`",`"problem`":`"p`",`"how`":`"h`",`"realized_by`":`"x`"}`n{`"schema_version`":`"1`",`"type`":`"relation`",`"ts`":`"2026-08-09`",`"feature`":`"global`",`"session`":`"none`",`"commit`":`"abc`",`"from`":`"missing`",`"to`":`"known`",`"kind`":`"uses`"}`n")
+
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 1
+        $result = Get-FlJson 'check.ps1' '--json'
+        $result.store_errors[0].line | Should -Be 2
+        $result.store_errors[0].message | Should -Be 'dangling relation endpoint: missing'
+    }
+
+    It 'reports a feature directory without store records' {
+        $script:repo = Initialize-TestRepo
+        New-Item -ItemType Directory -Force -Path "$script:repo/docs/fluencyloop/features/001-empty" | Out-Null
+
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 1
+        $result = Get-FlJson 'check.ps1' '--json'
+        $result.store_errors[0].file | Should -Match '001-empty\.jsonl'
+        $result.store_errors[0].line | Should -Be 0
+        $result.store_errors[0].message | Should -Be 'feature directory has no store records: 001-empty'
+    }
 }

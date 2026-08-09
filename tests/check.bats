@@ -63,3 +63,78 @@ load test_helper
     [ "$status" -eq 0 ]
     [[ "$output" == *"no constitution yet"* ]]
 }
+
+store_record() {
+    printf '%s\n' "$1" >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+}
+
+store_errors() {
+    python3 -c 'import json,sys; print(json.load(sys.stdin)["store_errors"])'
+}
+
+@test "check: accepts a clean store" {
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store"
+    store_record '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"global","session":"none","commit":"abc","name":"cache","problem":"slow reads","how":"reuse results","realized_by":"CacheClient"}'
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | store_errors)" = "[]" ]
+}
+
+@test "check: reports unparseable store JSON with file and line" {
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store"
+    store_record '{"schema_version":"1"'
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 1 ]
+    [[ "$output" == *'concepts.jsonl'* ]]
+    [[ "$output" == *'"line":1'* ]]
+    [[ "$output" == *'unparseable JSON'* ]]
+}
+
+@test "check: reports an unknown store record type" {
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store"
+    store_record '{"schema_version":"1","type":"invented","ts":"2026-08-09","feature":"global","session":"none","commit":"abc"}'
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 1 ]
+    [[ "$output" == *'"line":1'* ]]
+    [[ "$output" == *'unknown record type: invented'* ]]
+}
+
+@test "check: reports a missing required envelope field" {
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store"
+    store_record '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"global","session":"none","name":"cache"}'
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 1 ]
+    [[ "$output" == *'"line":1'* ]]
+    [[ "$output" == *'missing required envelope field: commit'* ]]
+}
+
+@test "check: reports a dangling relation with file and line" {
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store"
+    store_record '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"global","session":"none","commit":"abc","name":"known","problem":"p","how":"h","realized_by":"x"}'
+    store_record '{"schema_version":"1","type":"relation","ts":"2026-08-09","feature":"global","session":"none","commit":"abc","from":"missing","to":"known","kind":"uses"}'
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 1 ]
+    [[ "$output" == *'"line":2'* ]]
+    [[ "$output" == *'dangling relation endpoint: missing'* ]]
+}
+
+@test "check: reports a feature directory without store records" {
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/features/001-empty"
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 1 ]
+    [[ "$output" == *'store/features/001-empty.jsonl'* ]]
+    [[ "$output" == *'"line":0'* ]]
+    [[ "$output" == *'feature directory has no store records: 001-empty'* ]]
+}

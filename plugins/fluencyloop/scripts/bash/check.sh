@@ -79,8 +79,158 @@ if [ -n "$CONSTITUTION" ] && [ -f "$CONSTITUTION" ]; then
     fi
 fi
 
+# --- store integrity ------------------------------------------------------
+# Store writers only append and never read JSONL. The doctor is the deliberate read-time
+# consistency boundary: it reports every finding but never repairs or rewrites a record.
+STORE_ERROR_COUNT=0
+STORE_ERROR_JSON=()
+STORE_ERROR_TEXT=()
+CONCEPT_NAMES=()
+COMPONENT_NAMES=()
+FEATURE_NAMES=()
+RELATION_FILES=()
+RELATION_LINES=()
+RELATION_FROMS=()
+RELATION_TOS=()
+
+store_error() {
+    local file="$1" line="$2" message="$3"
+    STORE_ERROR_COUNT=$((STORE_ERROR_COUNT + 1))
+    STORE_ERROR_TEXT+=("$file:$line: $message")
+    STORE_ERROR_JSON+=("{\"file\":\"$(json_escape "$file")\",\"line\":$line,\"message\":\"$(json_escape "$message")\"}")
+}
+
+# Schema records are compact objects whose keys and values are JSON strings. This recognises that
+# writer format without a runtime JSON dependency; malformed or differently-shaped JSON is still
+# a finding because it cannot be a valid generation-1 store record.
+is_store_json_object() {
+    local value="$1"
+    local string='"([^"\\]|\\(["\\/bfnrt]|u[[:xdigit:]]{4}))*"'
+    local pair="${string}[[:space:]]*:[[:space:]]*${string}"
+    [[ "$value" =~ ^[[:space:]]*\{[[:space:]]*($pair([[:space:]]*,[[:space:]]*$pair)*)?[[:space:]]*\}[[:space:]]*$ ]]
+}
+
+# Sets STORE_FIELD_FOUND and STORE_FIELD_VALUE. Values stay JSON-escaped: identities written by
+# the shell are compared in that same representation, so no reader needs to reinterpret escapes.
+store_field() {
+    local record="$1" key="$2" content re
+    STORE_FIELD_FOUND=false
+    STORE_FIELD_VALUE=""
+    content='([^"\\]|\\.)*'
+    re="\"$key\"[[:space:]]*:[[:space:]]*\"($content)\""
+    if [[ "$record" =~ $re ]]; then
+        STORE_FIELD_FOUND=true
+        STORE_FIELD_VALUE="${BASH_REMATCH[1]}"
+    fi
+}
+
+known_identity() {
+    local wanted="$1" item
+    for item in ${CONCEPT_NAMES[@]+"${CONCEPT_NAMES[@]}"} ${COMPONENT_NAMES[@]+"${COMPONENT_NAMES[@]}"} ${FEATURE_NAMES[@]+"${FEATURE_NAMES[@]}"}; do
+        [ "$item" = "$wanted" ] && return 0
+    done
+    return 1
+}
+
+valid_record_type() {
+    case "$1" in
+        feature|session|decision|component|condition|concept|relation|principle|requirement|open_question) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+validate_store_record() {
+    local record="$1" file="$2" line="$3" type="" field
+    if ! is_store_json_object "$record"; then
+        store_error "$file" "$line" "unparseable JSON"
+        return
+    fi
+
+    store_field "$record" type
+    if $STORE_FIELD_FOUND; then type="$STORE_FIELD_VALUE"; fi
+    for field in schema_version type ts feature session commit; do
+        store_field "$record" "$field"
+        if ! $STORE_FIELD_FOUND || [ -z "$STORE_FIELD_VALUE" ]; then
+            store_error "$file" "$line" "missing required envelope field: $field"
+        fi
+    done
+    if [ -n "$type" ] && ! valid_record_type "$type"; then
+        store_error "$file" "$line" "unknown record type: $type"
+        return
+    fi
+
+    store_field "$record" feature
+    if $STORE_FIELD_FOUND && [ -n "$STORE_FIELD_VALUE" ] && [ "$STORE_FIELD_VALUE" != global ]; then
+        FEATURE_NAMES+=("$STORE_FIELD_VALUE")
+    fi
+    case "$type" in
+        concept)
+            store_field "$record" name
+            $STORE_FIELD_FOUND && [ -n "$STORE_FIELD_VALUE" ] && CONCEPT_NAMES+=("$STORE_FIELD_VALUE")
+            ;;
+        component)
+            store_field "$record" name
+            $STORE_FIELD_FOUND && [ -n "$STORE_FIELD_VALUE" ] && COMPONENT_NAMES+=("$STORE_FIELD_VALUE")
+            ;;
+        relation)
+            store_field "$record" from
+            local from="$STORE_FIELD_VALUE"
+            store_field "$record" to
+            local to="$STORE_FIELD_VALUE"
+            RELATION_FILES+=("$file")
+            RELATION_LINES+=("$line")
+            RELATION_FROMS+=("$from")
+            RELATION_TOS+=("$to")
+            ;;
+    esac
+}
+
+store_errors_json() {
+    local joined="" item
+    for item in ${STORE_ERROR_JSON[@]+"${STORE_ERROR_JSON[@]}"}; do
+        [ -n "$joined" ] && joined="${joined},"
+        joined+="$item"
+    done
+    printf '%s' "$joined"
+}
+
+STORE_ROOT="$(store_dir)"
+if [ -n "$STORE_ROOT" ] && [ -d "$STORE_ROOT" ]; then
+    while IFS= read -r store_file; do
+        STORE_FILE_REL="$(repo_rel "$store_file")"
+        STORE_LINE=0
+        while IFS= read -r store_line || [ -n "$store_line" ]; do
+            STORE_LINE=$((STORE_LINE + 1))
+            validate_store_record "$store_line" "$STORE_FILE_REL" "$STORE_LINE"
+        done < "$store_file"
+    done < <(find "$STORE_ROOT" -type f -name '*.jsonl' -print | LC_ALL=C sort)
+
+    # Relations can precede their defining concept, so validate targets only after the full scan.
+    for ((relation_index = 0; relation_index < ${#RELATION_FILES[@]}; relation_index++)); do
+        if ! known_identity "${RELATION_FROMS[relation_index]}"; then
+            store_error "${RELATION_FILES[relation_index]}" "${RELATION_LINES[relation_index]}" \
+                "dangling relation endpoint: ${RELATION_FROMS[relation_index]}"
+        fi
+        if ! known_identity "${RELATION_TOS[relation_index]}"; then
+            store_error "${RELATION_FILES[relation_index]}" "${RELATION_LINES[relation_index]}" \
+                "dangling relation endpoint: ${RELATION_TOS[relation_index]}"
+        fi
+    done
+
+    FEATURES_ROOT="$(docs_dir)/features"
+    if [ -d "$FEATURES_ROOT" ]; then
+        while IFS= read -r feature_dir; do
+            feature_slug="$(basename "$feature_dir")"
+            feature_store="$(feature_store_path "$feature_slug")"
+            if [ ! -s "$feature_store" ]; then
+                store_error "$(repo_rel "$feature_store")" 0 "feature directory has no store records: $feature_slug"
+            fi
+        done < <(find "$FEATURES_ROOT" -mindepth 1 -maxdepth 1 -type d -print | LC_ALL=C sort)
+    fi
+fi
+
 if $JSON_MODE; then
-    printf '{"git_repo":%s,"fluency":%s,"branch":"%s","feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"constitution":"%s"}\n' \
+    printf '{"git_repo":%s,"fluency":%s,"branch":"%s","feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"constitution":"%s","store_errors":[%s]}\n' \
         "$IN_GIT_REPO" \
         "$FLUENCY_PRESENT" \
         "$(json_escape "$BRANCH")" \
@@ -90,8 +240,9 @@ if $JSON_MODE; then
         "$(json_escape "$LAST_SESSION")" \
         "$UNJOURNALED" \
         "$CAL_PRESENT" \
-        "$CONSTITUTION_STATE"
-    exit 0
+        "$CONSTITUTION_STATE" \
+        "$(store_errors_json)"
+    [ "$STORE_ERROR_COUNT" -eq 0 ] && exit 0 || exit 1
 fi
 
 # Human form.
@@ -117,3 +268,11 @@ case "$CONSTITUTION_STATE" in
     pointer) echo "  ok  constitution: points to a source of truth" ;;
     *)       echo "  --  no constitution yet — written from your first plan or feature" ;;
 esac
+if [ "$STORE_ERROR_COUNT" -eq 0 ]; then
+    echo "  ok  store: valid"
+else
+    for store_error_text in ${STORE_ERROR_TEXT[@]+"${STORE_ERROR_TEXT[@]}"}; do
+        echo "  XX  store: $store_error_text"
+    done
+fi
+[ "$STORE_ERROR_COUNT" -eq 0 ]
