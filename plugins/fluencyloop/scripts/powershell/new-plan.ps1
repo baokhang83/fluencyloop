@@ -10,7 +10,19 @@ for ($i = 0; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--json' { $jsonMode = $true }
         '--slug' { $i++; $slug = [string]$args[$i] }
-        default  { $rest += [string]$args[$i] }
+        { $_ -eq '-h' -or $_ -eq '--help' } {
+            FlOut 'Usage: new-plan.ps1 [--json] [--slug <slug>] <intent...>'
+            exit 0
+        }
+        default {
+            # An intent never starts with a dash, so a flag-shaped token here is a typo or an
+            # unsupported option, not text to fold into the intent.
+            if ([string]$args[$i] -like '-*') {
+                [Console]::Error.WriteLine("Unknown option: $($args[$i])")
+                exit 1
+            }
+            $rest += [string]$args[$i]
+        }
     }
 }
 

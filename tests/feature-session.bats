@@ -38,6 +38,23 @@ PY
     [ "$status" -ne 0 ]
 }
 
+@test "new-feature --help prints usage and does not create a branch or store record" {
+    # Regression: an unrecognized flag used to fall through into the intent, so `--help` minted a
+    # real feature named "help" -- branch, store record, and state mutation included.
+    run bash "$BIN/new-feature.sh" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Usage: new-feature.sh"* ]]
+    [ -z "$(git branch --list 'feature/*')" ]
+    [ ! -d "$TESTREPO/docs/fluencyloop/store/features" ]
+}
+
+@test "new-feature rejects an unknown flag instead of folding it into the intent" {
+    run bash "$BIN/new-feature.sh" --bogus "should not scaffold"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Unknown option: --bogus"* ]]
+    [ -z "$(git branch --list 'feature/*')" ]
+}
+
 @test "new-feature is idempotent: re-run on the same branch preserves base_ref" {
     bash "$BIN/new-feature.sh" "add caching" >/dev/null
     run bash "$BIN/new-feature.sh" "add caching"
@@ -75,6 +92,22 @@ PY
 @test "new-session errors with no active feature" {
     run bash "$BIN/new-session.sh" "orphan slice"
     [ "$status" -ne 0 ]
+}
+
+@test "new-session --help prints usage and does not write a store record" {
+    bash "$BIN/new-feature.sh" "add caching" >/dev/null
+    run bash "$BIN/new-session.sh" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Usage: new-session.sh"* ]]
+    [ "$(wc -l < "$TESTREPO/docs/fluencyloop/store/features/001-add-caching.jsonl")" -eq 1 ]
+}
+
+@test "new-session rejects an unknown flag instead of folding it into the intent" {
+    bash "$BIN/new-feature.sh" "add caching" >/dev/null
+    run bash "$BIN/new-session.sh" --bogus "should not record"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Unknown option: --bogus"* ]]
+    [ "$(wc -l < "$TESTREPO/docs/fluencyloop/store/features/001-add-caching.jsonl")" -eq 1 ]
 }
 
 @test "base_ref records the true fork point, not always main" {
