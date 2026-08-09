@@ -123,6 +123,10 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "Ask all material gaps **once, batched**" in plan_skill_text
     assert "Never resolve an unanswered gap silently" in plan_skill_text
     assert "Reuse **Question delivery — preserve the pause** above" in plan_skill_text
+    assert "fluencyloop requirement --gap" in plan_skill_text
+    assert "fluencyloop requirement --open" in plan_skill_text
+    assert "Record the same outcome in the store exactly once per gap" in plan_skill_text
+    assert "Never edit or delete the earlier `open_question`" in plan_skill_text
 plan_template = read_text(dist / "templates" / "plan.md")
 assert "## Open questions" in plan_template
 assert "rather than silently assuming an answer" in plan_template

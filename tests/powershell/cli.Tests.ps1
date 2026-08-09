@@ -21,6 +21,7 @@ Describe 'fluencyloop.ps1 (dispatcher)' {
         $out | Should -Match 'feature'
         $out | Should -Match 'knowledge'
         $out | Should -Match 'concept'
+        $out | Should -Match 'requirement'
         $out | Should -Match 'import'
         $out | Should -Match 'check'
         $out | Should -Match 'site'

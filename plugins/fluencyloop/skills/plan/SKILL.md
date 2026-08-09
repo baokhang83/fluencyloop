@@ -110,6 +110,26 @@ decomposition, and roadmap work.
 If the developer explicitly leaves a gap unanswered, or directs you to proceed without resolving
 it, add it to `## Open questions` in `plan.md` with why it matters. Never resolve an unanswered gap silently or convert it into an assumed requirement.
 
+Record the same outcome in the store exactly once per gap. For each answer the developer provides,
+run:
+
+```bash
+fluencyloop requirement --gap "<what was unstated or conflicted>" \
+  --answer "<the developer's decision>" \
+  --consequence "<what it changes about the work>"
+```
+
+For each explicitly unanswered gap, run:
+
+```bash
+fluencyloop requirement --open "<the unresolved gap>" \
+  --matters "<why leaving it open matters>"
+```
+
+When a later planning round resolves an earlier open question, append the answered
+`requirement` for the same gap. Never edit or delete the earlier `open_question`; readers
+supersede it on read.
+
 ## 2. Design the architecture — *shown*, at initiative altitude
 
 Draft the **big shapes**: the components/modules and their relationships, and the main flow(s).
