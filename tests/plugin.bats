@@ -95,6 +95,16 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "never valid signal types" in feature_skill_text
     assert "never run `fluencyloop calibration signal <dimension> learning` or `new`" in feature_skill_text
     assert "Only that later response can justify a signal" in feature_skill_text
+    assert "### Distill once at feature wrap-up" in feature_skill_text
+    assert "**only after the feature is complete**" in feature_skill_text
+    assert "Never distill during a slice, after a decision, or as a turn-by-turn summary" in feature_skill_text
+    assert "fluencyloop calibration show --json" in feature_skill_text
+    assert "docs/fluencyloop/distillations/" in feature_skill_text
+    assert "**Feature delta**" in feature_skill_text
+    assert "**no overview rewrite**" in feature_skill_text
+    assert "when this feature newly establishes a concept" in feature_skill_text
+    assert "**Do not distill decisions.**" in feature_skill_text
+    assert "person-neutral" in feature_skill_text
 claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "### Codex architecture teaching gate - before decomposition" in codex_plan_text

@@ -378,6 +378,37 @@ developer never writes it by hand.
 
 ## 4. Hand off to review — settle the recurring choice once
 
+### Distill once at feature wrap-up
+
+Before hand-off, and **only after the feature is complete**, run one bounded distillation pass.
+Never distill during a slice, after a decision, or as a turn-by-turn summary: the live teaching
+and the store records already carry that detail. Read `fluencyloop calibration show --json` now,
+at distillation time, and pitch the prose to the developer's recorded level in the relevant
+domain:
+
+- `fluent` / `familiar`: concise product-level prose; name the load-bearing change without
+  re-teaching fundamentals.
+- `learning` / `new`: explain the terms, flow, and product consequence needed to hold the
+  shape; still stay at the concept level rather than narrating code or decisions.
+
+Write and commit at most these Markdown distillations under
+`docs/fluencyloop/distillations/`:
+
+1. **Feature delta** — always one for this feature at
+   `features/<feature-slug>.md`: what changed about the product before → after, expressed through
+   concepts and behavior, never as a file list.
+2. **Product overview** — refresh `product.md` only when this feature materially changes the
+   product's problem, shape, or major flow. A feature that changes nothing at that altitude gets
+   **no overview rewrite**.
+3. **Concept explanation** — when this feature newly establishes a concept, create
+   `concepts/<concept-slug>.md`; revise an existing explanation only when a feature decision contradicts
+   it. Do not create a concept explanation merely because the feature touched a concept.
+
+**Do not distill decisions.** Their why was taught and captured contemporaneously by
+`fluencyloop decision`; re-synthesising it is both less trustworthy and unnecessary token spend.
+Keep every distillation person-neutral: describe the product and its constraints, never a
+developer's competence, knowledge, or authorship.
+
 When the feature is ready for a PR, tell the user they can run **fluencyloop-review** to
 assemble the reviewer-facing view from the sessions.
 
@@ -430,7 +461,9 @@ FluencyLoop is meant to be **cheap to run**. Treat these as smell tests, not har
   files — typically a few hundred to ~2K tokens. If a slice's context balloons well past that, the
   slice is too big — split it. Open a full file only when a hunk lacks the context to judge a
   decision.
-- **Review (§4):** the assembled session journal (already distilled), not the code — ~1–2K.
+- **Wrap-up (§4):** one feature delta plus only warranted overview/concept revisions; no per-slice
+  distillation and no decision summaries.
+- **Review (§4):** the assembled store-backed view, not the code — ~1–2K.
 
 Read loop state through the deterministic commands — `slice-context --json`, `calibration show
 --json`, `check --json` — which are cheap structured reads, not file scans or git re-derivation.
@@ -441,6 +474,9 @@ Read loop state through the deterministic commands — `slice-context --json`, `
 - **Honesty over polish.** A journaled `why` must be one the developer actually engaged with.
   If they waved a decision through, mark it `trust: ⚠`. Do not manufacture rationale.
 - **Anchor every claim to code** (`where:`) — file/area, so it survives refactoring.
+- **Distill only at wrap-up.** Produce one feature delta, refresh the product overview only for a
+  material product-shape change, and revise only contradicted concept explanations. Never
+  re-summarise a decision.
 - **Depth is a function of level, not whim.** Probe the concepts a feature needs *before* diving
   in; then teach each decision to the **depth policy** in §3 (`fluent` → name it and move on …
   `new` → unpack, slow down, offer to go deeper). Your live estimate moves the *level* (logged as
