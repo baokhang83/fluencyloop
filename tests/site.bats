@@ -188,7 +188,8 @@ PY
     run request /concepts/concept-graph
     [ "$status" -eq 0 ]
     [[ "$output" == *"Relationships carry architectural meaning."* ]]
-    [[ "$output" == *"concept graph — realized_by"* ]]
+    [[ "$output" == *"realized_by"* ]]
+    [[ "$output" == *'href="/concepts/concept-graph"'* ]]
     [[ "$output" == *'href="/features/site-navigation"'* ]]
 
     run request /features/site-navigation
