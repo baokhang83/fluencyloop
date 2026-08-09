@@ -74,6 +74,7 @@ trim() {
 # pair only when the whole value is exactly that shape; otherwise keep the line as written rather
 # than mis-strip and lose structure.
 strip_wrapping_backticks() {
+    # shellcheck disable=SC2016 # The regex deliberately matches literal Markdown backticks.
     local s="$1" re='^`([^`]*)`$'
     if [[ "$s" =~ $re ]]; then printf '%s' "${BASH_REMATCH[1]}"; else printf '%s' "$s"; fi
 }
