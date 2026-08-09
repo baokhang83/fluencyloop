@@ -220,6 +220,67 @@ pre {
   overflow-wrap: anywhere;
 }
 
+.diagram {
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-quiet);
+  overflow: auto;
+}
+
+.diagram-canvas {
+  min-width: 28rem;
+  color: var(--accent-strong);
+}
+
+.diagram svg {
+  display: block;
+  width: 100%;
+  min-width: 28rem;
+  height: auto;
+  overflow: visible;
+}
+
+.diagram-node {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.diagram-link {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.diagram-lifeline {
+  stroke: var(--line);
+  stroke-dasharray: 5 5;
+  stroke-width: 2;
+}
+
+.diagram-arrow { fill: currentColor; }
+.diagram-label, .diagram-message { fill: var(--ink); font-family: var(--font-body); font-size: 14px; }
+.diagram-message { fill: var(--ink-muted); font-size: 13px; }
+
+.diagram figcaption,
+.diagram-unavailable {
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+}
+
+.diagram figcaption { margin-top: var(--space-2); }
+
+.diagram-unavailable {
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  border-left: 0.25rem solid var(--alert);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--alert) 10%, var(--surface));
+}
+
+[data-diagram-state="unavailable"] figcaption::before { content: "Diagram unavailable. "; color: var(--alert); }
+
 [role="alert"] {
   padding: var(--space-2) var(--space-3);
   border-left: 0.25rem solid var(--alert);

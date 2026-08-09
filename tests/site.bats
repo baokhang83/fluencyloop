@@ -247,3 +247,36 @@ PY
     [[ "$output" == *'src="/assets/site.js"'* ]]
     [[ "$output" == *"data-theme-toggle"* ]]
 }
+
+@test "site renders supported diagrams and keeps invalid or absent diagrams readable" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store/features" "$TESTREPO/docs/fluencyloop/distillations/features"
+    printf '%s\n' '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"invalid-diagram","session":"none","commit":"abc","slug":"invalid-diagram","intent":"test diagram fallbacks","branch":"feature/invalid-diagram","base_ref":"dev"}' > "$TESTREPO/docs/fluencyloop/store/features/invalid-diagram.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"plain-diagram","session":"none","commit":"abc","slug":"plain-diagram","intent":"test plain prose","branch":"feature/plain-diagram","base_ref":"dev"}' > "$TESTREPO/docs/fluencyloop/store/features/plain-diagram.jsonl"
+    printf '%s\n' 'The writer and reader stay independently simple.' '```mermaid' 'flowchart LR' '  Writer[Writer] --> Reader[Reader]' '```' 'Diagram: The reader consumes records after the writer appends them.' > "$TESTREPO/docs/fluencyloop/distillations/product.md"
+    printf '%s\n' 'The prose still explains this subject.' '```mermaid' 'this is not a supported diagram' '```' 'Diagram: The invalid visual must not hide this caption.' > "$TESTREPO/docs/fluencyloop/distillations/features/invalid-diagram.md"
+    printf '%s\n' 'This subject is clearer as prose alone.' > "$TESTREPO/docs/fluencyloop/distillations/features/plain-diagram.md"
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'class="diagram"'* ]]
+    [[ "$output" == *'data-mermaid="'* ]]
+    [[ "$output" == *"The reader consumes records after the writer appends them."* ]]
+    [[ "$output" == *"The writer and reader stay independently simple."* ]]
+    [[ "$output" != *"flowchart LR"* ]]
+
+    run request /features/invalid-diagram
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'class="diagram-unavailable"'* ]]
+    [[ "$output" == *"The invalid visual must not hide this caption."* ]]
+    [[ "$output" == *"The prose still explains this subject."* ]]
+    [[ "$output" != *"this is not a supported diagram"* ]]
+
+    run request /features/plain-diagram
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"This subject is clearer as prose alone."* ]]
+    [[ "$output" != *'class="diagram"'* ]]
+    [[ "$output" != *'class="diagram-unavailable"'* ]]
+}

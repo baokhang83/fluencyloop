@@ -425,6 +425,27 @@ Write and commit at most these Markdown distillations under
    `concepts/<concept-slug>.md`; revise an existing explanation only when a feature decision contradicts
    it. Do not create a concept explanation merely because the feature touched a concept.
 
+### Optional explanatory diagrams
+
+Prose always carries the explanation. Add a diagram only when spatial structure makes a relationship
+or flow materially easier to understand — for example, a small dependency graph or the hand-off
+between two product components. A diagram is supporting evidence, never the entire explanation, and
+**every feature gets one** is exactly the failure this option replaces.
+
+When a diagram earns its place, put it directly after the prose it supports, using this exact slot:
+
+```mermaid
+flowchart LR
+  Writer[append-only writer] --> Reader[current-record reader]
+```
+Diagram: The reader selects the last record without asking writers to rewrite history.
+
+Use concise Mermaid flowcharts (`flowchart LR` / `flowchart TD`) for relationships or
+`sequenceDiagram` for message flow. Keep node labels short, include the caption, and omit the
+diagram when prose or a table explains the subject better. Never add source that needs a remote
+renderer; the bundled local site renders these forms offline and safely falls back to caption + prose
+when a diagram is invalid.
+
 **Do not distill decisions.** Their why was taught and captured contemporaneously by
 `fluencyloop decision`; re-synthesising it is both less trustworthy and unnecessary token spend.
 Keep every distillation person-neutral: describe the product and its constraints, never a
