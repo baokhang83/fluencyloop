@@ -34,6 +34,7 @@ Usage:
   fluencyloop feature "<intent>"         declare a feature (branch + design stub)
   fluencyloop session "<intent>"         open a session in the active feature
   fluencyloop decision --where .. --why ..  append a formatted decision block to the session
+  fluencyloop knowledge --component ..    batch session knowledge records
   fluencyloop concept --name ..           capture an architectural concept or relation
   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
   fluencyloop check [--json]             doctor: loop state + un-journaled drift
@@ -62,6 +63,7 @@ switch -Regex ($cmd) {
     '^feature$'       { Run 'new-feature.ps1' }
     '^session$'       { Run 'new-session.ps1' }
     '^decision$'      { Run 'add-decision.ps1' }
+    '^knowledge$'     { Run 'add-knowledge.ps1' }
     '^concept$'       { Run 'add-concept.ps1' }
     '^review$'        { Run 'assemble-pr-view.ps1' }
     '^check$'         { Run 'check.ps1' }

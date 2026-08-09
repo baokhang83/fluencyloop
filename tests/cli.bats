@@ -13,6 +13,7 @@ load test_helper
     run bash "$DIST/fluencyloop" help
     [ "$status" -eq 0 ]
     [[ "$output" == *"feature"* ]]
+    [[ "$output" == *"knowledge"* ]]
     [[ "$output" == *"concept"* ]]
     [[ "$output" == *"check"* ]]
     [[ "$output" != *"self upgrade"* ]]

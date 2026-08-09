@@ -52,7 +52,7 @@ standard sandbox.
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
 `base_ref`), written by `fluencyloop feature` / `fluencyloop session` and committed with the branch. Prefer
 it over re-deriving from git each turn: it tells you which stage you're resuming at and which
-session file is open. It's absent only before the feature is declared (§1 creates it).
+session is active. It's absent only before the feature is declared (§1 creates it).
 
 **Load the learner's knowledge base — parse it, don't eyeball it.** First fold in what prior work
 demonstrated: run `fluencyloop calibration compact` — deterministic bash that rolls the engagement
@@ -274,9 +274,9 @@ visible; the journal is its durable byproduct.
    **Let the pre-filter gate the expensive pass.** slice-context also emits `likely_decision`
    (with a `decision_score` and the `decision_signals` that fired — new dep/import, new API,
    control-flow, size). When it is **false**, don't spend a full teaching pass: glance at the
-   hunks, and unless something is plainly a fork, journal the slice **lightly** (a one-line
-   knowledge-transfer note, no decision block) and move on — this is how trivial slices stay
-   near-zero cost. When it is **true**, run the full teach (step 2). The filter gates, it doesn't
+   hunks, and unless something is plainly a fork, close the slice **lightly** (no knowledge record
+   is needed without a real component or hard-won condition) and move on — this is how trivial
+   slices stay near-zero cost. When it is **true**, run the full teach (step 2). The filter gates, it doesn't
    gag: a real decision you can plainly see in a low-scored slice still gets taught — but the
    default on a low score is light-touch, not deliberation.
 2. **Teach the why — live, in the conversation.** This is the *during*, so it happens *here*,
@@ -328,24 +328,31 @@ visible; the journal is its durable byproduct.
      skip because they authored the code. Name where knowledge ends and trust begins.
    - Tone: *"This is the right call here — here's the one-line why. If A and B feel shaky,
      that's where to dig, but you don't need to right now to trust this."* Not homework.
-3. **Journal it** *(the byproduct, after the live teaching — not instead of it)*. Open (or
-   create) the slice's session file:
+3. **Record the session close** *(the byproduct, after the live teaching — not instead of it)*.
+   Open the slice's session record:
 
    ```bash
    fluencyloop session --json --slug "<feature-slug>" "<slice intent>"
    ```
 
-   Then record two things — you supply the *content*; the template's scaffolding is already there
-   (all in comments, nothing to delete):
-   - **Knowledge transfer** *(you write this — it's irreducible)* — under the session's
-     `## Knowledge transfer` headings, one bullet per component/role/mechanism: the *subject*,
-     *what it does and under what conditions*, and *status:* `documented` / `follow-up`. Make it
-     **rich, not a token list**: the roles *and* the non-obvious conditions, gotchas, and hard-won
-     lessons (a bug's root cause, why something is done an odd way, a documented limitation) — the
-     highest-value fluency. Separate from decisions (a role you explained is knowledge transfer
-     even if no fork was chosen). **About the work, never the person** — no competence, prior
-     knowledge, or "who learned what" (committed files, GDPR); the per-developer picture lives only
-     in the calibration profile.
+   Then, once at session close, write the session's knowledge in one batched command — not prose
+   headings and not one command per component:
+
+   ```bash
+   fluencyloop knowledge \
+     --component "<name>|<role>|<conditions>" \
+     --component "<name>|<role>|<conditions>|follow-up" \
+     --gotcha "<subject>|<why it is this way or what breaks otherwise>"
+   ```
+
+   **Knowledge transfer** is still irreducible: make it **rich, not a token list**. Capture the
+   component roles and the non-obvious conditions, gotchas, and hard-won lessons (a bug's root
+   cause, why something is done an odd way, a documented limitation). A component defaults to
+   `documented`; use `follow-up` only when appropriate. Separate it from decisions: a role you
+   explained is knowledge transfer even if no fork was chosen. **About the work, never the
+   person** — no competence, prior knowledge, or "who learned what" (committed files, GDPR); the
+   per-developer picture lives only in the calibration profile. Escape a literal `|` as `\|` and a
+   literal backslash as `\\`.
    - **Decisions** *(the script formats them — you supply only the field values)* — for each, run
      `fluencyloop decision` so the block is assembled deterministically; never hand-write the
      bullet schema:

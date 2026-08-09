@@ -108,6 +108,11 @@ Captures a taught implementation fork. Its payload is unchanged from the existin
 
 Captures a component explained at session close.
 
+`fluencyloop knowledge` uses `|` between its input fields. Write a literal pipe as `\|` and a
+literal backslash as `\\`; the stored record contains the literal characters. Components use
+`name|role|conditions` with an optional final `|status` (`documented` is the default), and gotchas
+use `subject|why`.
+
 | payload field | meaning | writer |
 |---|---|---|
 | `name` | Component or mechanism name. | A4 |

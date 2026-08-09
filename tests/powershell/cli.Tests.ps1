@@ -19,6 +19,7 @@ Describe 'fluencyloop.ps1 (dispatcher)' {
     It 'help lists core commands without legacy self upgrade' {
         $out = (& $script:PwshExe -NoProfile -File $script:Cli 'help' 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
         $out | Should -Match 'feature'
+        $out | Should -Match 'knowledge'
         $out | Should -Match 'concept'
         $out | Should -Match 'check'
         $out | Should -Not -Match 'self upgrade'
