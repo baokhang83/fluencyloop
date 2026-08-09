@@ -23,6 +23,7 @@ Describe 'fluencyloop.ps1 (dispatcher)' {
         $out | Should -Match 'concept'
         $out | Should -Match 'import'
         $out | Should -Match 'check'
+        $out | Should -Match 'site'
         $out | Should -Not -Match 'self upgrade'
     }
 
@@ -37,5 +38,20 @@ Describe 'fluencyloop.ps1 (dispatcher)' {
         $script:repo = Initialize-TestRepo
         $j = (& $script:PwshExe -NoProfile -File $script:Cli 'check' '--json') | ConvertFrom-Json
         $j.fluency | Should -Be $true
+    }
+
+    It 'site without Node exits cleanly with an actionable message' {
+        $oldPath = $env:PATH
+        try {
+            $env:PATH = Split-Path -Parent (Get-Command git -CommandType Application).Source
+            $out = (& $script:PwshExe -NoProfile -File $script:Cli 'site' 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+            $LASTEXITCODE | Should -Be 1
+            $out | Should -Match 'Node\.js 18 or newer'
+            $out | Should -Match "only for 'fluencyloop site'"
+            $out | Should -Match 'The rest of FluencyLoop works without Node\.js'
+            $out | Should -Match 'https://nodejs\.org/'
+        } finally {
+            $env:PATH = $oldPath
+        }
     }
 }

@@ -19,6 +19,15 @@ suite on every push and PR; run them locally with
 or it ships behaviour that differs by platform; if you have no `pwsh` locally, say so in the PR and
 let the Windows CI job be the check.
 
+### Node boundary
+
+Node.js is an optional dependency. The core loop — its Bash/PowerShell scripts, store writers,
+skills, and normal feature flow — must run without Node installed. Only `fluencyloop site` may
+execute Node, and it requires **Node.js 18 or newer** with built-in modules only. `fluencyloop
+check` may report whether Node is available, but that result is informational and must never fail a
+check. Do not add a Node invocation or package dependency to the core path because it happened to
+be available on a development machine.
+
 <a id="distribution-roadmap"></a>
 > **Distribution:** FluencyLoop ships through its Claude Code and Codex marketplace plugins.
 > The canonical runtime lives in `plugins/fluencyloop/`; do not add a machine-wide installer or

@@ -49,6 +49,13 @@ Describe 'check.ps1' {
         (Invoke-Fl 'check.ps1') | Should -Match 'no constitution yet'
     }
 
+    It 'reports Node presence as informational' {
+        $script:repo = Initialize-TestRepo
+        $result = Get-FlJson 'check.ps1' '--json'
+        $result.PSObject.Properties.Name | Should -Contain 'node'
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 0
+    }
+
     It 'accepts a clean store' {
         $script:repo = Initialize-TestRepo
         $store = "$script:repo/docs/fluencyloop/store/concepts.jsonl"
