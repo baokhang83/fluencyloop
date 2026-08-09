@@ -18,6 +18,13 @@ while [ "$#" -gt 0 ]; do
     case "$1" in
         --json) JSON_MODE=true ;;
         --slug) shift; SLUG="${1:-}" ;;
+        -h|--help)
+            echo "Usage: new-plan.sh [--json] [--slug <slug>] <intent...>"
+            exit 0
+            ;;
+        # An intent never starts with a dash, so a flag-shaped token here is a typo or an
+        # unsupported option, not text to fold into the intent.
+        -*) echo "Unknown option: $1" >&2; exit 1 ;;
         *) ARGS+=("$1") ;;
     esac
     shift

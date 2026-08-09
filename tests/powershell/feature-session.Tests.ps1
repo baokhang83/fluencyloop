@@ -32,10 +32,27 @@ Describe 'new-feature.ps1 + new-session.ps1' {
         (Invoke-FlExit 'new-feature.ps1') | Should -Not -Be 0
     }
 
+    It 'new-feature --help prints usage and does not create a branch or store record' {
+        # Regression: an unrecognized flag used to fall through into the intent, so `--help`
+        # minted a real feature named "help" -- branch, store record, state mutation included.
+        $script:repo = Initialize-TestRepo
+        $out = Invoke-FlAll 'new-feature.ps1' '--help'
+        $out | Should -Match 'Usage: new-feature.ps1'
+        (git branch --list 'feature/*') | Should -BeNullOrEmpty
+        "$script:repo/docs/fluencyloop/store/features" | Should -Not -Exist
+    }
+
+    It 'new-feature rejects an unknown flag instead of folding it into the intent' {
+        $script:repo = Initialize-TestRepo
+        $out = Invoke-FlAll 'new-feature.ps1' '--bogus' 'should not scaffold'
+        $out | Should -Match 'Unknown option: --bogus'
+        (git branch --list 'feature/*') | Should -BeNullOrEmpty
+    }
+
     It 'new-feature is idempotent: re-run preserves base_ref' {
         $script:repo = Initialize-TestRepo
-        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add caching' | Out-Null
-        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add caching' | Out-Null
+        Get-FlJson 'new-feature.ps1' '--json' 'add caching' | Out-Null
+        Get-FlJson 'new-feature.ps1' '--json' 'add caching' | Out-Null
         $s = Get-Content -Raw "$script:repo/.fluencyloop/state.json" | ConvertFrom-Json
         $s.base_ref | Should -Be 'main'
     }
@@ -49,7 +66,7 @@ Describe 'new-feature.ps1 + new-session.ps1' {
 
     It 'new-session records the slice without creating markdown' {
         $script:repo = Initialize-TestRepo
-        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add caching' | Out-Null
+        Get-FlJson 'new-feature.ps1' '--json' 'add caching' | Out-Null
         $j = Get-FlJson 'new-session.ps1' '--json' '--slug' '001-add-caching' 'wire the LRU cache'
         $store = "$script:repo/docs/fluencyloop/store/features/001-add-caching.jsonl"
         @([System.IO.File]::ReadAllLines($store)).Count | Should -Be 2
@@ -62,7 +79,7 @@ Describe 'new-feature.ps1 + new-session.ps1' {
 
     It 'new sessions advance from state without markdown filenames' {
         $script:repo = Initialize-TestRepo
-        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add caching' | Out-Null
+        Get-FlJson 'new-feature.ps1' '--json' 'add caching' | Out-Null
         & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-add-caching' 'first slice' | Out-Null
         $j = Get-FlJson 'new-session.ps1' '--json' '--slug' '001-add-caching' 'second slice'
         $j.session_slug | Should -Be '002-second-slice'
@@ -71,6 +88,24 @@ Describe 'new-feature.ps1 + new-session.ps1' {
     It 'new-session errors with no active feature' {
         $script:repo = Initialize-TestRepo
         (Invoke-FlExit 'new-session.ps1' 'orphan slice') | Should -Not -Be 0
+    }
+
+    It 'new-session --help prints usage and does not write a store record' {
+        $script:repo = Initialize-TestRepo
+        Get-FlJson 'new-feature.ps1' '--json' 'add caching' | Out-Null
+        $out = Invoke-FlAll 'new-session.ps1' '--help'
+        $out | Should -Match 'Usage: new-session.ps1'
+        $store = "$script:repo/docs/fluencyloop/store/features/001-add-caching.jsonl"
+        @([System.IO.File]::ReadAllLines($store) | Where-Object { $_ -ne '' }).Count | Should -Be 1
+    }
+
+    It 'new-session rejects an unknown flag instead of folding it into the intent' {
+        $script:repo = Initialize-TestRepo
+        Get-FlJson 'new-feature.ps1' '--json' 'add caching' | Out-Null
+        $out = Invoke-FlAll 'new-session.ps1' '--bogus' 'should not record'
+        $out | Should -Match 'Unknown option: --bogus'
+        $store = "$script:repo/docs/fluencyloop/store/features/001-add-caching.jsonl"
+        @([System.IO.File]::ReadAllLines($store) | Where-Object { $_ -ne '' }).Count | Should -Be 1
     }
 
     It 'base_ref records the true fork point, not always main' {

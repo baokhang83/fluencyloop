@@ -23,3 +23,17 @@ setup() { setup_initialized_repo; }
     run bash "$BIN/new-plan.sh"
     [ "$status" -ne 0 ]
 }
+
+@test "new-plan --help prints usage and does not scaffold a plan" {
+    run bash "$BIN/new-plan.sh" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Usage: new-plan.sh"* ]]
+    [ ! -d "$TESTREPO/docs/fluencyloop/plans" ]
+}
+
+@test "new-plan rejects an unknown flag instead of folding it into the intent" {
+    run bash "$BIN/new-plan.sh" --bogus "should not scaffold"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Unknown option: --bogus"* ]]
+    [ ! -d "$TESTREPO/docs/fluencyloop/plans" ]
+}

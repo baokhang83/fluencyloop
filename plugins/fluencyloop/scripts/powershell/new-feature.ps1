@@ -17,7 +17,20 @@ for ($i = 0; $i -lt $args.Count; $i++) {
         '--slug'   { $i++; $slug = [string]$args[$i] }
         '--prefix' { $i++; $prefix = [string]$args[$i] }
         '--plan'   { $i++; $plan = [string]$args[$i] }
-        default    { $rest += [string]$args[$i] }
+        { $_ -eq '-h' -or $_ -eq '--help' } {
+            FlOut 'Usage: new-feature.ps1 [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] <intent...>'
+            exit 0
+        }
+        default {
+            # An intent never starts with a dash, so a flag-shaped token here is a typo or an
+            # unsupported option, not text to fold into the intent -- e.g. --help reaching this
+            # point unhandled used to become the intent itself, minting a real "help" feature.
+            if ([string]$args[$i] -like '-*') {
+                [Console]::Error.WriteLine("Unknown option: $($args[$i])")
+                exit 1
+            }
+            $rest += [string]$args[$i]
+        }
     }
 }
 

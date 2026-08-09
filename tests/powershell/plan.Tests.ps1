@@ -25,4 +25,18 @@ Describe 'new-plan.ps1' {
         $script:repo = Initialize-TestRepo
         (Invoke-FlExit 'new-plan.ps1') | Should -Not -Be 0
     }
+
+    It '--help prints usage and does not scaffold a plan' {
+        $script:repo = Initialize-TestRepo
+        $out = Invoke-FlAll 'new-plan.ps1' '--help'
+        $out | Should -Match 'Usage: new-plan.ps1'
+        "$script:repo/docs/fluencyloop/plans" | Should -Not -Exist
+    }
+
+    It 'rejects an unknown flag instead of folding it into the intent' {
+        $script:repo = Initialize-TestRepo
+        $out = Invoke-FlAll 'new-plan.ps1' '--bogus' 'should not scaffold'
+        $out | Should -Match 'Unknown option: --bogus'
+        "$script:repo/docs/fluencyloop/plans" | Should -Not -Exist
+    }
 }

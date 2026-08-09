@@ -25,6 +25,14 @@ while [ "$#" -gt 0 ]; do
         --slug) shift; SLUG="${1:-}" ;;
         --prefix) shift; PREFIX="${1:-}" ;;
         --plan) shift; PLAN="${1:-}" ;;
+        -h|--help)
+            echo "Usage: new-feature.sh [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] <intent...>"
+            exit 0
+            ;;
+        # An intent never starts with a dash, so a flag-shaped token here is a typo or an
+        # unsupported option, not text to fold into the intent -- e.g. `--help` reaching this
+        # point unhandled used to become the intent itself, minting a real "help" feature.
+        -*) echo "Unknown option: $1" >&2; exit 1 ;;
         *) ARGS+=("$1") ;;
     esac
     shift

@@ -16,6 +16,13 @@ while [ "$#" -gt 0 ]; do
     case "$1" in
         --json) JSON_MODE=true ;;
         --slug) shift; FEATURE_SLUG="${1:-}" ;;
+        -h|--help)
+            echo "Usage: new-session.sh [--json] [--slug <feature-slug>] <session-intent...>"
+            exit 0
+            ;;
+        # An intent never starts with a dash, so a flag-shaped token here is a typo or an
+        # unsupported option, not text to fold into the intent.
+        -*) echo "Unknown option: $1" >&2; exit 1 ;;
         *) ARGS+=("$1") ;;
     esac
     shift
