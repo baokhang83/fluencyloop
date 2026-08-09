@@ -343,7 +343,7 @@ function filterBar(concepts) {
 function recordCard(item) {
   const topics = item.concepts || [];
   const topicData = topics.map((concept) => concept.slug).join(' ');
-  const title = item.href ? link(item.href, item.title) : escapeHtml(item.title);
+  const title = item.titleHtml || (item.href ? link(item.href, item.title) : escapeHtml(item.title));
   return `<article class="record-card record-card--${escapeHtml(item.kind || 'record')}" data-topic-card data-topics="${escapeHtml(topicData)}">
     <div class="record-main">
       <div class="record-kicker">${escapeHtml(item.label || item.kind || 'Record')}</div>
@@ -461,7 +461,7 @@ function renderProduct(data) {
     <header><p class="eyebrow">Project knowledge</p><h1>${escapeHtml(data.project)}</h1><p>Architecture, feature deltas, and the decisions that shaped them.</p></header>
     <section class="overview-prose"><h2>Technical overview</h2>${overview}${distillations}</section>
     <div class="section-heading"><p class="eyebrow">Project record</p><h2>What changed</h2></div>
-    ${filterableCollection(navigation.concepts, activity, 'No project records have been captured yet.')}
+    ${filterableCollection(navigation.concepts, activity, 'No architectural concepts have been recorded yet. No project records have been captured yet.')}
   `);
 }
 
@@ -474,6 +474,7 @@ function renderConceptList(data) {
     const endpoints = [relation.from, relation.to].map((name) => data.navigation.concepts.find((concept) => concept.name === name)).filter(Boolean);
     return {
       kind: 'relation', label: 'Relationship', title: `${relation.from} ${relation.kind} ${relation.to}`,
+      titleHtml: relationshipTitle(data.navigation, relation),
       summary: 'A recorded architectural connection.', record: relation, concepts: endpoints,
     };
   });
@@ -496,6 +497,10 @@ function endpointLink(navigation, endpoint) {
   return escapeHtml(endpoint);
 }
 
+function relationshipTitle(navigation, relation) {
+  return `${endpointLink(navigation, relation.from)} ${escapeHtml(relation.kind)} ${endpointLink(navigation, relation.to)}`;
+}
+
 function renderConcept(data, concept) {
   const realizedBy = String(concept.realized_by || '').split(/\r?\n/).filter(Boolean);
   const explanation = concept.distillation
@@ -506,7 +511,7 @@ function renderConcept(data, concept) {
     <section class="detail-section"><h2>Problem in this product</h2><p>${escapeHtml(concept.problem)}</p><h2>How it works</h2><p>${escapeHtml(concept.how)}</p>
     <h2>Realized by</h2>${realizedBy.length ? `<ul class="detail-list">${realizedBy.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : emptyState('No implementation area was recorded.')}</section>
     <section class="detail-section"><h2>Concept explanation</h2>${explanation}</section>
-    <section class="detail-section"><h2>Relationships</h2>${concept.relations.length ? `<div class="record-list">${concept.relations.map((relation) => recordCard({ kind: 'relation', label: 'Relationship', title: `${relation.from} ${relation.kind} ${relation.to}`, summary: 'A recorded architectural connection.', record: relation, concepts: [concept] })).join('')}</div>` : emptyState('This concept has no recorded relationships yet.')}</section>
+    <section class="detail-section"><h2>Relationships</h2>${concept.relations.length ? `<div class="record-list">${concept.relations.map((relation) => recordCard({ kind: 'relation', label: 'Relationship', title: `${relation.from} ${relation.kind} ${relation.to}`, titleHtml: relationshipTitle(data.navigation, relation), summary: 'A recorded architectural connection.', record: relation, concepts: [concept] })).join('')}</div>` : emptyState('This concept has no recorded relationships yet.')}</section>
     <section class="detail-section"><h2>Features that change this concept</h2>${concept.features.length ? `<div class="record-list">${concept.features.map((feature) => recordCard({ kind: 'feature', label: 'Feature', title: feature.slug, summary: feature.record && feature.record.intent, href: featurePath(feature), record: feature.record, concepts: feature.concepts })).join('')}</div>` : emptyState('No feature is currently linked to this concept.')}</section>
   `, [{ href: '/', label: 'Product overview' }, { href: '/concepts', label: 'Architectural concepts' }, { label: concept.name }]);
 }
