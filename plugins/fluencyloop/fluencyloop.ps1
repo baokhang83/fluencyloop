@@ -89,7 +89,8 @@ function RequireNodeForSite {
 function StartSite {
     $nodeExe = RequireNodeForSite
     $projectRoot = (& git rev-parse --show-toplevel 2>$null | Select-Object -First 1)
-    if ($LASTEXITCODE -ne 0 -or -not $projectRoot) {
+    $gitExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+    if ($gitExitCode -ne 0 -or -not $projectRoot) {
         [Console]::Error.WriteLine("Error: 'fluencyloop site' must run inside a Git repository.")
         exit 1
     }
