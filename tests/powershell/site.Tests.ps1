@@ -51,10 +51,10 @@ Describe 'fluencyloop site' {
             throw "Site did not bind to $url. stdout: $stdout stderr: $stderr"
         }
 
-        $home = Invoke-WebRequest -Uri "$url/" -UseBasicParsing
-        $home.StatusCode | Should -Be 200
-        $home.Headers['Content-Type'] | Should -Match 'text/html'
-        $home.Content | Should -Match 'FluencyLoop'
+        $page = Invoke-WebRequest -Uri "$url/" -UseBasicParsing
+        $page.StatusCode | Should -Be 200
+        $page.Headers['Content-Type'] | Should -Match 'text/html'
+        $page.Content | Should -Match 'FluencyLoop'
 
         $data = Invoke-WebRequest -Uri "$url/api/site-data" -UseBasicParsing
         $data.StatusCode | Should -Be 200
