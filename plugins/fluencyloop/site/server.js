@@ -295,12 +295,16 @@ function renderProduct(data) {
   const overview = navigation.product
     ? markdown(navigation.product.content)
     : emptyState('No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
+  const distillations = data.distillations.length
+    ? `<ul>${data.distillations.map((item) => `<li>${escapeHtml(item.path)}</li>`).join('')}</ul>`
+    : emptyState('No distillations have been written yet.');
   return layout(data, 'Product overview', `
     <header><h1>${escapeHtml(data.project)}</h1><p>Product overview</p></header>
     <section><h2>Technical overview</h2>${overview}</section>
     <section><h2>Architectural concepts</h2>${concepts}</section>
     <section><h2>Features as deltas</h2>${features}</section>
     <section><h2>Initiative constraints</h2>${renderConstraints(navigation.requirements, navigation.openQuestions)}</section>
+    <section><h2>Available distillations</h2>${distillations}</section>
   `);
 }
 

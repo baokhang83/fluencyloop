@@ -181,7 +181,9 @@ PY
     run request /concepts
     [ "$status" -eq 0 ]
     [[ "$output" == *"Relationship graph"* ]]
-    [[ "$output" == *"concept graph — realized_by"* ]]
+    [[ "$output" == *"realized_by"* ]]
+    [[ "$output" == *'href="/concepts/concept-graph"'* ]]
+    [[ "$output" == *'href="/features/site-navigation"'* ]]
 
     run request /concepts/concept-graph
     [ "$status" -eq 0 ]
