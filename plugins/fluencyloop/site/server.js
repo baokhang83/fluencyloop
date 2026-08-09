@@ -301,6 +301,115 @@ function emptyState(message) {
   return `<p>${escapeHtml(message)}</p>`;
 }
 
+function topicClass(name) {
+  let hash = 0;
+  for (const character of name) hash = ((hash * 31) + character.charCodeAt(0)) >>> 0;
+  return `topic-${hash % 6}`;
+}
+
+function topicNames(concepts) {
+  return concepts.map((concept) => concept.name);
+}
+
+function metadata(record) {
+  if (!record) return '';
+  const date = record.ts ? `<span>Recorded <time datetime="${escapeHtml(record.ts)}">${escapeHtml(record.ts)}</time></span>` : '';
+  const commit = record.commit
+    ? `<code title="Commit ${escapeHtml(record.commit)}">${escapeHtml(record.commit === 'uncommitted' ? 'Uncommitted' : record.commit.slice(0, 7))}</code>`
+    : '';
+  return date || commit ? `<div class="record-meta">${date}${commit}</div>` : '';
+}
+
+function topicBadges(concepts, interactive = false) {
+  if (!concepts.length) return '';
+  const tag = interactive ? 'button' : 'span';
+  return `<div class="topic-badges">${concepts.map((concept) => {
+    const attributes = interactive
+      ? ` type="button" data-topic-filter="${escapeHtml(concept.slug)}" aria-label="Filter by ${escapeHtml(concept.name)}"`
+      : '';
+    return `<${tag} class="topic-badge ${topicClass(concept.name)}"${attributes}>${escapeHtml(concept.name)}</${tag}>`;
+  }).join('')}</div>`;
+}
+
+function filterBar(concepts) {
+  if (!concepts.length) return '';
+  return `<div class="topic-filter" aria-label="Filter by architectural concept" data-topic-filter-bar>
+    <span class="filter-label">Filter by concept</span>
+    <button type="button" class="filter-all" data-topic-filter="all" aria-pressed="true">All</button>
+    ${concepts.map((concept) => `<button type="button" class="topic-badge ${topicClass(concept.name)}" data-topic-filter="${escapeHtml(concept.slug)}" aria-pressed="false">${escapeHtml(concept.name)}</button>`).join('')}
+  </div>`;
+}
+
+function recordCard(item) {
+  const topics = item.concepts || [];
+  const topicData = topics.map((concept) => concept.slug).join(' ');
+  const title = item.href ? link(item.href, item.title) : escapeHtml(item.title);
+  return `<article class="record-card record-card--${escapeHtml(item.kind || 'record')}" data-topic-card data-topics="${escapeHtml(topicData)}">
+    <div class="record-main">
+      <div class="record-kicker">${escapeHtml(item.label || item.kind || 'Record')}</div>
+      <h2>${title}</h2>
+      ${item.summary ? `<p>${escapeHtml(item.summary)}</p>` : ''}
+      ${topicBadges(topics, true)}
+    </div>
+    ${metadata(item.record)}
+  </article>`;
+}
+
+function filterableCollection(concepts, items, emptyMessage) {
+  if (!items.length) return emptyState(emptyMessage);
+  return `<section class="record-collection" data-topic-collection>
+    ${filterBar(concepts)}
+    <p class="filter-status" data-topic-status aria-live="polite"></p>
+    <div class="record-list">${items.map(recordCard).join('')}</div>
+  </section>`;
+}
+
+function featureTopics(navigation, feature) {
+  return feature ? feature.concepts : [];
+}
+
+function recordTopics(navigation, record) {
+  if (record.type === 'concept') {
+    const concept = navigation.concepts.find((item) => item.name === record.name);
+    return concept ? [concept] : [];
+  }
+  const feature = navigation.features.find((item) => item.slug === record.feature || item.slug === record.slug);
+  return featureTopics(navigation, feature);
+}
+
+function activityItem(navigation, record) {
+  const concepts = recordTopics(navigation, record);
+  if (record.type === 'concept') return {
+    kind: 'concept', label: 'Concept', title: record.name, summary: record.problem,
+    href: conceptPath(navigation.concepts.find((item) => item.name === record.name)), record, concepts,
+  };
+  if (record.type === 'feature') return {
+    kind: 'feature', label: 'Feature', title: record.slug, summary: record.intent,
+    href: featurePath(navigation.features.find((item) => item.slug === record.slug)), record, concepts,
+  };
+  if (record.type === 'decision') return {
+    kind: 'decision', label: 'Decision', title: record.title, summary: record.why,
+    href: decisionPath(record), record, concepts,
+  };
+  if (record.type === 'requirement') return {
+    kind: 'requirement', label: 'Requirement', title: record.gap, summary: record.answer,
+    href: record.feature === 'global' ? '/features' : featurePath(navigation.features.find((item) => item.slug === record.feature)), record, concepts,
+  };
+  if (record.type === 'open_question') return {
+    kind: 'open-question', label: 'Open question', title: record.gap, summary: record.why_it_matters,
+    href: record.feature === 'global' ? '/features' : featurePath(navigation.features.find((item) => item.slug === record.feature)), record, concepts,
+  };
+  return null;
+}
+
+function sortByRecorded(items) {
+  return [...items].sort((left, right) => {
+    const leftDate = left.record && left.record.ts || '';
+    const rightDate = right.record && right.record.ts || '';
+    return rightDate.localeCompare(leftDate) || left.title.localeCompare(right.title);
+  });
+}
+
 function layout(data, title, body, crumbs = []) {
   const storeWarning = data.store.errors.length
     ? `<p role="alert">${data.store.errors.length} unreadable store record(s) were skipped.</p>`
@@ -313,7 +422,7 @@ function layout(data, title, body, crumbs = []) {
   <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} — ${escapeHtml(data.project)} — FluencyLoop</title><link rel="stylesheet" href="/assets/site.css"></head>
   <body data-depth="${Math.min(crumbs.length, 3)}">
     <main id="content" tabindex="-1">
-      <nav aria-label="Primary">${link('/', 'Product overview')} · ${link('/concepts', 'Architectural concepts')} · ${link('/features', 'Features')}<button type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">Theme</button></nav>
+      <nav aria-label="Primary"><a class="site-mark" href="/">FL</a><span class="project-name">${escapeHtml(data.project)}</span><span class="nav-links">${link('/', 'Overview')}${link('/concepts', 'Concepts')}${link('/features', 'Features')}</span><button type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">Theme</button></nav>
       ${breadcrumb}
       ${storeWarning}
       ${body}
@@ -324,53 +433,54 @@ function layout(data, title, body, crumbs = []) {
 }
 
 function renderConstraints(requirements, openQuestions) {
-  const answered = requirements.length
-    ? `<ul>${requirements.map((item) => `<li><strong>${escapeHtml(item.gap)}</strong><br>Answer: ${escapeHtml(item.answer)}<br>Consequence: ${escapeHtml(item.consequence)}</li>`).join('')}</ul>`
-    : emptyState('No answered requirements were recorded at this level.');
-  const open = openQuestions.length
-    ? `<ul>${openQuestions.map((item) => `<li><strong>${escapeHtml(item.gap)}</strong><br>Why it matters: ${escapeHtml(item.why_it_matters)}</li>`).join('')}</ul>`
-    : emptyState('No open questions were recorded at this level.');
-  return `<section><h2>Requirements</h2>${answered}<h2>Open questions</h2>${open}</section>`;
+  const cards = [
+    ...requirements.map((record) => ({
+      kind: 'requirement', label: 'Requirement', title: record.gap, summary: `Answer: ${record.answer}. Consequence: ${record.consequence}`, record, concepts: [],
+    })),
+    ...openQuestions.map((record) => ({
+      kind: 'open-question', label: 'Open question', title: record.gap, summary: record.why_it_matters, record, concepts: [],
+    })),
+  ];
+  return cards.length
+    ? `<section class="detail-section"><h2>Constraints</h2><div class="record-list">${cards.map(recordCard).join('')}</div></section>`
+    : '';
 }
 
 function renderProduct(data) {
   const navigation = data.navigation;
-  const concepts = navigation.concepts.length
-    ? `<ul>${navigation.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
-    : emptyState(navigation.hasCapturedHistoryWithoutConcepts
-      ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
-      : 'No architectural concepts have been recorded yet. Capture one with fluencyloop concept.');
-  const features = navigation.features.length
-    ? `<ul>${navigation.features.map((feature) => `<li>${link(featurePath(feature), feature.slug)}${feature.record && feature.record.intent ? ` — ${escapeHtml(feature.record.intent)}` : ''}</li>`).join('')}</ul>`
-    : emptyState('No features have been recorded yet.');
   const overview = navigation.product
     ? markdown(navigation.product.content)
     : emptyState(navigation.hasCapturedHistoryWithoutConcepts
       ? 'No product overview has been distilled yet. Ask your assistant to "fluencyloop backfill" the imported history to synthesize one, or it will appear automatically once a feature materially changes the product shape.'
       : 'No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
-  const distillations = data.distillations.length
-    ? `<ul>${data.distillations.map((item) => `<li>${escapeHtml(item.path)}</li>`).join('')}</ul>`
-    : emptyState('No distillations have been written yet.');
+  const activity = sortByRecorded(data.store.records.map((record) => activityItem(navigation, record)).filter(Boolean));
   return layout(data, 'Product overview', `
-    <header><h1>${escapeHtml(data.project)}</h1><p>Product overview</p></header>
-    <section><h2>Technical overview</h2>${overview}</section>
-    <section><h2>Architectural concepts</h2>${concepts}</section>
-    <section><h2>Features as deltas</h2>${features}</section>
-    <section><h2>Initiative constraints</h2>${renderConstraints(navigation.requirements, navigation.openQuestions)}</section>
-    <section><h2>Available distillations</h2>${distillations}</section>
+    <header><p class="eyebrow">Project knowledge</p><h1>${escapeHtml(data.project)}</h1><p>Architecture, feature deltas, and the decisions that shaped them.</p></header>
+    <section class="overview-prose"><h2>Technical overview</h2>${overview}</section>
+    <div class="section-heading"><p class="eyebrow">Project record</p><h2>What changed</h2></div>
+    ${filterableCollection(navigation.concepts, activity, 'No project records have been captured yet.')}
   `);
 }
 
 function renderConceptList(data) {
-  const concepts = data.navigation.concepts.length
-    ? `<ul>${data.navigation.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
-    : emptyState(data.navigation.hasCapturedHistoryWithoutConcepts
+  const concepts = data.navigation.concepts.map((concept) => ({
+    kind: 'concept', label: 'Concept', title: concept.name, summary: concept.problem,
+    href: conceptPath(concept), record: concept, concepts: [concept],
+  }));
+  const relationships = data.navigation.relations.map((relation) => {
+    const endpoints = [relation.from, relation.to].map((name) => data.navigation.concepts.find((concept) => concept.name === name)).filter(Boolean);
+    return {
+      kind: 'relation', label: 'Relationship', title: `${relation.from} ${relation.kind} ${relation.to}`,
+      summary: 'A recorded architectural connection.', record: relation, concepts: endpoints,
+    };
+  });
+  return layout(data, 'Architectural concepts', `
+    <header><p class="eyebrow">Architecture</p><h1>Architectural concepts</h1><p>Concepts are the stable vocabulary that links individual feature work together.</p></header>
+    <div class="section-heading"><p class="eyebrow">Concept map</p><h2>Concepts and relationships</h2></div>
+    ${filterableCollection(data.navigation.concepts, sortByRecorded([...concepts, ...relationships]), data.navigation.hasCapturedHistoryWithoutConcepts
       ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
-      : 'No architectural concepts have been recorded yet. The product overview remains available while the store is empty.');
-  const relationships = data.navigation.relations.length
-    ? `<ul>${data.navigation.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
-    : emptyState('No relationships have been recorded yet.');
-  return layout(data, 'Architectural concepts', `<h1>Architectural concepts</h1><section><h2>Concepts</h2>${concepts}</section><section><h2>Relationship graph</h2>${relationships}</section>`, [
+      : 'No architectural concepts have been recorded yet. The product overview remains available while the store is empty.')}
+  `, [
     { href: '/', label: 'Product overview' }, { label: 'Architectural concepts' },
   ]);
 }
@@ -385,65 +495,52 @@ function endpointLink(navigation, endpoint) {
 
 function renderConcept(data, concept) {
   const realizedBy = String(concept.realized_by || '').split(/\r?\n/).filter(Boolean);
-  const relationships = concept.relations.length
-    ? `<ul>${concept.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
-    : emptyState('This concept has no recorded relationships yet.');
-  const features = concept.features.length
-    ? `<ul>${concept.features.map((feature) => `<li>${link(featurePath(feature), feature.slug)}</li>`).join('')}</ul>`
-    : emptyState('No feature is currently linked to this concept.');
   const explanation = concept.distillation
     ? markdown(concept.distillation.content)
     : emptyState('No concept explanation has been distilled yet.');
   return layout(data, concept.name, `
-    <h1>${escapeHtml(concept.name)}</h1>
-    <section><h2>Problem in this product</h2><p>${escapeHtml(concept.problem)}</p><h2>How it works</h2><p>${escapeHtml(concept.how)}</p>
-    <h2>Realized by</h2>${realizedBy.length ? `<ul>${realizedBy.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : emptyState('No implementation area was recorded.')}</section>
-    <section><h2>Concept explanation</h2>${explanation}</section>
-    <section><h2>Relationships</h2>${relationships}</section>
-    <section><h2>Features that change this concept</h2>${features}</section>
+    <header><p class="eyebrow">Concept</p><h1>${escapeHtml(concept.name)}</h1>${metadata(concept)}${topicBadges([concept])}</header>
+    <section class="detail-section"><h2>Problem in this product</h2><p>${escapeHtml(concept.problem)}</p><h2>How it works</h2><p>${escapeHtml(concept.how)}</p>
+    <h2>Realized by</h2>${realizedBy.length ? `<ul class="detail-list">${realizedBy.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : emptyState('No implementation area was recorded.')}</section>
+    <section class="detail-section"><h2>Concept explanation</h2>${explanation}</section>
+    <section class="detail-section"><h2>Relationships</h2>${concept.relations.length ? `<div class="record-list">${concept.relations.map((relation) => recordCard({ kind: 'relation', label: 'Relationship', title: `${relation.from} ${relation.kind} ${relation.to}`, summary: 'A recorded architectural connection.', record: relation, concepts: [concept] })).join('')}</div>` : emptyState('This concept has no recorded relationships yet.')}</section>
+    <section class="detail-section"><h2>Features that change this concept</h2>${concept.features.length ? `<div class="record-list">${concept.features.map((feature) => recordCard({ kind: 'feature', label: 'Feature', title: feature.slug, summary: feature.record && feature.record.intent, href: featurePath(feature), record: feature.record, concepts: feature.concepts })).join('')}</div>` : emptyState('No feature is currently linked to this concept.')}</section>
   `, [{ href: '/', label: 'Product overview' }, { href: '/concepts', label: 'Architectural concepts' }, { label: concept.name }]);
 }
 
 function renderFeatureList(data) {
-  const features = data.navigation.features.length
-    ? `<ul>${data.navigation.features.map((feature) => `<li>${link(featurePath(feature), feature.slug)}${feature.record && feature.record.intent ? ` — ${escapeHtml(feature.record.intent)}` : ''}</li>`).join('')}</ul>`
-    : emptyState('No features have been recorded yet.');
-  return layout(data, 'Features', `<h1>Features as deltas</h1>${features}`, [
+  const features = data.navigation.features.map((feature) => ({
+    kind: 'feature', label: 'Feature', title: feature.slug, summary: feature.record && feature.record.intent,
+    href: featurePath(feature), record: feature.record, concepts: feature.concepts,
+  }));
+  return layout(data, 'Features', `
+    <header><p class="eyebrow">Product changes</p><h1>Features as deltas</h1><p>Each feature is a bounded change, connected to the concepts it moves.</p></header>
+    ${filterableCollection(data.navigation.concepts, sortByRecorded(features), 'No features have been recorded yet.')}
+  `, [
     { href: '/', label: 'Product overview' }, { label: 'Features' },
   ]);
 }
 
 function renderFeature(data, feature) {
-  const concepts = feature.concepts.length
-    ? `<ul>${feature.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
-    : emptyState('This feature has no recorded concept links yet.');
-  const decisions = feature.decisions.length
-    ? `<ul>${feature.decisions.map((decision) => `<li>${link(decisionPath(decision), decision.title)} — ${escapeHtml(decision.why)}</li>`).join('')}</ul>`
-    : emptyState('No decisions have been recorded for this feature yet.');
   const delta = feature.distillation
     ? markdown(feature.distillation.content)
     : emptyState('No feature delta has been distilled yet.');
   return layout(data, feature.slug, `
-    <h1>${escapeHtml(feature.slug)}</h1>
-    ${feature.record && feature.record.intent ? `<p>${escapeHtml(feature.record.intent)}</p>` : ''}
-    <section><h2>Feature delta</h2>${delta}</section>
-    <section><h2>Concepts changed</h2>${concepts}</section>
-    <section><h2>Constraints for this feature</h2>${renderConstraints(feature.requirements, feature.openQuestions)}</section>
-    <section><h2>Decisions</h2>${decisions}</section>
+    <header><p class="eyebrow">Feature</p><h1>${escapeHtml(feature.slug)}</h1>${feature.record && feature.record.intent ? `<p>${escapeHtml(feature.record.intent)}</p>` : ''}${metadata(feature.record)}${topicBadges(feature.concepts)}</header>
+    <section class="detail-section"><h2>Feature delta</h2>${delta}</section>
+    <section class="detail-section"><h2>Concepts changed</h2>${feature.concepts.length ? `<div class="record-list">${feature.concepts.map((concept) => recordCard({ kind: 'concept', label: 'Concept', title: concept.name, summary: concept.problem, href: conceptPath(concept), record: concept, concepts: [concept] })).join('')}</div>` : emptyState('This feature has no recorded concept links yet.')}</section>
+    ${renderConstraints(feature.requirements, feature.openQuestions)}
+    <section class="detail-section"><h2>Decisions</h2>${feature.decisions.length ? `<div class="record-list">${sortByRecorded(feature.decisions.map((decision) => ({ kind: 'decision', label: 'Decision', title: decision.title, summary: decision.why, href: decisionPath(decision), record: decision, concepts: feature.concepts }))).map(recordCard).join('')}</div>` : emptyState('No decisions have been recorded for this feature yet.')}</section>
   `, [{ href: '/', label: 'Product overview' }, { href: '/features', label: 'Features' }, { label: feature.slug }]);
 }
 
 function renderDecision(data, feature, decision) {
-  const concepts = feature.concepts.length
-    ? `<ul>${feature.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)}</li>`).join('')}</ul>`
-    : emptyState('No concept link was recorded for this feature.');
   return layout(data, decision.title, `
-    <h1>${escapeHtml(decision.title)}</h1>
-    <p>Decision in ${link(featurePath(feature), feature.slug)}.</p>
-    <section><h2>Why</h2><p>${escapeHtml(decision.why)}</p>
+    <header><p class="eyebrow">Decision in ${link(featurePath(feature), feature.slug)}</p><h1>${escapeHtml(decision.title)}</h1>${metadata(decision)}${topicBadges(feature.concepts)}</header>
+    <section class="detail-section"><h2>Why</h2><p>${escapeHtml(decision.why)}</p>
     ${decision.alternative ? `<h2>Alternative rejected</h2><p>${escapeHtml(decision.alternative)}</p>` : ''}
     <h2>Where</h2><p>${escapeHtml(decision.where)}</p></section>
-    <section><h2>Concepts served</h2>${concepts}</section>
+    <section class="detail-section"><h2>Concepts served</h2>${feature.concepts.length ? `<div class="record-list">${feature.concepts.map((concept) => recordCard({ kind: 'concept', label: 'Concept', title: concept.name, summary: concept.problem, href: conceptPath(concept), record: concept, concepts: [concept] })).join('')}</div>` : emptyState('No concept link was recorded for this feature.')}</section>
   `, [{ href: '/', label: 'Product overview' }, { href: '/features', label: 'Features' }, { href: featurePath(feature), label: feature.slug }, { label: decision.title }]);
 }
 
