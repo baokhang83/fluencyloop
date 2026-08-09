@@ -168,6 +168,17 @@ function byType(records, type) {
   return records.filter((record) => record.type === type);
 }
 
+// True once the store holds decisions/components/conditions but no concepts yet — the shape a
+// project takes right after `fluencyloop import`, since the legacy importer deterministically
+// parses what old markdown already said and never synthesizes a concept (that needs judgment,
+// which is what fluencyloop-backfill is for, not import). Distinguishing this from a genuinely
+// empty project changes which empty-state message actually points somewhere useful.
+function hasCapturedHistoryWithoutConcepts(records) {
+  const hasHistory = records.some((record) => record.type === 'decision' || record.type === 'component' || record.type === 'condition');
+  const hasConcepts = records.some((record) => record.type === 'concept');
+  return hasHistory && !hasConcepts;
+}
+
 function sortByLabel(records) {
   return [...records].sort((left, right) => recordLabel(left).localeCompare(recordLabel(right)));
 }
@@ -231,6 +242,7 @@ function buildNavigation(data) {
     relations,
     requirements: sortByLabel(byType(records, 'requirement').filter((item) => item.feature === 'global')),
     openQuestions: sortByLabel(byType(records, 'open_question').filter((item) => item.feature === 'global')),
+    hasCapturedHistoryWithoutConcepts: hasCapturedHistoryWithoutConcepts(records),
   };
 }
 
@@ -325,13 +337,17 @@ function renderProduct(data) {
   const navigation = data.navigation;
   const concepts = navigation.concepts.length
     ? `<ul>${navigation.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
-    : emptyState('No architectural concepts have been recorded yet. Capture one with fluencyloop concept.');
+    : emptyState(navigation.hasCapturedHistoryWithoutConcepts
+      ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
+      : 'No architectural concepts have been recorded yet. Capture one with fluencyloop concept.');
   const features = navigation.features.length
     ? `<ul>${navigation.features.map((feature) => `<li>${link(featurePath(feature), feature.slug)}${feature.record && feature.record.intent ? ` — ${escapeHtml(feature.record.intent)}` : ''}</li>`).join('')}</ul>`
     : emptyState('No features have been recorded yet.');
   const overview = navigation.product
     ? markdown(navigation.product.content)
-    : emptyState('No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
+    : emptyState(navigation.hasCapturedHistoryWithoutConcepts
+      ? 'No product overview has been distilled yet. Ask your assistant to "fluencyloop backfill" the imported history to synthesize one, or it will appear automatically once a feature materially changes the product shape.'
+      : 'No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
   const distillations = data.distillations.length
     ? `<ul>${data.distillations.map((item) => `<li>${escapeHtml(item.path)}</li>`).join('')}</ul>`
     : emptyState('No distillations have been written yet.');
@@ -348,7 +364,9 @@ function renderProduct(data) {
 function renderConceptList(data) {
   const concepts = data.navigation.concepts.length
     ? `<ul>${data.navigation.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
-    : emptyState('No architectural concepts have been recorded yet. The product overview remains available while the store is empty.');
+    : emptyState(data.navigation.hasCapturedHistoryWithoutConcepts
+      ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
+      : 'No architectural concepts have been recorded yet. The product overview remains available while the store is empty.');
   const relationships = data.navigation.relations.length
     ? `<ul>${data.navigation.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
     : emptyState('No relationships have been recorded yet.');

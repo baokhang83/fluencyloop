@@ -155,6 +155,27 @@ PY
     [[ "$output" == *"This concept has no recorded relationships yet."* ]]
 }
 
+@test "site points a migrated project with decisions but no concepts at backfill, not at authoring cold" {
+    # A project fresh off `fluencyloop import` has decisions/components/conditions -- deterministically
+    # parsed from old markdown -- but zero concepts, since import never synthesizes one. The generic
+    # "capture one with fluencyloop concept" empty state is the wrong next step there; backfill is.
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store/features"
+    printf '%s\n' '{"schema_version":"1","type":"decision","ts":"2026-08-09","feature":"add-caching","session":"001-wire-cache","commit":"abc","title":"Chose an LRU cache","where":"src/cache.js","why":"memory must stay bounded","trust":"verified"}' \
+        >> "$TESTREPO/docs/fluencyloop/store/features/add-caching.jsonl"
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'fluencyloop backfill'* ]]
+    [[ "$output" != *"Capture one with fluencyloop concept.<"* ]]
+
+    run request /concepts
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'fluencyloop backfill'* ]]
+}
+
 @test "site navigates product, concepts, features, and current decisions" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo
