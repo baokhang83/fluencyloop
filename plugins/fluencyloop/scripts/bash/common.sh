@@ -47,6 +47,20 @@ require_fluency() {
         echo "Error: FluencyLoop is not initialised here. Run 'fluencyloop init' first." >&2
         exit 1
     fi
+    maybe_import_legacy
+}
+
+# First 0.3 use must carry legacy history forward without asking. The importer itself sets the
+# guard so this call is never recursive. Its record markers make direct retries safe too.
+maybe_import_legacy() {
+    [ "${FLUENCYLOOP_IMPORTING:-}" = "1" ] && return 0
+    local legacy store importer
+    legacy="$(docs_dir)/features"
+    store="$(store_dir)"
+    [ -d "$legacy" ] && [ ! -d "$store" ] || return 0
+    importer="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/import-legacy.sh"
+    [ -f "$importer" ] || return 0
+    FLUENCYLOOP_IMPORTING=1 bash "$importer" --auto
 }
 
 # --- text helpers ---------------------------------------------------------

@@ -36,6 +36,7 @@ Usage:
   fluencyloop decision --where .. --why ..  append a formatted decision block to the session
   fluencyloop knowledge --component ..    batch session knowledge records
   fluencyloop concept --name ..           capture an architectural concept or relation
+  fluencyloop import                     import legacy session markdown into the store
   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
   fluencyloop check [--json]             doctor: loop state + un-journaled drift
   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
@@ -65,6 +66,7 @@ switch -Regex ($cmd) {
     '^decision$'      { Run 'add-decision.ps1' }
     '^knowledge$'     { Run 'add-knowledge.ps1' }
     '^concept$'       { Run 'add-concept.ps1' }
+    '^import$'        { Run 'import-legacy.ps1' }
     '^review$'        { Run 'assemble-pr-view.ps1' }
     '^check$'         { Run 'check.ps1' }
     '^slice-context$' { Run 'slice-context.ps1' }
