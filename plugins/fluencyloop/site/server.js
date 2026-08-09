@@ -453,10 +453,13 @@ function renderProduct(data) {
     : emptyState(navigation.hasCapturedHistoryWithoutConcepts
       ? 'No product overview has been distilled yet. Ask your assistant to "fluencyloop backfill" the imported history to synthesize one, or it will appear automatically once a feature materially changes the product shape.'
       : 'No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
+  const distillations = data.distillations.length
+    ? `<details class="distillation-index"><summary>Available distillations (${data.distillations.length})</summary><ul>${data.distillations.map((item) => `<li><code>${escapeHtml(item.path)}</code></li>`).join('')}</ul></details>`
+    : '';
   const activity = sortByRecorded(data.store.records.map((record) => activityItem(navigation, record)).filter(Boolean));
   return layout(data, 'Product overview', `
     <header><p class="eyebrow">Project knowledge</p><h1>${escapeHtml(data.project)}</h1><p>Architecture, feature deltas, and the decisions that shaped them.</p></header>
-    <section class="overview-prose"><h2>Technical overview</h2>${overview}</section>
+    <section class="overview-prose"><h2>Technical overview</h2>${overview}${distillations}</section>
     <div class="section-heading"><p class="eyebrow">Project record</p><h2>What changed</h2></div>
     ${filterableCollection(navigation.concepts, activity, 'No project records have been captured yet.')}
   `);
@@ -476,7 +479,7 @@ function renderConceptList(data) {
   });
   return layout(data, 'Architectural concepts', `
     <header><p class="eyebrow">Architecture</p><h1>Architectural concepts</h1><p>Concepts are the stable vocabulary that links individual feature work together.</p></header>
-    <div class="section-heading"><p class="eyebrow">Concept map</p><h2>Concepts and relationships</h2></div>
+    <div class="section-heading"><p class="eyebrow">Concept map</p><h2>Concepts &amp; Relationship graph</h2></div>
     ${filterableCollection(data.navigation.concepts, sortByRecorded([...concepts, ...relationships]), data.navigation.hasCapturedHistoryWithoutConcepts
       ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
       : 'No architectural concepts have been recorded yet. The product overview remains available while the store is empty.')}

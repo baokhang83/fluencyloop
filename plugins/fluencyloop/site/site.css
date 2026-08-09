@@ -128,6 +128,10 @@ section > :last-child, li > :last-child { margin-bottom: 0; }
 ul, ol { padding-left: 1.2rem; }
 li + li { margin-top: var(--space-2); }
 .detail-list { columns: 2 16rem; }
+.distillation-index { margin-top: var(--space-3); color: var(--ink-muted); font-size: var(--step--1); }
+.distillation-index summary { cursor: pointer; font-family: var(--font-mono); }
+.distillation-index ul { margin: var(--space-2) 0 0; }
+.distillation-index code { color: var(--ink-muted); font-family: var(--font-mono); }
 
 .record-collection { padding: 0; overflow: hidden; }
 .topic-filter {
