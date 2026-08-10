@@ -5,7 +5,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 
-$name = ''; $problem = ''; $how = ''; $realizedBy = @(); $tags = @(); $relations = @()
+$name = ''; $problem = ''; $how = ''; $realizedBy = @(); $tags = @(); $relations = @(); $featureOverride = ''; $sessionOverride = ''; $targetOverride = $false
 for ($i = 0; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--name'        { $i++; $name = [string]$args[$i] }
@@ -14,6 +14,8 @@ for ($i = 0; $i -lt $args.Count; $i++) {
         '--realized-by' { $i++; $realizedBy += [string]$args[$i] }
         '--tag'         { $i++; $tags += [string]$args[$i] }
         '--relate'      { $i++; $relations += [string]$args[$i] }
+        '--feature'     { $i++; $featureOverride = [string]$args[$i]; $targetOverride = $true }
+        '--session'     { $i++; $sessionOverride = [string]$args[$i]; $targetOverride = $true }
         default         { [Console]::Error.WriteLine("Unknown option: $($args[$i])"); exit 1 }
     }
 }
@@ -39,10 +41,17 @@ if (-not $conceptRequested -and $relations.Count -eq 0) {
     exit 1
 }
 
-$feature = FlStateGet 'feature'
+if ($targetOverride -and ((-not $featureOverride) -or (-not $sessionOverride))) {
+    [Console]::Error.WriteLine('Error: --feature and --session must be used together for a historical record.')
+    exit 1
+}
+
+$feature = $featureOverride
+if (-not $feature) { $feature = FlStateGet 'feature' }
 if (-not $feature) { $feature = FlCurrentFeatureSlug }
 if (-not $feature) { $feature = 'global' }
-$session = FlStateGet 'last_session'
+$session = $sessionOverride
+if (-not $session) { $session = FlStateGet 'last_session' }
 $session = [System.IO.Path]::GetFileNameWithoutExtension($session)
 if (-not $session) { $session = 'none' }
 $store = FlConceptsStorePath

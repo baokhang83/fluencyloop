@@ -4,7 +4,7 @@
 #
 # Usage: add-decision.sh --where <path> --why <text> [--title <text>] [--alternative <text>]
 #          [--design <ref>] [--constitution <§N>] [--trust <verified|unverified>]
-#          [--session <session-slug-or-legacy-path>]
+#          [--feature <feature-slug> --session <session-slug-or-legacy-path>]
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,7 +13,7 @@ source "$SCRIPT_DIR/common.sh"
 require_fluency
 
 TITLE=""; WHERE=""; WHY=""; ALT=""; DESIGN=""; CONST=""
-TRUST="unverified"; SESSION=""
+TRUST="unverified"; SESSION=""; FEATURE_OVERRIDE=""; SESSION_OVERRIDE=false
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --title) shift; TITLE="${1:-}" ;;
@@ -26,12 +26,14 @@ while [ "$#" -gt 0 ]; do
                      verified|✓*) TRUST="verified" ;;
                      *) TRUST="unverified" ;;
                  esac ;;
-        --session) shift; SESSION="${1:-}" ;;
+        --session) shift; SESSION="${1:-}"; SESSION_OVERRIDE=true ;;
+        --feature) shift; FEATURE_OVERRIDE="${1:-}" ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
     shift
 done
 
+[ -z "$FEATURE_OVERRIDE" ] || { $SESSION_OVERRIDE && [ -n "$SESSION" ]; } || { echo "Error: --feature requires --session so a historical record cannot attach to the active session." >&2; exit 1; }
 [ -n "$WHERE" ] || { echo "Error: --where is required (a file/area, never a line number)." >&2; exit 1; }
 [ -n "$WHY" ]   || { echo "Error: --why is required (the taught rationale)." >&2; exit 1; }
 
@@ -48,7 +50,8 @@ if [ -z "$SESSION" ]; then
 fi
 
 [ -n "$TITLE" ] || TITLE="decision"
-FEATURE="$(state_get feature)"
+FEATURE="$FEATURE_OVERRIDE"
+[ -n "$FEATURE" ] || FEATURE="$(state_get feature)"
 [ -n "$FEATURE" ] || FEATURE="$(current_feature_slug)"
 if [ -z "$FEATURE" ]; then
     echo "Error: no active feature. Checkout a feature/<slug> branch first." >&2

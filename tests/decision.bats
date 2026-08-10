@@ -74,3 +74,22 @@ PY
     run dec --where a --why b
     [ "$status" -ne 0 ]
 }
+
+@test "can target an imported feature and session without changing branch state" {
+    run dec --feature "legacy-caching" --session "000-legacy-import" \
+        --title "kept the bounded cache" --where "src/cache.js" --why "the historical implementation bounds memory"
+    [ "$status" -eq 0 ]
+    python3 - "$TESTREPO/docs/fluencyloop/store/features/legacy-caching.jsonl" <<'PY'
+import json, sys
+r = json.loads(list(open(sys.argv[1], encoding='utf-8'))[-1])
+assert r['feature'] == 'legacy-caching'
+assert r['session'] == '000-legacy-import'
+PY
+    [ "$(git branch --show-current)" = "feature/001-add-caching" ]
+}
+
+@test "requires a session when targeting a historical feature" {
+    run dec --feature "legacy-caching" --where "src/cache.js" --why "x"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"--feature requires --session"* ]]
+}

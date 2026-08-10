@@ -70,3 +70,22 @@ PY
     [[ "$output" == *"no active session"* ]]
     [ "$(wc -l < "$STORE")" -eq 2 ]
 }
+
+@test "can target a legacy feature/session without changing branch state" {
+    run knowledge --feature "legacy-caching" --session "000-legacy-import" \
+        --component "cache reader|serves historical cache entries|during a cache hit"
+    [ "$status" -eq 0 ]
+    python3 - "$TESTREPO/docs/fluencyloop/store/features/legacy-caching.jsonl" <<'PY'
+import json, sys
+r = json.loads(list(open(sys.argv[1], encoding='utf-8'))[-1])
+assert r['feature'] == 'legacy-caching'
+assert r['session'] == '000-legacy-import'
+PY
+    [ "$(git branch --show-current)" = "feature/001-add-caching" ]
+}
+
+@test "requires both historical target flags" {
+    run knowledge --feature "legacy-caching" --component "cache|keeps values|after a miss"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"--feature and --session"* ]]
+}

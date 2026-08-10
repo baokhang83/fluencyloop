@@ -33,9 +33,9 @@ Usage:
   fluencyloop plan "<intent>"            declare a plan (architecture + roadmap for a big chunk)
   fluencyloop feature "<intent>"         declare a feature (branch + store record)
   fluencyloop session "<intent>"         open a session in the active feature
-  fluencyloop decision --where .. --why ..  append a formatted decision block to the session
-  fluencyloop knowledge --component ..    batch session knowledge records
-  fluencyloop concept --name ..           capture an architectural concept or relation
+  fluencyloop decision --where .. --why .. [--feature .. --session ..] append a decision record
+  fluencyloop knowledge --component .. [--feature .. --session ..] batch knowledge records
+  fluencyloop concept --name .. [--feature .. --session ..] capture a concept or relation
   fluencyloop requirement --gap ..        capture a planning requirement or open question
   fluencyloop principle --number §N ..    capture a constitution principle
   fluencyloop import                     import legacy session markdown into the store

@@ -63,4 +63,17 @@ Describe 'add-decision.ps1' {
         Remove-Item -LiteralPath "$script:repo/.fluencyloop/state.json" -Force
         (Invoke-FlExit 'add-decision.ps1' '--where' 'a' '--why' 'b') | Should -Not -Be 0
     }
+
+    It 'targets an imported feature without changing branch state' {
+        (Invoke-FlExit 'add-decision.ps1' '--feature' 'legacy-caching' '--session' '000-legacy-import' `
+            '--where' 'src/cache.js' '--why' 'the imported implementation bounds memory') | Should -Be 0
+        $store = "$script:repo/docs/fluencyloop/store/features/legacy-caching.jsonl"
+        $record = ([System.IO.File]::ReadAllLines($store) | Select-Object -Last 1) | ConvertFrom-Json
+        $record.feature | Should -Be 'legacy-caching'
+        $record.session | Should -Be '000-legacy-import'
+    }
+
+    It 'requires a session when targeting an imported feature' {
+        (Invoke-FlExit 'add-decision.ps1' '--feature' 'legacy-caching' '--where' 'src/cache.js' '--why' 'x') | Should -Not -Be 0
+    }
 }

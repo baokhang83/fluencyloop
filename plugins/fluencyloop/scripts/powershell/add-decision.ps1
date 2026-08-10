@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 
 $title = ''; $where = ''; $why = ''; $alt = ''; $design = ''; $const = ''
-$trust = 'unverified'; $session = ''
+$trust = 'unverified'; $session = ''; $featureOverride = ''; $sessionOverride = $false
 for ($i = 0; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--title'        { $i++; $title = [string]$args[$i] }
@@ -17,13 +17,18 @@ for ($i = 0; $i -lt $args.Count; $i++) {
         '--constitution' { $i++; $const = [string]$args[$i] }
         '--trust'        { $i++; $t = [string]$args[$i]
                            if ($t -eq 'verified' -or $t -like '✓*') { $trust = 'verified' } else { $trust = 'unverified' } }
-        '--session'      { $i++; $session = [string]$args[$i] }
+        '--session'      { $i++; $session = [string]$args[$i]; $sessionOverride = $true }
+        '--feature'      { $i++; $featureOverride = [string]$args[$i] }
         default          { [Console]::Error.WriteLine("Unknown option: $($args[$i])"); exit 1 }
     }
 }
 
 FlRequireFluency
 
+if ($featureOverride -and ((-not $sessionOverride) -or (-not $session))) {
+    [Console]::Error.WriteLine('Error: --feature requires --session so a historical record cannot attach to the active session.')
+    exit 1
+}
 if (-not $where) { [Console]::Error.WriteLine('Error: --where is required (a file/area, never a line number).'); exit 1 }
 if (-not $why)   { [Console]::Error.WriteLine('Error: --why is required (the taught rationale).'); exit 1 }
 
@@ -35,7 +40,8 @@ if (-not $session) {
 }
 
 if (-not $title) { $title = 'decision' }
-$feature = FlStateGet 'feature'
+$feature = $featureOverride
+if (-not $feature) { $feature = FlStateGet 'feature' }
 if (-not $feature) { $feature = FlCurrentFeatureSlug }
 if (-not $feature) {
     [Console]::Error.WriteLine('Error: no active feature. Checkout a feature/<slug> branch first.')

@@ -3,7 +3,8 @@
 # Fields use | as their separator; write literal | as \| and literal \ as \\. The script unescapes
 # those two sequences before writing records, and validates the complete batch before it appends.
 #
-# Usage: add-knowledge.sh [--component <name|role|conditions[|status]> ...]
+# Usage: add-knowledge.sh [--feature <feature-slug> --session <session-slug-or-legacy-path>]
+#          [--component <name|role|conditions[|status]> ...]
 #          [--gotcha <subject|why> ...]
 
 set -euo pipefail
@@ -13,11 +14,14 @@ source "$SCRIPT_DIR/common.sh"
 require_fluency
 
 declare -a COMPONENTS=() GOTCHAS=() PARSED_FIELDS=()
+FEATURE_OVERRIDE=""; SESSION_OVERRIDE=""; TARGET_OVERRIDE=false
 HAS_INPUT=false
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --component) shift; COMPONENTS+=("${1:-}"); HAS_INPUT=true ;;
         --gotcha) shift; GOTCHAS+=("${1:-}"); HAS_INPUT=true ;;
+        --feature) shift; FEATURE_OVERRIDE="${1:-}"; TARGET_OVERRIDE=true ;;
+        --session) shift; SESSION_OVERRIDE="${1:-}"; TARGET_OVERRIDE=true ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
     shift
@@ -69,16 +73,23 @@ if ! $HAS_INPUT; then
     exit 0
 fi
 
+if $TARGET_OVERRIDE && { [ -z "$FEATURE_OVERRIDE" ] || [ -z "$SESSION_OVERRIDE" ]; }; then
+    echo "Error: --feature and --session must be used together for a historical record." >&2
+    exit 1
+fi
+
 # Feature and session are always the active state, never caller-selected flags. Keep the legacy
 # basename handling so a pre-0.3 state file still resolves to its session identity.
-SESSION="$(state_get last_session)"
+SESSION="$SESSION_OVERRIDE"
+[ -n "$SESSION" ] || SESSION="$(state_get last_session)"
 SESSION="${SESSION##*/}"
 SESSION="${SESSION%.md}"
 if [ -z "$SESSION" ]; then
     echo "Error: no active session — open one with 'fluencyloop session \"<slice>\"' before recording knowledge." >&2
     exit 1
 fi
-FEATURE="$(state_get feature)"
+FEATURE="$FEATURE_OVERRIDE"
+[ -n "$FEATURE" ] || FEATURE="$(state_get feature)"
 if [ -z "$FEATURE" ]; then
     echo "Error: no active feature in state." >&2
     exit 1

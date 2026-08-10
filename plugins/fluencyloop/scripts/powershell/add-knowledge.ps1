@@ -5,11 +5,13 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 
-$components = @(); $gotchas = @(); $hasInput = $false
+$components = @(); $gotchas = @(); $hasInput = $false; $featureOverride = ''; $sessionOverride = ''; $targetOverride = $false
 for ($i = 0; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--component' { $i++; $components += [string]$args[$i]; $hasInput = $true }
         '--gotcha'    { $i++; $gotchas += [string]$args[$i]; $hasInput = $true }
+        '--feature'   { $i++; $featureOverride = [string]$args[$i]; $targetOverride = $true }
+        '--session'   { $i++; $sessionOverride = [string]$args[$i]; $targetOverride = $true }
         default        { [Console]::Error.WriteLine("Unknown option: $($args[$i])"); exit 1 }
     }
 }
@@ -57,15 +59,22 @@ if (-not $hasInput) {
     exit 0
 }
 
+if ($targetOverride -and ((-not $featureOverride) -or (-not $sessionOverride))) {
+    [Console]::Error.WriteLine('Error: --feature and --session must be used together for a historical record.')
+    exit 1
+}
+
 # Feature and session are always read from state, never caller-selected flags. The basename step
 # preserves the transition path for a pre-0.3 state file containing a legacy session markdown path.
-$session = FlStateGet 'last_session'
+$session = $sessionOverride
+if (-not $session) { $session = FlStateGet 'last_session' }
 $session = [System.IO.Path]::GetFileNameWithoutExtension($session)
 if (-not $session) {
     [Console]::Error.WriteLine("Error: no active session — open one with 'fluencyloop session `"<slice>`"' before recording knowledge.")
     exit 1
 }
-$feature = FlStateGet 'feature'
+$feature = $featureOverride
+if (-not $feature) { $feature = FlStateGet 'feature' }
 if (-not $feature) {
     [Console]::Error.WriteLine('Error: no active feature in state.')
     exit 1
