@@ -55,6 +55,11 @@ For that `fluencyloop init --json` command in Codex, request sandbox elevation b
 execution. It may create or update Codex-protected `.git` metadata; do not first attempt it in the
 standard sandbox.
 
+**Refuse split state.** Parse `state_matches_branch` from `fluencyloop check --json` before any
+calibration, feature declaration, session, or writer command. If it is `false`, stop immediately:
+state the checkout branch and `state_branch`, and ask the developer which existing feature context
+to preserve. Do not create a new feature, switch branches, or overwrite state to guess a repair.
+
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
 `base_ref`), written by `fluencyloop feature` / `fluencyloop session` and committed with the branch. Prefer

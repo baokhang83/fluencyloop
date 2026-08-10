@@ -17,6 +17,18 @@ load test_helper
     [ "$status" -eq 0 ]
     [ "$(echo "$output" | json_field feature)" = "001-add-search" ]
     [ "$(echo "$output" | json_field constitution)" = "empty" ]
+    [ "$(echo "$output" | json_field state_matches_branch)" = "True" ] || [ "$(echo "$output" | json_field state_matches_branch)" = "true" ]
+}
+
+@test "check rejects state from a different feature branch" {
+    setup_initialized_repo
+    bash "$BIN/new-feature.sh" "add search" >/dev/null
+    git checkout -q -b feature/another-context
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 1 ]
+    [ "$(echo "$output" | json_field state_matches_branch)" = "False" ] || [ "$(echo "$output" | json_field state_matches_branch)" = "false" ]
+    [ "$(echo "$output" | json_field state_branch)" = "feature/001-add-search" ]
 }
 
 @test "check: constitution states - present and pointer" {

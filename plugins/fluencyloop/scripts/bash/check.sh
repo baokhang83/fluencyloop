@@ -32,11 +32,16 @@ FLUENCY_PRESENT=false
 
 # --- active feature: from state.json, falling back to the branch ---
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+STATE_BRANCH="$(state_get branch)"
 FEATURE="$(state_get feature)"
 [ -z "$FEATURE" ] && FEATURE="$(current_feature_slug)"
 STAGE="$(state_get stage)"
 BASE="$(state_get base_ref)"; [ -z "$BASE" ] && BASE="main"
 LAST_SESSION="$(state_get last_session)"
+STATE_MATCHES_BRANCH=true
+if [ -n "$STATE_BRANCH" ] && [ -n "$BRANCH" ] && [ "$STATE_BRANCH" != "$BRANCH" ]; then
+    STATE_MATCHES_BRANCH=false
+fi
 
 # --- un-journaled drift: commits since the last committed session record. Before the first
 # session, everything since the base ref counts as un-journaled. Legacy session markdown remains
@@ -234,10 +239,12 @@ if [ -n "$STORE_ROOT" ] && [ -d "$STORE_ROOT" ]; then
 fi
 
 if $JSON_MODE; then
-    printf '{"git_repo":%s,"fluency":%s,"branch":"%s","feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"node":%s,"constitution":"%s","store_errors":[%s]}\n' \
+    printf '{"git_repo":%s,"fluency":%s,"branch":"%s","state_branch":"%s","state_matches_branch":%s,"feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"node":%s,"constitution":"%s","store_errors":[%s]}\n' \
         "$IN_GIT_REPO" \
         "$FLUENCY_PRESENT" \
         "$(json_escape "$BRANCH")" \
+        "$(json_escape "$STATE_BRANCH")" \
+        "$STATE_MATCHES_BRANCH" \
         "$(json_escape "$FEATURE")" \
         "$(json_escape "$STAGE")" \
         "$(json_escape "$BASE")" \
@@ -247,7 +254,7 @@ if $JSON_MODE; then
         "$NODE_PRESENT" \
         "$CONSTITUTION_STATE" \
         "$(store_errors_json)"
-    [ "$STORE_ERROR_COUNT" -eq 0 ] && exit 0 || exit 1
+    [ "$STORE_ERROR_COUNT" -eq 0 ] && $STATE_MATCHES_BRANCH && exit 0 || exit 1
 fi
 
 # Human form.
@@ -261,6 +268,9 @@ if [ -n "$FEATURE" ]; then
     echo "  ok  active feature: $FEATURE${STAGE:+ (stage: $STAGE)}"
 else
     echo "  XX  no active feature"
+fi
+if ! $STATE_MATCHES_BRANCH; then
+    echo "  XX  state belongs to $STATE_BRANCH, but checkout is $BRANCH — reconcile before starting or recording work"
 fi
 if [ "$UNJOURNALED" -gt 0 ]; then
     echo "  !!  $UNJOURNALED commit(s) since the last journaled session — un-journaled drift"
@@ -278,7 +288,7 @@ case "$CONSTITUTION_STATE" in
     pointer) echo "  ok  constitution: points to a source of truth" ;;
     *)       echo "  --  no constitution yet — written from your first plan or feature" ;;
 esac
-if [ "$STORE_ERROR_COUNT" -eq 0 ]; then
+if [ "$STORE_ERROR_COUNT" -eq 0 ] && $STATE_MATCHES_BRANCH; then
     echo "  ok  store: valid"
 else
     for store_error_text in ${STORE_ERROR_TEXT[@]+"${STORE_ERROR_TEXT[@]}"}; do

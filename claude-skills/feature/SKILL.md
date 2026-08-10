@@ -53,6 +53,12 @@ in the current project directory when needed, then creates FluencyLoop's state. 
 continuing. Only stop if `init` itself fails. Do not hand-create `.fluencyloop`, `docs`, or
 `.claude/skills`.
 
+**Refuse split state.** Parse `state_matches_branch` from the bundled `fluencyloop check --json`
+before any calibration, feature declaration, session, or writer command. If it is `false`, stop
+immediately: state the checkout branch and `state_branch`, and ask the developer which existing
+feature context to preserve. Do not create a new feature, switch branches, or overwrite state to
+guess a repair.
+
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
 `base_ref`), written by `fluencyloop feature` / `fluencyloop session` and committed with the branch. Prefer

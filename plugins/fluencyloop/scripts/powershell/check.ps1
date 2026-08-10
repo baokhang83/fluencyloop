@@ -21,11 +21,13 @@ if ($fluencyStr -eq 'true') { FlMaybeImportLegacy }
 $branch = & git rev-parse --abbrev-ref HEAD 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $branch) { $branch = '' } else { $branch = ($branch | Select-Object -First 1) }
 
+$stateBranch = FlStateGet 'branch'
 $feature = FlStateGet 'feature'
 if (-not $feature) { $feature = FlCurrentFeatureSlug }
 $stage = FlStateGet 'stage'
 $base = FlStateGet 'base_ref'; if (-not $base) { $base = 'main' }
 $lastSession = FlStateGet 'last_session'
+$stateMatchesBranch = (-not $stateBranch) -or (-not $branch) -or ($stateBranch -eq $branch)
 
 # Un-journaled drift: commits since the last committed session record; else since base. Legacy
 # session markdown remains a read-only fallback for projects that have not imported it yet.
@@ -178,6 +180,8 @@ if ($jsonMode) {
     $json = '{"git_repo":' + $gitRepoStr +
             ',"fluency":' + $fluencyStr +
             ',"branch":"' + (FlJsonEscape $branch) + '"' +
+            ',"state_branch":"' + (FlJsonEscape $stateBranch) + '"' +
+            ',"state_matches_branch":' + $stateMatchesBranch.ToString().ToLowerInvariant() +
             ',"feature":"' + (FlJsonEscape $feature) + '"' +
             ',"stage":"' + (FlJsonEscape $stage) + '"' +
             ',"base_ref":"' + (FlJsonEscape $base) + '"' +
@@ -188,7 +192,7 @@ if ($jsonMode) {
             ',"constitution":"' + $cstate + '"' +
             ',"store_errors":' + $storeErrorsJson + '}'
     FlOut $json
-    if ($script:storeErrors.Count -eq 0) { exit 0 }
+    if ($script:storeErrors.Count -eq 0 -and $stateMatchesBranch) { exit 0 }
     exit 1
 }
 
@@ -203,6 +207,9 @@ if ($feature) {
     FlOut "  ok  active feature: $feature$s"
 } else {
     FlOut '  XX  no active feature'
+}
+if (-not $stateMatchesBranch) {
+    FlOut "  XX  state belongs to $stateBranch, but checkout is $branch — reconcile before starting or recording work"
 }
 if ($unjournaled -gt 0) {
     FlOut "  !!  $unjournaled commit(s) since the last journaled session — un-journaled drift"
@@ -220,7 +227,7 @@ switch ($cstate) {
     'pointer' { FlOut '  ok  constitution: points to a source of truth' }
     default   { FlOut '  --  no constitution yet — written from your first plan or feature' }
 }
-if ($script:storeErrors.Count -eq 0) {
+if ($script:storeErrors.Count -eq 0 -and $stateMatchesBranch) {
     FlOut '  ok  store: valid'
 } else {
     foreach ($storeError in $script:storeErrors) {
