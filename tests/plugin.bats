@@ -176,6 +176,9 @@ for backfill_text in [codex_backfill_text, claude_backfill_text]:
     assert "--trust unverified" in backfill_text
     assert "Store parity, no Markdown." in backfill_text
     assert "Do not create or edit session journals" in backfill_text
+    assert "confirm reconstructed decisions one at a time" not in backfill_text
+    assert "must pass a human before it lands" not in backfill_text
+    assert "No trust prompts." in backfill_text
 codex_review_text = read_text(dist / "skills" / "review" / "SKILL.md")
 assert "feature-handoff: automatic" in codex_review_text
 assert "without a second" in codex_review_text
