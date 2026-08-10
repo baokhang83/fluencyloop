@@ -85,6 +85,13 @@ Describe 'import-legacy.ps1' {
         Test-Path -LiteralPath $script:store | Should -BeTrue
     }
 
+    It 'shows import help without running the legacy importer' {
+        Test-Path -LiteralPath $script:store | Should -BeFalse
+        (Invoke-FlExit 'import-legacy.ps1' '--help') | Should -Be 0
+        (Invoke-Fl 'import-legacy.ps1' '--help') | Should -Match '--semantic-status'
+        Test-Path -LiteralPath $script:store | Should -BeFalse
+    }
+
     It 'requires architectural records and an assessment for every imported feature before completion' {
         (Invoke-FlExit 'check.ps1' '--json') | Should -Be 0
         (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 1

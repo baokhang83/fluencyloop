@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 $env:FLUENCYLOOP_IMPORTING = '1'
 
-$auto = $false; $markSemanticComplete = $false; $assessFeature = ''; $assessSummary = ''; $assessRecords = @(); $semanticStatus = $false; $json = $false
+$auto = $false; $markSemanticComplete = $false; $assessFeature = ''; $assessSummary = ''; $assessRecords = @(); $semanticStatus = $false; $json = $false; $help = $false
 for ($i = 0; $i -lt $args.Count; $i++) {
     $arg = $args[$i]
     if ($arg -eq '--auto') { $auto = $true }
@@ -17,7 +17,18 @@ for ($i = 0; $i -lt $args.Count; $i++) {
     elseif ($arg -eq '--record') { $i++; if ($i -ge $args.Count) { [Console]::Error.WriteLine('Error: --record requires a record name.'); exit 1 }; $assessRecords += $args[$i] }
     elseif ($arg -eq '--semantic-status') { $semanticStatus = $true }
     elseif ($arg -eq '--json') { $json = $true }
+    elseif ($arg -eq '--help' -or $arg -eq '-h') { $help = $true }
     else { [Console]::Error.WriteLine("Unknown option: $arg"); exit 1 }
+}
+
+if ($help) {
+    FlOut 'Usage: fluencyloop import [--auto]'
+    FlOut '       fluencyloop import --semantic-status [--json]'
+    FlOut '       fluencyloop import --assess <feature> --summary <text> [--record <name> ...]'
+    FlOut '       fluencyloop import --mark-semantic-complete'
+    FlOut ''
+    FlOut 'Import legacy Markdown records, inspect semantic-migration coverage, record one feature assessment, or mark a fully assessed migration complete.'
+    exit 0
 }
 FlRequireFluency
 
