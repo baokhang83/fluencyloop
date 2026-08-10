@@ -21,7 +21,9 @@ const MANAGED_DEFAULT_PORT = 44444;
 const MANAGED_IDLE_MS = positiveMillisecondsFromEnvironment('FLUENCYLOOP_SITE_IDLE_MS', 2 * 60 * 60 * 1000);
 const MANAGED_IDLE_CHECK_MS = positiveMillisecondsFromEnvironment('FLUENCYLOOP_SITE_IDLE_CHECK_MS', 60 * 1000);
 const MANAGED_TOUCH_INTERVAL_MS = 30 * 1000;
-const MANAGED_START_TIMEOUT_MS = 5000;
+// Keep the managed child on the same Windows-safe cold-start budget as the foreground-site test.
+// This only affects an unavailable child; normal startup returns after its first health probe.
+const MANAGED_START_TIMEOUT_MS = 30_000;
 const SITE_VERSION = fs.existsSync(path.join(__dirname, '..', 'VERSION'))
   ? fs.readFileSync(path.join(__dirname, '..', 'VERSION'), 'utf8').trim()
   : 'unknown';
@@ -60,20 +62,21 @@ function parseArgs(argv) {
   const options = {
     root: '', port: DEFAULT_PORT, portSpecified: false, ensure: false, status: false, stop: false, json: false,
     sessionStart: '', sessionEnd: '',
-    managedState: '', managedId: '', managedStartup: '',
+    managedState: '', managedId: '', managedStartup: '', managedSession: '',
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--root' || arg === '--port' || arg === '--managed-state' || arg === '--managed-id' || arg === '--managed-startup'
-      || arg === '--session-start' || arg === '--session-end') {
+      || arg === '--managed-session' || arg === '--session-start' || arg === '--session-end') {
       const value = argv[index + 1];
       if (!value) throw new Error(`${arg} needs a value`);
       index += 1;
       if (arg === '--root') options.root = path.resolve(value);
-      else if (arg === '--session-start' || arg === '--session-end') {
+      else if (arg === '--managed-session' || arg === '--session-start' || arg === '--session-end') {
         if (!/^[A-Za-z0-9._-]{1,256}$/.test(value)) throw new Error(`${arg} needs a safe session identifier`);
         if (arg === '--session-start') options.sessionStart = value;
-        else options.sessionEnd = value;
+        else if (arg === '--session-end') options.sessionEnd = value;
+        else options.managedSession = value;
       }
       else if (arg === '--managed-state') options.managedState = path.resolve(value);
       else if (arg === '--managed-id') options.managedId = value;
@@ -295,17 +298,21 @@ async function stopManagedSite(root, paths) {
   });
 }
 
-function spawnManagedSite(root, paths, requestedPort) {
+function spawnManagedSite(root, paths, requestedPort, sessionId = '') {
   const startup = crypto.randomUUID();
   const output = fs.openSync(paths.log, 'a', 0o600);
-  const child = childProcess.spawn(process.execPath, [
+  const childArgs = [
     __filename,
     '--root', root,
     '--port', String(requestedPort),
     '--managed-state', paths.state,
     '--managed-id', paths.id,
     '--managed-startup', startup,
-  ], {
+  ];
+  // The child must own the first lease before its idle timer starts. Otherwise a slow parent can
+  // observe a healthy server after an aggressively configured idle timeout has already stopped it.
+  if (sessionId) childArgs.push('--managed-session', sessionId);
+  const child = childProcess.spawn(process.execPath, childArgs, {
     detached: true,
     stdio: ['ignore', output, output],
   });
@@ -334,7 +341,7 @@ async function ensureManagedSite(root, paths, requestedPort, sessionId = '') {
       if (await probeSite(metadata)) throw new Error('managed site did not stop before the timeout');
       removeFile(paths.state);
     }
-    const startup = spawnManagedSite(root, paths, requestedPort);
+    const startup = spawnManagedSite(root, paths, requestedPort, sessionId);
     const deadline = Date.now() + MANAGED_START_TIMEOUT_MS;
     while (Date.now() < deadline) {
       metadata = metadataFor(root, paths);
@@ -1036,6 +1043,7 @@ function managedConfiguration(options) {
     state: options.managedState,
     id: options.managedId,
     startup: options.managedStartup,
+    session: options.managedSession,
   };
 }
 
@@ -1052,6 +1060,7 @@ function recordManagedStart(root, managed, port) {
     last_activity: Date.now(),
     sessions: {},
   };
+  recordSession(metadata, managed.session);
   ensureManagedDirectory({ directory: path.dirname(managed.state) });
   writeJsonAtomically(managed.state, metadata);
 }
