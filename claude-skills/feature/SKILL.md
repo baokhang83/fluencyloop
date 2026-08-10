@@ -64,19 +64,26 @@ When it is `true`, do not inspect the active feature, calibration, preferences, 
 or the new intent yet—and do not ask the developer anything. This is an automatic, repository-wide
 migration, not a new feature.
 
+**Do not probe writer commands.** During this migration, `fluencyloop import --semantic-status --json`
+is the only discovery command. Do **not** run bare `fluencyloop import`, `fluencyloop import --help`,
+or bare `fluencyloop concept`; the automatic importer already ran, and writers require complete
+evidence-backed arguments. Do not inspect preferences, calibration, the active feature, or Git status
+until the migration completes.
+
 1. Run `fluencyloop import --semantic-status --json` and work through **every**
    `unassessed_features` entry in its stable order. For each one, read its imported store records
-   and the relevant legacy history—not just the feature title. Never create or switch historical
-   feature branches.
-2. Add the evidence-backed architectural records and relations that the feature establishes or
+   and the matching `docs/fluencyloop/features/<slug>/` history—not just the feature title. Never
+   create or switch historical feature branches.
+2. In that same per-feature pass, add the evidence-backed architectural records and relations that it establishes or
    changes, using `fluencyloop concept --feature <slug> --session 000-legacy-import`. Do not invent
    one record per feature and do not repeat the already-imported decision/knowledge records. A
    feature with no product-level architectural effect is valid, but its assessment must say why.
-3. Record that evidence pass immediately with
+3. Immediately record that same evidence pass with
    `fluencyloop import --assess <slug> --summary "<evidence-based outcome>" --record "<record name>"`
    (repeat `--record` for every architectural record it contributed; omit it only for a genuinely
    local feature). This is required for every imported feature; it is the completion coverage, not
-   a substitute for the architectural records themselves.
+   a substitute for the architectural records themselves. Do not collect 46 summaries and issue
+   them later as one detached batch: every `--assess` follows its own read → record pass.
 4. Run `fluencyloop import --semantic-status --json` again. Only when its
    `unassessed_features` array is empty **and** `architectural_records` is non-zero may you run
    `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`. Continue

@@ -90,6 +90,14 @@ PY
     [ "$(echo "$result" | json_field legacy_migration_pending)" = "True" ] || [ "$(echo "$result" | json_field legacy_migration_pending)" = "true" ]
 }
 
+@test "shows import help without running the legacy importer" {
+    [ ! -e "$STORE" ]
+    run bash "$BIN/import-legacy.sh" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"--semantic-status"* ]]
+    [ ! -e "$STORE" ]
+}
+
 @test "requires architectural records and an assessment for every imported feature before completion" {
     bash "$BIN/check.sh" --json >/dev/null
     run bash "$BIN/import-legacy.sh" --mark-semantic-complete

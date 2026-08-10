@@ -68,8 +68,8 @@ legacy_import_revision_path() {
 # Semantic reconstruction needs model judgment, unlike the deterministic Markdown importer. The
 # completed marker is only valid after every imported feature has an explicit assessment and the
 # migration has produced architectural records; otherwise later work must resume the migration.
-# Revision 2 deliberately reopens repositories marked by the earlier, empty-completion rule.
-LEGACY_SEMANTIC_MIGRATION_REVISION=2
+# Revision 3 deliberately reopens repositories marked by the earlier detached-assessment workflow.
+LEGACY_SEMANTIC_MIGRATION_REVISION=3
 legacy_semantic_migration_path() { printf '%s/.legacy-semantic-migration-revision' "$(store_dir)"; }
 
 legacy_imported_feature_count() {

@@ -3,7 +3,7 @@
 # Originals under docs/fluencyloop/features are read-only. Each imported record carries a stable
 # imported_from marker; re-runs recognise that exact raw marker without parsing JSON.
 #
-# Usage: import-legacy.sh [--auto|--semantic-status [--json]|--assess <feature> --summary <text> [--record <name> ...]|--mark-semantic-complete]
+# Usage: import-legacy.sh [--auto|--semantic-status [--json]|--assess <feature> --summary <text> [--record <name> ...]|--mark-semantic-complete|--help]
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,6 +18,7 @@ AUTO=false; MARK_SEMANTIC_COMPLETE=false
 ASSESS_FEATURE=""; ASSESS_SUMMARY=""
 declare -a ASSESS_RECORDS=()
 SEMANTIC_STATUS=false; JSON=false
+HELP=false
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --auto) AUTO=true ;;
@@ -27,10 +28,24 @@ while [ "$#" -gt 0 ]; do
         --record) shift; ASSESS_RECORDS+=("${1:-}") ;;
         --semantic-status) SEMANTIC_STATUS=true ;;
         --json) JSON=true ;;
+        --help|-h) HELP=true ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
     shift
 done
+
+if $HELP; then
+    cat <<'EOF'
+Usage: fluencyloop import [--auto]
+       fluencyloop import --semantic-status [--json]
+       fluencyloop import --assess <feature> --summary <text> [--record <name> ...]
+       fluencyloop import --mark-semantic-complete
+
+Import legacy Markdown records, inspect semantic-migration coverage, record one feature
+assessment, or mark a fully assessed migration complete.
+EOF
+    exit 0
+fi
 require_fluency
 
 json_array_from_lines() {
