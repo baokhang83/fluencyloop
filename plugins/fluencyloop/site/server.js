@@ -713,7 +713,7 @@ function recordList(items, emptyMessage) {
 // below hides the ones that stop matching. Without JavaScript the catalog is simply complete.
 function catalogToolbar(tags) {
   const chips = tags.length
-    ? `<div class="tag-filter" role="group" aria-label="Filter by architectural concept">
+    ? `<div class="tag-filter" role="group" aria-label="Filter by architectural record">
         <button type="button" class="tag tag-button is-all" data-tag-filter="all" aria-pressed="true">All</button>
         ${tags.map((tag) => `<button type="button" class="tag tag-button tone-${tag.tone}" data-tag-filter="${escapeHtml(tag.slug)}" aria-pressed="false">${escapeHtml(tag.name)}</button>`).join('')}
       </div>`
