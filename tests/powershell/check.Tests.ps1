@@ -18,6 +18,17 @@ Describe 'check.ps1' {
         $j = Get-FlJson 'check.ps1' '--json'
         $j.feature | Should -Be '001-add-search'
         $j.constitution | Should -Be 'empty'
+        $j.state_matches_branch | Should -BeTrue
+    }
+
+    It 'rejects state from a different feature branch' {
+        $script:repo = Initialize-TestRepo
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add search' | Out-Null
+        git checkout -q -b feature/another-context
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 1
+        $j = Get-FlJson 'check.ps1' '--json'
+        $j.state_matches_branch | Should -BeFalse
+        $j.state_branch | Should -Be 'feature/001-add-search'
     }
 
     It 'constitution states: present and pointer' {
