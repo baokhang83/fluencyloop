@@ -48,7 +48,7 @@ function FlRequireFluency {
 # It gives already-migrated repositories one automatic, idempotent repair pass without running the
 # full legacy scan on every normal command thereafter.
 $script:FlLegacyImportRevision = '2'
-$script:FlLegacySemanticMigrationRevision = '2'
+$script:FlLegacySemanticMigrationRevision = '3'
 
 function Get-FlLegacyImportRevisionPath { "$(FlStoreDir)/.legacy-import-revision" }
 function Get-FlLegacySemanticMigrationPath { "$(FlStoreDir)/.legacy-semantic-migration-revision" }
