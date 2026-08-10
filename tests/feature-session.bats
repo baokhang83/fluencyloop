@@ -116,6 +116,17 @@ PY
     [ "$(cat "$TESTREPO/.fluencyloop/state.json" | json_field base_ref)" = "trunk" ]
 }
 
+@test "a separate feature reuses the active feature's integration base instead of stacking" {
+    bash "$BIN/new-feature.sh" "first independent feature" >/dev/null
+    git add -A && git commit -q -m "first feature"
+    first_branch="$(git branch --show-current)"
+
+    bash "$BIN/new-feature.sh" "second independent feature" >/dev/null
+    second_branch="$(git branch --show-current)"
+    [ "$(cat "$TESTREPO/.fluencyloop/state.json" | json_field base_ref)" = "main" ]
+    [ "$(git merge-base "$first_branch" "$second_branch")" = "$(git rev-parse main)" ]
+}
+
 @test "new-feature reuses a legacy unnumbered branch without changing its markdown" {
     git checkout -q -b "feature/add-caching"
     mkdir -p "$TESTREPO/docs/fluencyloop/features/add-caching/sessions"

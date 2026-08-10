@@ -89,6 +89,11 @@ until the migration completes.
    `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`. Continue
    to normal feature flow only when `legacy_migration_pending` is `false`.
 
+The resulting `docs/fluencyloop/store/` files are project records, not disposable local cache.
+Keep them in the worktree and include them in the next feature handoff; never describe imported
+store files as intentionally excluded. If unrelated handwritten store changes make that unsafe,
+surface the conflict instead of silently omitting the migration.
+
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
 `base_ref`), written by `fluencyloop feature` / `fluencyloop session` and committed with the branch. Prefer
@@ -196,6 +201,11 @@ This creates the `feature/<slug>` branch (switching to it) and its store record.
 for `slug`, `branch`, `store`, `base_ref`, and `plan`.
 `store` must be a path under `docs/fluencyloop/`; if it is not, stop and surface the
 runtime/path mismatch rather than writing fallback files.
+
+**Separate means independent.** When another feature is active, the command reuses its recorded
+`base_ref`, so the new branch is based on the integration branch rather than on the other feature's
+unmerged HEAD. Pass `--base <ref>` only for intentionally stacked work, and create the PR against
+the returned `base_ref`.
 
 ## 2. Design (Stage 2) — concepts and relationships before implementation
 
@@ -460,6 +470,11 @@ hardcoded package-manager list) then `gh auth login`. If `gh` stays unavailable 
 deferred), the hand-off is at most *commit + push*, and a PR can be opened later via
 `fluencyloop-review`. Only run the full **commit + push + open-PR** automation where `gh` works.
 
+**Create PR bodies through a file.** Write the assembled Markdown to a temporary, untracked file
+and call `gh pr create --body-file <path>` (and `gh pr edit --body-file <path>` when correcting it).
+Never pass Markdown inline through `--body`: shell interpolation corrupts backticks, `$` expressions,
+and code examples before GitHub receives them. Remove the temporary file after GitHub accepts it.
+
 **If `feature-numbering: pr` is recorded** (§1), the moment a PR actually opens — whether you ran
 `gh pr create` here or the user opened it manually and told you the number — run
 `fluencyloop rename-feature-dir --json --pr <number>` to swap the feature's docs dir onto that
@@ -471,7 +486,9 @@ once per feature. Check `~/.fluencyloop/preferences.md` (loaded in §0):
 
 - **A preference is already recorded** — honor it silently, and **do not re-ask**. If it says
   automatic, go ahead and commit + push + open the PR yourself (run fluencyloop-review first) at
-  completion; if manual, just point the user at fluencyloop-review and stop.
+  completion; if manual, just point the user at fluencyloop-review and stop. Stage all
+  `docs/fluencyloop/store/` records created in this worktree with the handoff; never exclude the
+  completed legacy migration from the commit.
 - **No preference yet (this is the first feature)** — ask **exactly once**, via a single
   explicit confirmation using the delivery rule above rather than a per-feature prompt: from now on, should you commit
   + push **(+ open the PR, when `gh` is available)** yourself at feature completion, or keep

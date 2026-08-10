@@ -488,6 +488,8 @@ PY
 
     run request /features/plain-diagram
     [ "$status" -eq 0 ]
+    [[ "$output" == *'<p>This subject is clearer as prose alone.</p>'* ]]
+    [[ "$output" != *'<pre class="distillation-prose">'* ]]
     [[ "$output" == *"This subject is clearer as prose alone."* ]]
     [[ "$output" != *'class="diagram"'* ]]
     [[ "$output" != *'class="diagram-unavailable"'* ]]

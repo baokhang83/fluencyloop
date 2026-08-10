@@ -21,11 +21,11 @@ setup() {
     [ "$(echo "$output" | json_field base)" = "main" ]
 }
 
-@test "assemble-pr-view points readers to the store instead of parsing it in shell" {
+@test "assemble-pr-view reads session declarations from the store" {
     bash "$BIN/new-session.sh" --slug 001-add-search "index the docs" >/dev/null
     run bash "$BIN/assemble-pr-view.sh" --json
     [ "$status" -eq 0 ]
-    echo "$output" | python3 -c "import json,sys;d=json.load(sys.stdin);assert d['store'].endswith('001-add-search.jsonl'),d;assert d['sessions']==[],d"
+    echo "$output" | python3 -c "import json,sys;d=json.load(sys.stdin);assert d['store'].endswith('001-add-search.jsonl'),d;assert d['session_count']==1,d;assert d['sessions'][0]['slug']=='001-index-the-docs',d"
 }
 
 @test "assemble-pr-view markdown form renders a title and range" {

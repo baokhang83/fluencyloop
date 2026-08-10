@@ -96,6 +96,9 @@ assert "fluencyloop import --semantic-status --json" in feature_text
 assert "This is required for every imported feature" in feature_text
 assert "Do not probe writer commands." in feature_text
 assert "every `--assess` follows its own read" in feature_text
+assert "Separate means independent." in feature_text
+assert "Create PR bodies through a file." in feature_text
+assert "never exclude the\n  completed legacy migration" in feature_text
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
 assert "`store` must be a path under `docs/fluencyloop/`" in feature_text
@@ -111,6 +114,9 @@ assert "fluencyloop import --semantic-status --json" in codex_feature_text
 assert "This is required for every imported feature" in codex_feature_text
 assert "Do not probe writer commands." in codex_feature_text
 assert "every `--assess` follows its own read" in codex_feature_text
+assert "Separate means independent." in codex_feature_text
+assert "Create PR bodies through a file." in codex_feature_text
+assert "never exclude the\n  completed legacy migration" in codex_feature_text
 assert "### Codex teaching gate - visible before the journal" in codex_feature_text
 assert "before any `fluencyloop decision`" in codex_feature_text
 assert "No reply is not a `wave`" in codex_feature_text
