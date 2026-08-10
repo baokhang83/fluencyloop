@@ -5,11 +5,20 @@
 // response reads the project's current store, distillations, and local calibration profile.
 
 const http = require('node:http');
+const crypto = require('node:crypto');
+const childProcess = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
 const DEFAULT_PORT = 4173;
+const MANAGED_DEFAULT_PORT = 44444;
+const MANAGED_IDLE_MS = 2 * 60 * 60 * 1000;
+const MANAGED_TOUCH_INTERVAL_MS = 30 * 1000;
+const MANAGED_START_TIMEOUT_MS = 5000;
+const SITE_VERSION = fs.existsSync(path.join(__dirname, '..', 'VERSION'))
+  ? fs.readFileSync(path.join(__dirname, '..', 'VERSION'), 'utf8').trim()
+  : 'unknown';
 // No font files: the site sets type in the reader's own interface font. That keeps the reader
 // byte-for-byte local without shipping a typeface, and matches the register of the tools the
 // project record sits beside.
@@ -34,30 +43,288 @@ const IDENTITY_FIELDS = {
 
 function usage(message) {
   if (message) process.stderr.write(`Error: ${message}\n`);
-  process.stderr.write('Usage: fluencyloop site [--port <0-65535>]\n');
+  process.stderr.write('Usage: fluencyloop site [--port <0-65535>] [--ensure|--status|--stop] [--json]\n');
   process.exitCode = 1;
 }
 
 function parseArgs(argv) {
-  const options = { root: '', port: DEFAULT_PORT };
+  const options = {
+    root: '', port: DEFAULT_PORT, portSpecified: false, ensure: false, status: false, stop: false, json: false,
+    managedState: '', managedId: '', managedStartup: '',
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--root' || arg === '--port') {
+    if (arg === '--root' || arg === '--port' || arg === '--managed-state' || arg === '--managed-id' || arg === '--managed-startup') {
       const value = argv[index + 1];
       if (!value) throw new Error(`${arg} needs a value`);
       index += 1;
       if (arg === '--root') options.root = path.resolve(value);
+      else if (arg === '--managed-state') options.managedState = path.resolve(value);
+      else if (arg === '--managed-id') options.managedId = value;
+      else if (arg === '--managed-startup') options.managedStartup = value;
       else {
         if (!/^\d+$/.test(value)) throw new Error('--port must be an integer from 0 to 65535');
         options.port = Number(value);
+        options.portSpecified = true;
         if (options.port > 65535) throw new Error('--port must be an integer from 0 to 65535');
       }
-    } else {
+    } else if (arg === '--ensure') options.ensure = true;
+    else if (arg === '--status') options.status = true;
+    else if (arg === '--stop') options.stop = true;
+    else if (arg === '--json') options.json = true;
+    else {
       throw new Error(`unknown option: ${arg}`);
     }
   }
   if (!options.root) throw new Error('the project root is required');
+  if ([options.ensure, options.status, options.stop].filter(Boolean).length > 1) {
+    throw new Error('choose only one of --ensure, --status, or --stop');
+  }
   return options;
+}
+
+function sleep(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function canonicalRoot(root) {
+  return fs.realpathSync(root);
+}
+
+function fluencyHome() {
+  return process.env.FLUENCYLOOP_HOME
+    ? path.resolve(process.env.FLUENCYLOOP_HOME)
+    : path.join(os.homedir(), '.fluencyloop');
+}
+
+function managedPaths(root) {
+  const id = crypto.createHash('sha256').update(root).digest('hex').slice(0, 32);
+  const directory = path.join(fluencyHome(), 'sites');
+  return {
+    id,
+    directory,
+    state: path.join(directory, id + '.json'),
+    lock: path.join(directory, id + '.lock'),
+    log: path.join(directory, id + '.log'),
+  };
+}
+
+function ensureManagedDirectory(paths) {
+  fs.mkdirSync(paths.directory, { recursive: true, mode: 0o700 });
+}
+
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (_) {
+    return null;
+  }
+}
+
+function writeJsonAtomically(file, value) {
+  const temporary = file + '.' + process.pid + '.' + crypto.randomUUID() + '.tmp';
+  fs.writeFileSync(temporary, JSON.stringify(value) + '\n', { encoding: 'utf8', mode: 0o600 });
+  fs.renameSync(temporary, file);
+}
+
+function removeFile(file) {
+  try {
+    fs.unlinkSync(file);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+
+async function withSiteLock(paths, action) {
+  ensureManagedDirectory(paths);
+  const deadline = Date.now() + MANAGED_START_TIMEOUT_MS;
+  let descriptor;
+  while (descriptor === undefined && Date.now() < deadline) {
+    try {
+      descriptor = fs.openSync(paths.lock, 'wx', 0o600);
+      fs.writeFileSync(descriptor, String(process.pid) + '\n', 'utf8');
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      try {
+        const age = Date.now() - fs.statSync(paths.lock).mtimeMs;
+        if (age > MANAGED_START_TIMEOUT_MS) removeFile(paths.lock);
+      } catch (_) {
+        // Another manager may have completed while this process was checking the lock.
+      }
+      await sleep(50);
+    }
+  }
+  if (descriptor === undefined) throw new Error('timed out waiting for the managed site lock');
+  try {
+    return await action();
+  } finally {
+    fs.closeSync(descriptor);
+    removeFile(paths.lock);
+  }
+}
+
+function metadataFor(root, paths) {
+  const metadata = readJson(paths.state);
+  if (!metadata || metadata.id !== paths.id || metadata.root !== root || !Number.isInteger(metadata.pid)
+    || !Number.isInteger(metadata.port) || typeof metadata.url !== 'string') {
+    return null;
+  }
+  return metadata;
+}
+
+function probeSite(metadata) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (healthy) => {
+      if (!settled) {
+        settled = true;
+        resolve(healthy);
+      }
+    };
+    let target;
+    try {
+      target = new URL(metadata.url + '/health');
+    } catch (_) {
+      finish(false);
+      return;
+    }
+    const request = http.get({
+      hostname: target.hostname,
+      port: target.port,
+      path: target.pathname,
+      timeout: 750,
+    }, (response) => {
+      let body = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => { body += chunk; });
+      response.on('end', () => {
+        try {
+          const health = JSON.parse(body);
+          finish(response.statusCode === 200 && health.status === 'ok' && health.site_id === metadata.id);
+        } catch (_) {
+          finish(false);
+        }
+      });
+    });
+    request.once('timeout', () => request.destroy());
+    request.once('error', () => finish(false));
+  });
+}
+
+function resultFor(metadata, extra = {}) {
+  return {
+    available: true,
+    running: Boolean(metadata),
+    url: metadata ? metadata.url : null,
+    port: metadata ? metadata.port : null,
+    ...extra,
+  };
+}
+
+async function currentManagedSite(root, paths) {
+  const metadata = metadataFor(root, paths);
+  if (!metadata) return null;
+  if (await probeSite(metadata)) return metadata;
+  removeFile(paths.state);
+  return null;
+}
+
+function touchManagedActivity(managed) {
+  if (!managed || !managed.state || !managed.id) return;
+  const metadata = readJson(managed.state);
+  if (!metadata || metadata.id !== managed.id || metadata.pid !== process.pid) return;
+  const now = Date.now();
+  if (now - Number(metadata.last_activity || 0) < MANAGED_TOUCH_INTERVAL_MS) return;
+  metadata.last_activity = now;
+  writeJsonAtomically(managed.state, metadata);
+}
+
+function removeManagedState(managed) {
+  if (!managed || !managed.state) return;
+  const metadata = readJson(managed.state);
+  if (metadata && metadata.id === managed.id && metadata.pid === process.pid) removeFile(managed.state);
+}
+
+async function stopManagedSite(root, paths) {
+  return withSiteLock(paths, async () => {
+    const metadata = await currentManagedSite(root, paths);
+    if (!metadata) return resultFor(null, { stopped: false });
+    try {
+      process.kill(metadata.pid, 'SIGTERM');
+    } catch (error) {
+      if (error.code !== 'ESRCH') throw error;
+    }
+    const deadline = Date.now() + MANAGED_START_TIMEOUT_MS;
+    while (Date.now() < deadline) {
+      if (!(await probeSite(metadata))) break;
+      await sleep(50);
+    }
+    if (!(await probeSite(metadata))) {
+      removeFile(paths.state);
+      return resultFor(null, { stopped: true });
+    }
+    throw new Error('managed site did not stop before the timeout');
+  });
+}
+
+function spawnManagedSite(root, paths, requestedPort) {
+  const startup = crypto.randomUUID();
+  const output = fs.openSync(paths.log, 'a', 0o600);
+  const child = childProcess.spawn(process.execPath, [
+    __filename,
+    '--root', root,
+    '--port', String(requestedPort),
+    '--managed-state', paths.state,
+    '--managed-id', paths.id,
+    '--managed-startup', startup,
+  ], {
+    detached: true,
+    stdio: ['ignore', output, output],
+  });
+  child.unref();
+  fs.closeSync(output);
+  return startup;
+}
+
+async function ensureManagedSite(root, paths, requestedPort) {
+  return withSiteLock(paths, async () => {
+    let metadata = await currentManagedSite(root, paths);
+    if (metadata && metadata.version === SITE_VERSION) {
+      metadata.last_activity = Date.now();
+      writeJsonAtomically(paths.state, metadata);
+      return resultFor(metadata, { reused: true });
+    }
+    if (metadata) {
+      try {
+        process.kill(metadata.pid, 'SIGTERM');
+      } catch (error) {
+        if (error.code !== 'ESRCH') throw error;
+      }
+      const deadline = Date.now() + MANAGED_START_TIMEOUT_MS;
+      while (Date.now() < deadline && await probeSite(metadata)) await sleep(50);
+      if (await probeSite(metadata)) throw new Error('managed site did not stop before the timeout');
+      removeFile(paths.state);
+    }
+    const startup = spawnManagedSite(root, paths, requestedPort);
+    const deadline = Date.now() + MANAGED_START_TIMEOUT_MS;
+    while (Date.now() < deadline) {
+      metadata = metadataFor(root, paths);
+      if (metadata && metadata.startup === startup && await probeSite(metadata)) {
+        return resultFor(metadata, { reused: false });
+      }
+      await sleep(50);
+    }
+    throw new Error('managed site did not start before the timeout');
+  });
+}
+
+function printManagedResult(result, json) {
+  if (json) {
+    process.stdout.write(JSON.stringify(result) + '\n');
+    return;
+  }
+  if (result.running) process.stdout.write('FluencyLoop site: ' + result.url + '\n');
+  else process.stdout.write('FluencyLoop site is not running.\n');
 }
 
 function filesUnder(directory, extension) {
@@ -616,7 +883,7 @@ function send(response, status, contentType, body) {
   response.end(body);
 }
 
-function createServer(root) {
+function createServer(root, managed = null) {
   return http.createServer((request, response) => {
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       send(response, 405, 'text/plain; charset=utf-8', 'Method not allowed\n');
@@ -624,8 +891,11 @@ function createServer(root) {
     }
     try {
       const pathname = new URL(request.url, 'http://127.0.0.1').pathname;
+      touchManagedActivity(managed);
       if (pathname === '/health') {
-        send(response, 200, 'application/json; charset=utf-8', request.method === 'HEAD' ? '' : '{"status":"ok"}\n');
+        const health = { status: 'ok' };
+        if (managed) health.site_id = managed.id;
+        send(response, 200, 'application/json; charset=utf-8', request.method === 'HEAD' ? '' : JSON.stringify(health) + '\n');
         return;
       }
       const asset = SITE_ASSETS[pathname];
@@ -687,17 +957,61 @@ function listen(server, port) {
   });
 }
 
-async function start(root, requestedPort) {
+function managedConfiguration(options) {
+  if (!options.managedState) return null;
+  return {
+    state: options.managedState,
+    id: options.managedId,
+    startup: options.managedStartup,
+  };
+}
+
+function recordManagedStart(root, managed, port) {
+  if (!managed) return;
+  const metadata = {
+    id: managed.id,
+    startup: managed.startup,
+    root,
+    pid: process.pid,
+    port,
+    url: 'http://127.0.0.1:' + port,
+    version: SITE_VERSION,
+    last_activity: Date.now(),
+  };
+  ensureManagedDirectory({ directory: path.dirname(managed.state) });
+  writeJsonAtomically(managed.state, metadata);
+}
+
+function manageIdleLifetime(server, managed) {
+  if (!managed) return;
+  const interval = setInterval(() => {
+    const metadata = readJson(managed.state);
+    if (!metadata || metadata.id !== managed.id || metadata.pid !== process.pid) return;
+    if (Date.now() - Number(metadata.last_activity || 0) < MANAGED_IDLE_MS) return;
+    server.close(() => {
+      removeManagedState(managed);
+      process.exit(0);
+    });
+  }, 60 * 1000);
+  interval.unref();
+}
+
+async function start(root, requestedPort, managed = null) {
   let port = requestedPort;
   while (port <= 65535) {
-    const server = createServer(root);
+    const server = createServer(root, managed);
     try {
       await listen(server, port);
       const address = server.address();
-      process.stdout.write(`FluencyLoop site: http://127.0.0.1:${address.port}\n`);
-      const stop = () => server.close(() => process.exit(0));
+      recordManagedStart(root, managed, address.port);
+      process.stdout.write('FluencyLoop site: http://127.0.0.1:' + address.port + '\n');
+      const stop = () => server.close(() => {
+        removeManagedState(managed);
+        process.exit(0);
+      });
       process.once('SIGINT', stop);
       process.once('SIGTERM', stop);
+      manageIdleLifetime(server, managed);
       return;
     } catch (error) {
       if (error.code === 'EADDRINUSE' && port !== 0) {
@@ -707,7 +1021,7 @@ async function start(root, requestedPort) {
       throw error;
     }
   }
-  throw new Error(`no free loopback port found from ${requestedPort} through 65535`);
+  throw new Error('no free loopback port found from ' + requestedPort + ' through 65535');
 }
 
 let options;
@@ -717,8 +1031,20 @@ try {
   usage(error.message);
 }
 if (options) {
-  start(options.root, options.port).catch((error) => {
-    process.stderr.write(`Could not start FluencyLoop site: ${error.message}\n`);
+  const root = canonicalRoot(options.root);
+  const paths = managedPaths(root);
+  const manager = options.ensure || options.status || options.stop;
+  const operation = options.ensure
+    ? ensureManagedSite(root, paths, options.portSpecified ? options.port : MANAGED_DEFAULT_PORT)
+    : options.status
+      ? currentManagedSite(root, paths).then((metadata) => resultFor(metadata, { reused: Boolean(metadata) }))
+      : options.stop
+        ? stopManagedSite(root, paths)
+        : start(root, options.port, managedConfiguration(options));
+  operation.then((result) => {
+    if (manager) printManagedResult(result, options.json);
+  }).catch((error) => {
+    process.stderr.write('Could not start FluencyLoop site: ' + error.message + '\n');
     process.exitCode = 1;
   });
 }

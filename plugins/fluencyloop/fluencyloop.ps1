@@ -41,7 +41,8 @@ Usage:
   fluencyloop import                     import legacy session markdown into the store
   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
   fluencyloop check [--json]             doctor: loop state + un-journaled drift
-  fluencyloop site [--port <port>]       serve the local 0.3 site (requires Node.js 18+)
+  fluencyloop site [--port <port>] [--ensure|--status|--stop] [--json]
+                                         serve or manage the local 0.3 site (requires Node.js 18+)
   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
   fluencyloop index                      regenerate docs/fluencyloop/README.md
@@ -63,31 +64,46 @@ function Run([string]$name) {
 
 # Node is deliberately optional: only the forthcoming local site server may execute it. Keep the
 # rest of the loop runnable on an agent host with no Node installation at all.
-function RequireNodeForSite {
+function RequireNodeForSite([bool]$Quiet = $false) {
     $nodeCommand = Get-Command node -CommandType Application -ErrorAction SilentlyContinue
     if (-not $nodeCommand) {
-        [Console]::Error.WriteLine("Node.js 18 or newer is required only for 'fluencyloop site'.")
-        [Console]::Error.WriteLine('The rest of FluencyLoop works without Node.js. Install it from https://nodejs.org/ and rerun this command.')
-        exit 1
+        if (-not $Quiet) {
+            [Console]::Error.WriteLine("Node.js 18 or newer is required only for 'fluencyloop site'.")
+            [Console]::Error.WriteLine('The rest of FluencyLoop works without Node.js. Install it from https://nodejs.org/ and rerun this command.')
+        }
+        return $null
     }
     $version = (& $nodeCommand.Source --version 2>$null | Select-Object -First 1)
     $nodeExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
     $versionMatch = [regex]::Match([string]$version, '^v?(\d+)')
     if ($nodeExitCode -ne 0 -or -not $version -or -not $versionMatch.Success) {
-        [Console]::Error.WriteLine("Could not determine the installed Node.js version for 'fluencyloop site'.")
-        [Console]::Error.WriteLine('Node.js 18 or newer is required only for the local site. Install or update it at https://nodejs.org/.')
-        exit 1
+        if (-not $Quiet) {
+            [Console]::Error.WriteLine("Could not determine the installed Node.js version for 'fluencyloop site'.")
+            [Console]::Error.WriteLine('Node.js 18 or newer is required only for the local site. Install or update it at https://nodejs.org/.')
+        }
+        return $null
     }
     if ([int]$versionMatch.Groups[1].Value -lt 18) {
-        [Console]::Error.WriteLine("Node.js $version is too old for 'fluencyloop site'; Node.js 18 or newer is required.")
-        [Console]::Error.WriteLine('The rest of FluencyLoop works without Node.js. Update it at https://nodejs.org/.')
-        exit 1
+        if (-not $Quiet) {
+            [Console]::Error.WriteLine("Node.js $version is too old for 'fluencyloop site'; Node.js 18 or newer is required.")
+            [Console]::Error.WriteLine('The rest of FluencyLoop works without Node.js. Update it at https://nodejs.org/.')
+        }
+        return $null
     }
     return $nodeCommand.Source
 }
 
 function StartSite {
-    $nodeExe = RequireNodeForSite
+    $automatic = $rest -contains '--ensure' -or $rest -contains '--status'
+    $json = $rest -contains '--json'
+    $nodeExe = RequireNodeForSite $automatic
+    if (-not $nodeExe) {
+        if ($automatic) {
+            if ($json) { [Console]::Out.Write("{`"available`":false,`"running`":false,`"url`":null,`"port`":null,`"reason`":`"node_missing`"}`n") }
+            exit 0
+        }
+        exit 1
+    }
     $projectRoot = (& git rev-parse --show-toplevel 2>$null | Select-Object -First 1)
     $gitExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
     if ($gitExitCode -ne 0 -or -not $projectRoot) {

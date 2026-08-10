@@ -125,4 +125,27 @@ Describe 'fluencyloop site' {
         $decisionPage.StatusCode | Should -Be 200
         $decisionPage.Content | Should -Match 'the dispatcher shares the bundled reader'
     }
+
+    It 'ensures and reuses a managed local site through the PowerShell dispatcher' {
+        if (-not $script:Node) { Set-ItResult -Skipped -Because 'Node.js is required for the site test'; return }
+        $script:repo = Initialize-TestRepo
+        $siteHome = New-TestHome
+        try {
+            $first = (& $script:PwshExe -NoProfile -File $script:Cli 'site' '--ensure' '--json' | ForEach-Object { $_.ToString() }) -join "`n" | ConvertFrom-Json
+            $first.running | Should -BeTrue
+            $first.url | Should -Be 'http://127.0.0.1:44444'
+            $first.reused | Should -BeFalse
+
+            $health = Invoke-WebRequest -Uri "$($first.url)/health" -UseBasicParsing
+            $health.StatusCode | Should -Be 200
+
+            $second = (& $script:PwshExe -NoProfile -File $script:Cli 'site' '--ensure' '--json' | ForEach-Object { $_.ToString() }) -join "`n" | ConvertFrom-Json
+            $second.running | Should -BeTrue
+            $second.url | Should -Be $first.url
+            $second.reused | Should -BeTrue
+        } finally {
+            & $script:PwshExe -NoProfile -File $script:Cli 'site' '--stop' '--json' *> $null
+            Remove-Item -Recurse -Force -LiteralPath $siteHome -ErrorAction SilentlyContinue
+        }
+    }
 }
