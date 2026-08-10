@@ -46,3 +46,9 @@ load test_helper
     [[ "$output" == *"The rest of FluencyLoop works without Node.js"* ]]
     [[ "$output" == *"https://nodejs.org/"* ]]
 }
+
+@test "managed site automation is a quiet no-op without Node" {
+    run env PATH=/usr/bin:/bin bash "$DIST/fluencyloop" site --ensure --json
+    [ "$status" -eq 0 ]
+    [ "$output" = '{"available":false,"running":false,"url":null,"port":null,"reason":"node_missing"}' ]
+}

@@ -20,7 +20,8 @@
 #   fluencyloop import                     import legacy session markdown into the store
 #   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
 #   fluencyloop check [--json]             doctor: loop state + un-journaled drift
-#   fluencyloop site [--port <port>]       serve the local 0.3 site (requires Node.js 18+)
+#   fluencyloop site [--port <port>] [--ensure|--status|--stop] [--json]
+#                                           serve or manage the local 0.3 site (requires Node.js 18+)
 #   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
 #   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
 #   fluencyloop index                      regenerate docs/fluencyloop/README.md
@@ -65,32 +66,51 @@ usage() { awk 'NR>1 && /^#/ {sub(/^# ?/,""); print; next} NR>1 {exit}' "${BASH_S
 # Node is deliberately optional: only the forthcoming local site server may execute it. Keep the
 # rest of the loop runnable on an agent host with no Node installation at all.
 require_node_for_site() {
-    local node_bin node_version major
+    local quiet="${1:-false}" node_bin node_version major
     node_bin="$(command -v node 2>/dev/null || true)"
     if [ -z "$node_bin" ]; then
-        echo "Node.js 18 or newer is required only for 'fluencyloop site'." >&2
-        echo "The rest of FluencyLoop works without Node.js. Install it from https://nodejs.org/ and rerun this command." >&2
+        if [ "$quiet" != true ]; then
+            echo "Node.js 18 or newer is required only for 'fluencyloop site'." >&2
+            echo "The rest of FluencyLoop works without Node.js. Install it from https://nodejs.org/ and rerun this command." >&2
+        fi
         return 1
     fi
     node_version="$("$node_bin" --version 2>/dev/null || true)"
     major="${node_version#v}"; major="${major%%.*}"
     case "$major" in
         ''|*[!0-9]*)
-            echo "Could not determine the installed Node.js version for 'fluencyloop site'." >&2
-            echo "Node.js 18 or newer is required only for the local site. Install or update it at https://nodejs.org/." >&2
+            if [ "$quiet" != true ]; then
+                echo "Could not determine the installed Node.js version for 'fluencyloop site'." >&2
+                echo "Node.js 18 or newer is required only for the local site. Install or update it at https://nodejs.org/." >&2
+            fi
             return 1
             ;;
     esac
     if [ "$major" -lt 18 ]; then
-        echo "Node.js $node_version is too old for 'fluencyloop site'; Node.js 18 or newer is required." >&2
-        echo "The rest of FluencyLoop works without Node.js. Update it at https://nodejs.org/." >&2
+        if [ "$quiet" != true ]; then
+            echo "Node.js $node_version is too old for 'fluencyloop site'; Node.js 18 or newer is required." >&2
+            echo "The rest of FluencyLoop works without Node.js. Update it at https://nodejs.org/." >&2
+        fi
         return 1
     fi
     NODE_BIN="$node_bin"
 }
 
 start_site() {
-    require_node_for_site
+    local arg automatic=false json=false
+    for arg in "$@"; do
+        case "$arg" in
+            --ensure|--status) automatic=true ;;
+            --json) json=true ;;
+        esac
+    done
+    if ! require_node_for_site "$automatic"; then
+        if $automatic; then
+            $json && printf '%s\n' '{"available":false,"running":false,"url":null,"port":null,"reason":"node_missing"}'
+            return 0
+        fi
+        return 1
+    fi
     local project_root
     project_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
     if [ -z "$project_root" ]; then

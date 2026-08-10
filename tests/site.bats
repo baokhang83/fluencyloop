@@ -6,6 +6,7 @@ load test_helper
 
 SITE_PID=''
 BLOCKER_PID=''
+MANAGED_SITE=false
 
 stop_servers() {
     for pid in "$SITE_PID" "$BLOCKER_PID"; do
@@ -13,6 +14,9 @@ stop_servers() {
         kill "$pid" 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
     done
+    if $MANAGED_SITE && [ -n "${TESTREPO:-}" ] && [ -d "$TESTREPO" ]; then
+        (cd "$TESTREPO" && bash "$DIST/fluencyloop" site --stop --json >/dev/null 2>&1 || true)
+    fi
 }
 
 teardown() {
@@ -135,6 +139,74 @@ PY
 
     start_site
     [ "$SITE_URL" = "http://127.0.0.1:4174" ]
+}
+
+@test "managed site ensures, reuses, and stops a user-local server" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    export FLUENCYLOOP_HOME="$BATS_TEST_TMPDIR/managed-home-$RANDOM"
+    MANAGED_SITE=true
+    before="$(git status --porcelain)"
+
+    run bash "$DIST/fluencyloop" site --ensure --json
+    [ "$status" -eq 0 ]
+    first="$output"
+    first_url="$(printf '%s' "$first" | json_field url)"
+    [ "$first_url" = "http://127.0.0.1:44444" ]
+    SITE_URL="$first_url"
+    printf '%s' "$first" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and not d["reused"],d'
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"200"* ]]
+
+    run bash "$DIST/fluencyloop" site --ensure --json
+    [ "$status" -eq 0 ]
+    second="$output"
+    [ "$(printf '%s' "$second" | json_field url)" = "$first_url" ]
+    printf '%s' "$second" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["reused"],d'
+
+    run bash "$DIST/fluencyloop" site --stop --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["stopped"] and not d["running"],d'
+    MANAGED_SITE=false
+    [ "$(git status --porcelain)" = "$before" ]
+}
+
+@test "managed site falls forward from busy port 44444 without killing its owner" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    export FLUENCYLOOP_HOME="$BATS_TEST_TMPDIR/managed-home-$RANDOM"
+    node -e 'require("node:http").createServer(() => {}).listen(44444, "127.0.0.1")' >/dev/null 2>&1 &
+    BLOCKER_PID=$!
+    for attempt in $(seq 1 100); do
+        if kill -0 "$BLOCKER_PID" 2>/dev/null; then
+            break
+        fi
+        sleep 0.1
+    done
+    MANAGED_SITE=true
+
+    run bash "$DIST/fluencyloop" site --ensure --json
+    [ "$status" -eq 0 ]
+    [ "$(printf '%s' "$output" | json_field url)" = "http://127.0.0.1:44445" ]
+    kill -0 "$BLOCKER_PID"
+}
+
+@test "managed site replaces stale lifecycle state" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    export FLUENCYLOOP_HOME="$BATS_TEST_TMPDIR/managed-home-$RANDOM"
+    root="$(git rev-parse --show-toplevel)"
+    site_id="$(node -e 'const crypto=require("node:crypto");console.log(crypto.createHash("sha256").update(process.argv[1]).digest("hex").slice(0,32))' "$root")"
+    mkdir -p "$FLUENCYLOOP_HOME/sites"
+    printf '{"id":"%s","root":"%s","pid":999999,"port":44444,"url":"http://127.0.0.1:44444"}\n' "$site_id" "$root" \
+        > "$FLUENCYLOOP_HOME/sites/$site_id.json"
+    MANAGED_SITE=true
+
+    run bash "$DIST/fluencyloop" site --ensure --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and not d["reused"],d'
 }
 
 @test "site renders an empty store and a concept without relationships" {

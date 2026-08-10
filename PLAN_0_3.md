@@ -91,6 +91,8 @@ the acceptance criteria and the tests; this document carries the reasoning.
 | F3 | Navigation across the four levels | [#91](https://github.com/baokhang83/fluencyloop/issues/91) | 4 | F2, D1 |
 | F4 | Visual design and interaction quality | [#92](https://github.com/baokhang83/fluencyloop/issues/92) | 4 | F2 |
 | F5 | Model-chosen diagrams, rendered in the site | [#93](https://github.com/baokhang83/fluencyloop/issues/93) | 4 | D1, F2 |
+| F6 | Managed local-site service | [#123](https://github.com/baokhang83/fluencyloop/issues/123) | 5 | F1, F2 |
+| F7 | Autostart and announce the local site | [#124](https://github.com/baokhang83/fluencyloop/issues/124) | 5 | F6 |
 | G1 | Release 0.3 | [#94](https://github.com/baokhang83/fluencyloop/issues/94) | 5 | everything |
 
 ### Track A — Store
@@ -261,6 +263,21 @@ Mermaid is the obvious carrier since the model already writes it fluently, but i
 with the plugin**, not pulled from a CDN — see F4's offline constraint. The distillation format needs
 a slot for a diagram plus its caption, so define that in the same change.
 
+**F6 · Managed local-site service** · `type:feature` · M · needs F1, F2
+
+`fluencyloop site --ensure --json`, `--status --json`, and `--stop` manage one loopback-only,
+per-repository background reader. The normal address is `http://127.0.0.1:44444`; a busy port
+falls forward without touching the process that owns it. Lifecycle state is user-local, never
+written to the project, validates reuse through a repository-specific health identity, and expires
+after inactivity.
+
+**F7 · Autostart and announce the local site** · `type:feature` · S · needs F6
+
+The trusted SessionStart hook silently ensures the managed site when the session starts in an
+initialized FluencyLoop repository. At the first FluencyLoop interaction, the skill reports the
+actual URL once. Hook output is not relied on for the announcement; Node remains optional and
+missing Node is a quiet no-op.
+
 ### Track G — Ship
 
 **G1 · Release 0.3** · `type:infra` · M · needs everything
@@ -276,12 +293,12 @@ covering what stops being written and what the importer does. Single fast-forwar
 | 1 — store | A1, A2 | nothing else can start; A2 is the schema every other track writes against |
 | 2 — capture | A3, A4, A5, A6, A8 · B1 · F1 | the loop fills the store; markdown generation stops |
 | 3 — meaning | A7, B2, C1, D1, E1 | the store gains the levels above a decision |
-| 4 — reading | F2, F3, F4, F5 | the site renders what phases 2–3 produced, and is worth opening |
+| 4 — reading | F2, F3, F4, F5, F6, F7 | the site renders what phases 2–3 produced, is ready when a session opens, and is worth opening |
 | 5 — ship | G1 | single fast-forward promotion `dev` → `main` |
 
 ### Critical path
 
-**A1 → A2 → A5 → D1 → (F3 ‖ F5) → G1**
+**A1 → A2 → A5 → D1 → (F3 ‖ F5) → F6 → F7 → G1**
 
 The chain runs through *meaning*, not through the server. The site's two most valuable levels — the
 product overview and the architectural concepts — cannot exist until concepts are captured (**A5**)
@@ -309,5 +326,7 @@ Two scheduling consequences worth holding:
 - Importer: run against this repo's own `docs/fluencyloop/`, diff the originals to prove they were
   not modified, and run it twice to prove idempotence.
 - Site: `fluencyloop site` on a project with an imported store, and navigate all four levels.
+- Managed site: ensure, reuse, stale-state repair, and a busy `44444` fallback without writing the
+  project; then confirm SessionStart announces the resulting URL once.
 - Token check: compare a wrap-up before and after **D1** — distillation must not make the loop
   measurably more expensive per feature.
