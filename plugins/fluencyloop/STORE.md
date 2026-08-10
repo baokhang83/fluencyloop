@@ -55,8 +55,10 @@ Writers omit optional payload values rather than writing empty strings, as requi
 primitive. Identity fields and the common envelope are never optional.
 
 `imported_from` is an optional A6 payload marker on records reconstructed from legacy Markdown. It
-is the stable source file plus record ordinal; the importer scans only for that literal marker to
-avoid writing a duplicate on a later run.
+is a stable legacy path plus a record identifier: decision/component/condition records use their
+source file and ordinal, while the synthetic feature and backfill-session declarations use the
+feature directory. The importer scans only for that literal marker to avoid writing a duplicate on
+a later run.
 
 ## Records
 

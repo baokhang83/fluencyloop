@@ -253,8 +253,39 @@ import_session() {
     flush_knowledge
 }
 
-while IFS= read -r -d '' session_file; do
-    import_session "$session_file"
-done < <(find "$LEGACY_ROOT" -mindepth 3 -maxdepth 3 -type f -path '*/sessions/*.md' -print0)
+import_feature() {
+    local feature_dir="$1" sessions_dir session_file
+    FEATURE="$(basename "$feature_dir")"
+    STORE="$(feature_store_path "$FEATURE")"
+    SOURCE_BASE="$(repo_rel "$feature_dir")"
+    sessions_dir="$feature_dir/sessions"
+    [ -d "$sessions_dir" ] || return 0
+    if ! find "$sessions_dir" -mindepth 1 -maxdepth 1 -type f -name '*.md' -print -quit | grep -q .; then
+        return 0
+    fi
+    while IFS= read -r -d '' session_file; do
+        import_session "$session_file"
+    done < <(find "$sessions_dir" -mindepth 1 -maxdepth 1 -type f -name '*.md' -print0)
+
+    # Legacy Markdown proves that this feature existed, but it cannot truthfully reconstruct the
+    # original branch or a native 0.3 session declaration. Add one explicitly synthetic import
+    # session instead. The original decision/component/condition records keep their legacy session
+    # slugs, so their contemporaneous context remains intact.
+    FEATURE="$(basename "$feature_dir")"
+    STORE="$(feature_store_path "$FEATURE")"
+    SOURCE_BASE="$(repo_rel "$feature_dir")"
+    append_imported "$STORE" feature "$FEATURE" none "$SOURCE_BASE#feature" \
+        slug "$FEATURE" \
+        intent "Imported pre-0.3 session history." \
+        branch "legacy-import/$FEATURE" \
+        base_ref "legacy"
+    append_imported "$STORE" session "$FEATURE" 000-legacy-import "$SOURCE_BASE#backfill-session" \
+        slug 000-legacy-import \
+        intent "Backfill pre-0.3 session history."
+}
+
+while IFS= read -r -d '' feature_dir; do
+    import_feature "$feature_dir"
+done < <(find "$LEGACY_ROOT" -mindepth 1 -maxdepth 1 -type d -print0)
 
 $AUTO || echo "Imported $IMPORTED legacy record(s); skipped $SKIPPED."

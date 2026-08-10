@@ -1,6 +1,6 @@
 ---
 name: backfill
-description: 'FluencyLoop safety net. Reconstruct store records for work that shipped without going through the loop — reads a merged diff, records the feature, session, decisions, knowledge, and architectural concepts, then leaves reconstructed decisions unverified until independently confirmed. Use post-merge, or when the user says "fluencyloop backfill", "document this PR after the fact", or "we skipped the loop on this one".'
+description: 'FluencyLoop safety net. Reconstruct store records for work that shipped without going through the loop — reads a merged diff, records the feature, session, decisions, knowledge, and architectural concepts, and defaults reconstructed decisions to unverified. Use post-merge, or when the user says "fluencyloop backfill", "document this PR after the fact", or "we skipped the loop on this one".'
 ---
 
 # fluencyloop-backfill — reconstruct, make fluent, then flag
@@ -9,14 +9,13 @@ FluencyLoop never blocks a merge. The safety net for work that skipped the loop 
 **post-merge backfill**: it gives ad-hoc work a home retroactively. Backfilled rationale
 *usually* had no real-time teaching in FluencyLoop's format to force honesty, so it is the entry
 most at risk of plausible post-hoc fiction — which is why every backfilled entry is stamped
-`trust: ⚠ unverified` and **must pass a human before it lands**. (Sometimes a contemporaneous
-record *does* exist outside the loop — see step 1 — which strengthens, but does not replace, that
-review.)
+`trust: ⚠ unverified` by default. It lands immediately and never asks for a confirmation; a
+contemporaneous record can strengthen the reconstruction without changing that default.
 
 Backfill is not just bookkeeping. Its job is to recover the durable explanation of the
 components the work touched — the fluency the missing real-time loop never gave them. Record
 that explanation as the same feature, session, decision, knowledge, and concept records a live
-loop would write, then confirm reconstructed decisions one at a time.
+loop would write, while making uncertainty visible in the record rather than turning it into a conversation gate.
 
 ## Bundled CLI (Claude Code)
 
@@ -28,11 +27,10 @@ command.
 Do not hand-scaffold `.fluencyloop/`, `.claude/skills/`, designs, sessions, state, or helper
 scripts. The bundled CLI creates the deterministic files and returns their paths.
 
-## Question delivery — preserve the pause
+## Automatic trust handling
 
-For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has
-no equivalent question-form tool, so ask a concise standalone question in chat and stop; do not
-update an entry's trust marker until the developer answers.
+Backfill never asks for a trust confirmation. It records uncertainty as `trust: unverified`; only
+a later, volunteered correction may append a superseding `trust: verified` record.
 
 ## 1. Scope the work
 
@@ -72,7 +70,8 @@ field values are:
 - `alternative` — the plausible rejected option, if the code implies one; otherwise say the
   alternative is unknown rather than inventing a tidy story.
 - `constitution` — the principle it serves, by the **current** constitution's numbering (if a
-  cited source uses older numbers, map to current and note the drift for the human to confirm).
+  cited source uses older numbers, map it when the evidence is clear; otherwise omit it rather
+  than asking for confirmation.
 - `trust` — always **unverified** at this stage, with no exceptions.
 
 Create the feature + session to hold them:
@@ -108,10 +107,10 @@ fluencyloop knowledge \
   --gotcha "<subject>|<why it is this way or what breaks otherwise>"
 ```
 
-Then ask whether the already-shipped code establishes an architectural concept a new joiner would
-need explained. This is often more valuable in backfill than another decision: the code exists, so
-the transferable thing is how the product works. Capture only genuine concepts, never a ritual
-concept per feature:
+Decide from the already-shipped code whether it establishes an architectural concept a new joiner
+would need explained. This is often more valuable in backfill than another decision: the code
+exists, so the transferable thing is how the product works. Capture only genuine concepts, never a
+ritual concept per feature:
 
 ```bash
 fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...]
@@ -121,19 +120,20 @@ fluencyloop concept --relate "<from>|<to>|<kind>"
 Both commands append store records; neither creates Markdown. Keep their prose person-neutral:
 record what the code does and why, never anyone's competence or prior knowledge.
 
-## 4. Confirm corrections without rewriting history
+## 4. Correct later without rewriting history
 
-Do not ask for a blanket "looks good." If the developer can independently verify or correct a
-reconstructed decision, append a new `fluencyloop decision` record with the same `title` and
-`where` identity, the confirmed or corrected values, and `--trust verified` when they can vouch
-for it firsthand. A later line supersedes the earlier unverified record on read; never edit or
-delete the original JSONL line. If they cannot verify it, leave the existing `trust: unverified`
-record honest.
+Do not ask for trust confirmation. If the developer later volunteers an independent verification
+or correction, append a new `fluencyloop decision` record with the same `title` and `where`
+identity, the corrected values, and `--trust verified` when they can vouch for it firsthand. A
+later line supersedes the earlier unverified record on read; never edit or delete the original
+JSONL line. Otherwise, leave the existing `trust: unverified` record honest.
 
 ## Rules
 
 - **Every backfilled decision defaults to `trust: unverified`.** It was reconstructed after the
   fact and must not overstate what was independently checked.
+- **No trust prompts.** Record uncertainty automatically; only a later volunteered correction may
+  supersede it with `trust: verified`.
 - **Store parity, no Markdown.** Use `fluencyloop decision`, `fluencyloop knowledge`, and
   `fluencyloop concept` so a backfilled feature reads exactly like a live one; never hand-write a
   journal, design, or other Markdown artifact.

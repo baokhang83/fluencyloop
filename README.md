@@ -31,7 +31,15 @@ For normal-sized work, the practical path is **init → feature → review**. Fo
 run **plan** first, then repeat **feature → review** for each task in its roadmap.
 
 If work was merged without the loop, use `/fluencyloop:backfill` in Claude Code or
-`$fluencyloop:backfill` in Codex to reconstruct and verify its design and decisions.
+`$fluencyloop:backfill` in Codex to reconstruct its design and decisions. Reconstructed decisions
+are recorded as unverified by default; verification is optional and never blocks the backfill.
+
+### Moving from 0.2
+
+Install 0.3 normally, then continue working. On the first FluencyLoop command in a 0.2 project,
+the plugin silently imports legacy session history into the append-only store. There is no separate
+migration command or trust-confirmation step to run. The original Markdown remains in place as a
+read-only compatibility fallback.
 
 ## What it gives you
 

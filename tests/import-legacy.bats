@@ -28,7 +28,7 @@ setup() {
     printf '%b\n' '- **trust:** \342\234\223 verified' >> "$LEGACY"
 }
 
-@test "imports full and minimal decisions, both trust values, and skips malformed blocks" {
+@test "imports full and minimal decisions plus one explicit legacy declaration pair" {
     run bash "$BIN/import-legacy.sh"
     [ "$status" -eq 0 ]
     [[ "$output" == *"Warning: skipped malformed legacy record"* ]]
@@ -37,8 +37,10 @@ setup() {
 import json, sys
 with open(sys.argv[1], encoding='utf-8') as fh:
     records = [json.loads(line) for line in fh]
-assert len(records) == 2, records
-full, minimal = records
+assert len(records) == 4, records
+full, minimal = [record for record in records if record['type'] == 'decision']
+feature = next(record for record in records if record['type'] == 'feature')
+session = next(record for record in records if record['type'] == 'session')
 assert full['title'] == 'choose an LRU cache'
 assert full['where'] == 'src/cache.js'
 assert full['why'] == 'memory must stay bounded'
@@ -51,9 +53,17 @@ assert minimal['trust'] == 'unverified'
 for field in ('alternative', 'design', 'constitution'):
     assert field not in minimal, (field, minimal)
 for n, record in enumerate(records, 1):
-    assert record['feature'] == '001-add-caching'
-    assert record['session'] == '001-wire-cache'
-    assert record['imported_from'].endswith(f'#decision-{n}')
+    if record['type'] == 'decision':
+        assert record['feature'] == '001-add-caching'
+        assert record['session'] == '001-wire-cache'
+        assert record['imported_from'].endswith(f'#decision-{n}')
+assert feature['slug'] == '001-add-caching'
+assert feature['branch'] == 'legacy-import/001-add-caching'
+assert feature['base_ref'] == 'legacy'
+assert feature['imported_from'].endswith('#feature')
+assert session['slug'] == '000-legacy-import'
+assert session['intent'] == 'Backfill pre-0.3 session history.'
+assert session['imported_from'].endswith('#backfill-session')
 PY
 }
 
@@ -71,6 +81,39 @@ PY
     run bash "$BIN/check.sh" --json
     [ "$status" -eq 0 ]
     [ -f "$STORE" ]
+}
+
+@test "a normal command repairs a store imported before declaration records existed" {
+    mkdir -p "$(dirname "$STORE")"
+    printf '%s\n' '{"schema_version":"1","type":"decision","ts":"2026-08-09","feature":"001-add-caching","session":"001-wire-cache","commit":"abc","title":"choose an LRU cache","where":"src/cache.js","why":"memory must stay bounded","trust":"verified","imported_from":"docs/fluencyloop/features/001-add-caching/sessions/001-wire-cache.md#decision-1"}' > "$STORE"
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    records = [json.loads(line) for line in fh]
+assert sum(record['type'] == 'feature' for record in records) == 1, records
+assert sum(record['type'] == 'session' and record['slug'] == '000-legacy-import' for record in records) == 1, records
+assert sum(record['type'] == 'decision' and record['title'] == 'choose an LRU cache' for record in records) == 1, records
+PY
+}
+
+@test "automatic repair leaves a native feature declaration with a legacy slug alone" {
+    mkdir -p "$(dirname "$STORE")"
+    printf '%s\n' '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"001-add-caching","session":"none","commit":"abc","slug":"001-add-caching","intent":"native 0.3 work","branch":"feature/001-add-caching","base_ref":"dev"}' > "$STORE"
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    records = [json.loads(line) for line in fh]
+assert len(records) == 1, records
+assert records[0]['intent'] == 'native 0.3 work', records
+PY
 }
 
 # The four cases below are regressions found by running the importer against a real 47-feature

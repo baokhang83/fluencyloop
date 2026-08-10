@@ -34,29 +34,39 @@ Describe 'import-legacy.ps1' {
         [System.IO.File]::WriteAllText($script:legacy, $text + "`n", (New-Object System.Text.UTF8Encoding($false)))
     }
 
-    It 'imports full and minimal decisions, both trust values, and skips malformed blocks' {
+    It 'imports full and minimal decisions plus one explicit legacy declaration pair' {
         (Invoke-FlExit 'import-legacy.ps1') | Should -Be 0
         (Invoke-FlAll 'import-legacy.ps1') | Should -Match 'Warning: skipped malformed legacy record'
 
         $records = @([System.IO.File]::ReadAllLines($script:store) | ForEach-Object { $_ | ConvertFrom-Json })
-        $records.Count | Should -Be 2
-        $records[0].title | Should -Be 'choose an LRU cache'
-        $records[0].where | Should -Be 'src/cache.js'
-        $records[0].why | Should -Be 'memory must stay bounded'
-        $records[0].alternative | Should -Be 'unbounded map - rejected: leaks'
-        $records[0].design | Should -Be '../design.md#cache'
-        $records[0].constitution | Should -Be 'section-2'
-        $records[0].trust | Should -Be 'verified'
-        $records[1].title | Should -Be 'cache failures remain visible'
-        $records[1].trust | Should -Be 'unverified'
+        $records.Count | Should -Be 4
+        $decisions = @($records | Where-Object { $_.type -eq 'decision' })
+        $feature = $records | Where-Object { $_.type -eq 'feature' }
+        $session = $records | Where-Object { $_.type -eq 'session' }
+        $decisions[0].title | Should -Be 'choose an LRU cache'
+        $decisions[0].where | Should -Be 'src/cache.js'
+        $decisions[0].why | Should -Be 'memory must stay bounded'
+        $decisions[0].alternative | Should -Be 'unbounded map - rejected: leaks'
+        $decisions[0].design | Should -Be '../design.md#cache'
+        $decisions[0].constitution | Should -Be 'section-2'
+        $decisions[0].trust | Should -Be 'verified'
+        $decisions[1].title | Should -Be 'cache failures remain visible'
+        $decisions[1].trust | Should -Be 'unverified'
         foreach ($field in @('alternative', 'design', 'constitution')) {
-            $records[1].PSObject.Properties.Name | Should -Not -Contain $field
+            $decisions[1].PSObject.Properties.Name | Should -Not -Contain $field
         }
-        for ($i = 0; $i -lt $records.Count; $i++) {
-            $records[$i].feature | Should -Be '001-add-caching'
-            $records[$i].session | Should -Be '001-wire-cache'
-            $records[$i].imported_from | Should -Match "#decision-$($i + 1)$"
+        for ($i = 0; $i -lt $decisions.Count; $i++) {
+            $decisions[$i].feature | Should -Be '001-add-caching'
+            $decisions[$i].session | Should -Be '001-wire-cache'
+            $decisions[$i].imported_from | Should -Match "#decision-$($i + 1)$"
         }
+        $feature.slug | Should -Be '001-add-caching'
+        $feature.branch | Should -Be 'legacy-import/001-add-caching'
+        $feature.base_ref | Should -Be 'legacy'
+        $feature.imported_from | Should -Match '#feature$'
+        $session.slug | Should -Be '000-legacy-import'
+        $session.intent | Should -Be 'Backfill pre-0.3 session history.'
+        $session.imported_from | Should -Match '#backfill-session$'
     }
 
     It 'leaves the legacy markdown untouched and a second run byte-identical' {
@@ -73,6 +83,35 @@ Describe 'import-legacy.ps1' {
         $j = (& $script:PwshExe -NoProfile -File "$script:Bin/check.ps1" '--json') | ConvertFrom-Json
         $j.fluency | Should -Be $true
         Test-Path -LiteralPath $script:store | Should -BeTrue
+    }
+
+    It 'a normal command repairs a store imported before declaration records existed' {
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $script:store) | Out-Null
+        [System.IO.File]::WriteAllText($script:store,
+            '{"schema_version":"1","type":"decision","ts":"2026-08-09","feature":"001-add-caching","session":"001-wire-cache","commit":"abc","title":"choose an LRU cache","where":"src/cache.js","why":"memory must stay bounded","trust":"verified","imported_from":"docs/fluencyloop/features/001-add-caching/sessions/001-wire-cache.md#decision-1"}' + [Environment]::NewLine,
+            (New-Object System.Text.UTF8Encoding($false)))
+
+        $j = (& $script:PwshExe -NoProfile -File "$script:Bin/check.ps1" '--json') | ConvertFrom-Json
+        $j.fluency | Should -Be $true
+
+        $records = @([System.IO.File]::ReadAllLines($script:store) | ForEach-Object { $_ | ConvertFrom-Json })
+        @($records | Where-Object { $_.type -eq 'feature' }).Count | Should -Be 1
+        @($records | Where-Object { $_.type -eq 'session' -and $_.slug -eq '000-legacy-import' }).Count | Should -Be 1
+        @($records | Where-Object { $_.type -eq 'decision' -and $_.title -eq 'choose an LRU cache' }).Count | Should -Be 1
+    }
+
+    It 'automatic repair leaves a native feature declaration with a legacy slug alone' {
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $script:store) | Out-Null
+        [System.IO.File]::WriteAllText($script:store,
+            '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"001-add-caching","session":"none","commit":"abc","slug":"001-add-caching","intent":"native 0.3 work","branch":"feature/001-add-caching","base_ref":"dev"}' + [Environment]::NewLine,
+            (New-Object System.Text.UTF8Encoding($false)))
+
+        $j = (& $script:PwshExe -NoProfile -File "$script:Bin/check.ps1" '--json') | ConvertFrom-Json
+        $j.fluency | Should -Be $true
+
+        $records = @([System.IO.File]::ReadAllLines($script:store) | ForEach-Object { $_ | ConvertFrom-Json })
+        $records.Count | Should -Be 1
+        $records[0].intent | Should -Be 'native 0.3 work'
     }
 
     # The five cases below are regressions found by running the importer against a real 47-feature
