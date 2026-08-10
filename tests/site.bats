@@ -230,39 +230,6 @@ PY
     [[ "$output" == *'href="/"'* ]]
 }
 
-@test "site presents dated record cards with concept filters" {
-    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
-    setup_initialized_repo
-    store="$TESTREPO/docs/fluencyloop/store/features/topic-filter.jsonl"
-    mkdir -p "$(dirname "$store")" "$TESTREPO/docs/fluencyloop/store"
-    printf '%s\n' '{"schema_version":"1","type":"feature","ts":"2026-08-11","feature":"topic-filter","session":"none","commit":"abcdef123","slug":"topic-filter","intent":"make project records scannable","branch":"feature/topic-filter","base_ref":"dev"}' >> "$store"
-    printf '%s\n' '{"schema_version":"1","type":"feature","ts":"2026-08-10","feature":"unlinked","session":"none","commit":"uncommitted","slug":"unlinked","intent":"remain visible until a topic is selected","branch":"feature/unlinked","base_ref":"dev"}' >> "$store"
-    printf '%s\n' '{"schema_version":"1","type":"decision","ts":"2026-08-12","feature":"topic-filter","session":"001","commit":"fedcba987","title":"filter on concepts","where":"site","why":"topics make the record easier to scan"}' >> "$store"
-    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-11","feature":"topic-filter","session":"001","commit":"abcdef123","name":"topic filter","problem":"find connected work","how":"filter cards in place","realized_by":"site"}' >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
-    printf '%s\n' '{"schema_version":"1","type":"relation","ts":"2026-08-11","feature":"topic-filter","session":"001","commit":"abcdef123","from":"topic filter","to":"topic-filter","kind":"realized_by"}' >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
-    start_site --port 0
-
-    run request /
-    [ "$status" -eq 0 ]
-    [[ "$output" == *'data-topic-collection'* ]]
-    [[ "$output" == *'data-topic-filter="topic-filter"'* ]]
-    [[ "$output" == *'data-topic-card data-topics="topic-filter"'* ]]
-    [[ "$output" == *'Recorded <time datetime="2026-08-12">2026-08-12</time>'* ]]
-    [[ "$output" == *'<code title="Commit fedcba987">fedcba9</code>'* ]]
-
-    run request /features
-    [ "$status" -eq 0 ]
-    [[ "$output" == *'class="topic-badge'* ]]
-    [[ "$output" == *'data-topics=""'* ]]
-    [[ "$output" == *'Uncommitted'* ]]
-
-    run request /assets/site.js
-    [ "$status" -eq 0 ]
-    [[ "$output" == *'function installTopicFilters()'* ]]
-    [[ "$output" == *'card.hidden = !matches'* ]]
-    [[ "$output" == *'connected to this concept.'* ]]
-}
-
 @test "site serves its visual layer locally with theme and motion safeguards" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo
@@ -283,8 +250,6 @@ PY
     [[ "$output" == *'url("/assets/fonts/dm-sans.woff2")'* ]]
     [[ "$output" == *"prefers-reduced-motion"* ]]
     [[ "$output" == *"overflow-x: hidden"* ]]
-    [[ "$output" == *".record-card"* ]]
-    [[ "$output" == *".topic-filter"* ]]
 
     run python3 - "$SITE_URL/assets/fonts/dm-sans.woff2" <<'PY'
 import sys

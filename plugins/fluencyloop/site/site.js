@@ -140,34 +140,6 @@ function renderDiagram(figure) {
   }
 }
 
-function installTopicFilters() {
-  document.querySelectorAll('[data-topic-collection]').forEach((collection) => {
-    const cards = [...collection.querySelectorAll('[data-topic-card]')];
-    const controls = [...collection.querySelectorAll('[data-topic-filter]')];
-    const status = collection.querySelector('[data-topic-status]');
-    if (!controls.length || !cards.length) return;
-
-    const applyFilter = (topic) => {
-      let shown = 0;
-      cards.forEach((card) => {
-        const matches = topic === 'all' || (card.dataset.topics || '').split(' ').includes(topic);
-        card.hidden = !matches;
-        if (matches) shown += 1;
-      });
-      controls.forEach((control) => {
-        const active = control.dataset.topicFilter === topic;
-        control.setAttribute('aria-pressed', String(active));
-      });
-      if (status) status.textContent = topic === 'all'
-        ? `${shown} record${shown === 1 ? '' : 's'} shown.`
-        : `${shown} record${shown === 1 ? '' : 's'} connected to this concept.`;
-    };
-
-    controls.forEach((control) => control.addEventListener('click', () => applyFilter(control.dataset.topicFilter)));
-    applyFilter('all');
-  });
-}
-
 // Keep personal presentation preferences in the browser, never in the project store.
 (() => {
   const root = document.documentElement;
@@ -203,6 +175,5 @@ function installTopicFilters() {
   });
 
   requestAnimationFrame(() => { document.body.dataset.motion = 'ready'; });
-  installTopicFilters();
   document.querySelectorAll('.diagram[data-mermaid]').forEach(renderDiagram);
 })();
