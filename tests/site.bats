@@ -28,7 +28,10 @@ start_site() {
     SITE_LOG="$BATS_TEST_TMPDIR/fluencyloop-site-${RANDOM}.log"
     bash "$DIST/fluencyloop" site "$@" >"$SITE_LOG" 2>&1 &
     SITE_PID=$!
-    for attempt in $(seq 1 100); do
+    # Git Bash runners occasionally take longer than the nominal ten seconds to launch their
+    # first Node process after a repository setup. Polling remains cheap when it starts normally,
+    # but give that cold start a deterministic 30-second window instead of a timing-dependent fail.
+    for attempt in $(seq 1 300); do
         if grep -q '^FluencyLoop site: http://127.0.0.1:' "$SITE_LOG"; then
             SITE_URL="$(sed -n 's/^FluencyLoop site: //p' "$SITE_LOG")"
             return 0
