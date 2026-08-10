@@ -136,6 +136,20 @@ identity, the corrected values, and `--trust verified` when they can vouch for i
 later line supersedes the earlier unverified record on read; never edit or delete the original
 JSONL line. Otherwise, leave the existing `trust: unverified` record honest.
 
+## 5. Recommend one distillation pass after the reconstruction settles
+
+After the decisions, knowledge, and concepts are settled, recommend one bounded distillation
+pass. Do not create a turn-by-turn summary while reconstructing: the store already preserves the
+evidence and the individual decision rationale. Start with `docs/fluencyloop/distillations/product.md`
+when the recovered history makes the product's problem, shape, or major flow legible. Then add
+feature deltas for the most consequential backfilled features and concept explanations only where
+the store's problem/how fields are not enough for a reader to hold the model. Do not distill
+individual decisions.
+
+Keep the prose person-neutral and product-level. This is the same wrap-up pass used by a live
+feature, delayed until the reconstructed record is stable rather than omitted because the work was
+backfilled.
+
 ## Rules
 
 - **Every backfilled decision defaults to `trust: unverified`.** It was reconstructed after the

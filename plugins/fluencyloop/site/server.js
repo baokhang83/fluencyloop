@@ -34,6 +34,9 @@ const SITE_ASSETS = {
 };
 // How many tag colours the palette cycles through before repeating.
 const TAG_TONES = 8;
+// A broad, cross-cutting feature can inherit many tags from its concepts. Catalogue rows should
+// remain skimmable; its detail page still shows the complete vocabulary.
+const CATALOG_TAG_LIMIT = 4;
 const IDENTITY_FIELDS = {
   feature: ['slug'],
   session: ['feature', 'slug'],
@@ -658,11 +661,27 @@ function recordMeta(record) {
   return `<div class="record-meta">${date}${commit}</div>`;
 }
 
-function tagList(tags) {
+// `clickable` renders each tag as the same data-tag-filter button the toolbar chips use, so a
+// row's tags plug straight into installCatalogFilters()'s existing [data-tag-filter] wiring with
+// no separate handler — clicking a row's tag filters the catalog exactly like clicking it in the
+// toolbar. Detail-page headers (outside any [data-catalog]) stay plain static chips: a
+// data-tag-filter button there would look clickable but do nothing, since no catalog script runs
+// on that page to wire it up.
+function tagList(tags, clickable = false, limit = Infinity) {
   if (!tags || !tags.length) return '';
-  return `<ul class="tag-list">${tags
-    .map((tag) => `<li><span class="tag tone-${tag.tone}" data-tag="${escapeHtml(tag.slug)}">${escapeHtml(tag.name)}</span></li>`)
-    .join('')}</ul>`;
+  const visibleTags = tags.slice(0, limit);
+  const hiddenTags = tags.slice(limit);
+  const overflow = hiddenTags.length
+    ? `<li><span class="tag-overflow" title="Also tagged: ${escapeHtml(hiddenTags.map((tag) => tag.name).join(', '))}">+${hiddenTags.length} more</span></li>`
+    : '';
+  if (!clickable) {
+    return `<ul class="tag-list">${visibleTags
+      .map((tag) => `<li><span class="tag tone-${tag.tone}" data-tag="${escapeHtml(tag.slug)}">${escapeHtml(tag.name)}</span></li>`)
+      .join('')}${overflow}</ul>`;
+  }
+  return `<ul class="tag-list">${visibleTags
+    .map((tag) => `<li><button type="button" class="tag tag-button tone-${tag.tone}" data-tag-filter="${escapeHtml(tag.slug)}" aria-pressed="false">${escapeHtml(tag.name)}</button></li>`)
+    .join('')}${overflow}</ul>`;
 }
 
 function recordRow(item) {
@@ -672,7 +691,7 @@ function recordRow(item) {
     <div class="record-body">
       <h3 class="record-title">${item.href ? link(item.href, item.title) : escapeHtml(item.title)}</h3>
       ${item.summary ? `<p class="record-summary">${escapeHtml(item.summary)}</p>` : ''}
-      ${tagList(tags)}
+      ${tagList(tags, true, CATALOG_TAG_LIMIT)}
     </div>
     ${recordMeta(item.record)}
   </li>`;

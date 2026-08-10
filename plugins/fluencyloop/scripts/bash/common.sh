@@ -59,7 +59,7 @@ require_fluency() {
 # Bump this when a legacy parser correction can recover records that an earlier importer skipped.
 # It gives already-migrated repositories one automatic, idempotent repair pass without running the
 # full legacy scan on every normal command thereafter.
-LEGACY_IMPORT_REVISION=2
+LEGACY_IMPORT_REVISION=3
 
 legacy_import_revision_path() {
     printf '%s/.legacy-import-revision' "$(store_dir)"

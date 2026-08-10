@@ -353,7 +353,7 @@ PY
         >> "$TESTREPO/docs/fluencyloop/store/features/unlinked.jsonl"
     printf '%s\n' '{"schema_version":"1","type":"decision","ts":"2026-08-12","feature":"tag-filter","session":"001","commit":"fedcba987","title":"filter on tags","where":"site","why":"tags make the record easier to scan"}' \
         >> "$TESTREPO/docs/fluencyloop/store/features/tag-filter.jsonl"
-    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-11","feature":"tag-filter","session":"001","commit":"abcdef123","name":"supersede on read","problem":"find connected work","how":"filter cards in place","realized_by":"site","tags":"append-only log\nevent sourcing"}' \
+    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-11","feature":"tag-filter","session":"001","commit":"abcdef123","name":"supersede on read","problem":"find connected work","how":"filter cards in place","realized_by":"site","tags":"append-only log\nevent sourcing\nfaceted search\nread model\nstatic site"}' \
         >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
     printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-11","feature":"global","session":"none","commit":"abcdef123","name":"untagged idea","problem":"stay renderable without a tag","how":"omit the field"}' \
         >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
@@ -366,21 +366,25 @@ PY
     [[ "$output" == *'data-catalog'* ]]
     [[ "$output" == *'data-tag-filter="append-only-log"'* ]]
     [[ "$output" == *'data-tag-filter="event-sourcing"'* ]]
-    [[ "$output" == *'class="tag tone-0" data-tag="append-only-log"'* ]]
-    [[ "$output" == *'class="tag tone-1" data-tag="event-sourcing"'* ]]
-    [[ "$output" == *'data-record-row data-tags="append-only-log event-sourcing"'* ]]
+    # Tags inside a catalog row reuse the toolbar's filter button contract; a click filters
+    # without navigating away. Dense rows cap visible chips while retaining all filter metadata.
+    [[ "$output" == *'class="tag tag-button tone-0" data-tag-filter="append-only-log"'* ]]
+    [[ "$output" == *'class="tag tag-button tone-1" data-tag-filter="event-sourcing"'* ]]
+    [[ "$output" == *'data-record-row data-tags="append-only-log event-sourcing faceted-search read-model static-site"'* ]]
+    [[ "$output" == *'+1 more</span>'* ]]
     # A concept without --tag still renders: tags are optional, never a hard requirement.
     [[ "$output" == *"untagged idea"* ]]
 
     run request /features
     [ "$status" -eq 0 ]
-    [[ "$output" == *'data-tags="append-only-log event-sourcing"'* ]]
+    [[ "$output" == *'data-tags="append-only-log event-sourcing faceted-search read-model static-site"'* ]]
     [[ "$output" == *'<time class="record-date" datetime="2026-08-11" title="Recorded 2026-08-11">2026-08-11</time>'* ]]
     [[ "$output" == *'data-record-row data-tags=""'* ]]
 
     run request /decisions/tag-filter/001/site/filter%20on%20tags
     [ "$status" -eq 0 ]
     [[ "$output" == *'class="tag tone-0" data-tag="append-only-log"'* ]]
+    [[ "$output" == *'class="tag tone-4" data-tag="static-site"'* ]]
 }
 
 @test "site serves its visual layer locally with theme and motion safeguards" {
