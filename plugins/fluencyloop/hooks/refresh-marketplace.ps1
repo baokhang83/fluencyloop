@@ -24,8 +24,21 @@ if ($null -eq $hostKind) {
     exit 0
 }
 
-# Start the reader quietly only for an initialized project. The first FluencyLoop skill response
-# owns the user-visible URL because hook output is not consistently surfaced by either host.
+$hookEvent = if ($args -contains '--session-end') { 'session-end' } else { 'session-start' }
+$sessionId = $null
+try {
+    $payload = [Console]::In.ReadToEnd()
+    if (-not [string]::IsNullOrWhiteSpace($payload)) {
+        $candidate = [string](($payload | ConvertFrom-Json -ErrorAction Stop).session_id)
+        if ($candidate -match '^[A-Za-z0-9._-]{1,256}$') { $sessionId = $candidate }
+    }
+} catch {
+    $sessionId = $null
+}
+
+# A SessionStart lease keeps the reader alive even when no browser has requested it recently.
+# SessionEnd removes only its own lease: two agents can use the same initialized project without
+# either closing the other agent’s reader.
 function Ensure-LocalSite {
     $launcher = Join-Path $pluginDir 'fluencyloop.ps1'
     if (-not (Test-Path -LiteralPath $launcher -PathType Leaf)) { return }
@@ -36,7 +49,29 @@ function Ensure-LocalSite {
     # The dispatcher uses `exit`; run it in a child host so it cannot skip this hook's marketplace
     # refresh below.
     $hostExe = (Get-Process -Id $PID).Path
-    & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --json *> $null
+    if ($sessionId) {
+        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --session-start $sessionId --json *> $null
+    } else {
+        # Retain compatibility with hosts that do not pass a hook payload.
+        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --json *> $null
+    }
+}
+
+function Release-LocalSite {
+    if (-not $sessionId) { return }
+    $launcher = Join-Path $pluginDir 'fluencyloop.ps1'
+    if (-not (Test-Path -LiteralPath $launcher -PathType Leaf)) { return }
+    $root = (& git rev-parse --show-toplevel 2>$null | Select-Object -First 1)
+    $gitExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+    if ($gitExitCode -ne 0 -or -not $root) { return }
+    if (-not (Test-Path -LiteralPath (Join-Path $root '.fluencyloop') -PathType Container)) { return }
+    $hostExe = (Get-Process -Id $PID).Path
+    & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --session-end $sessionId --json *> $null
+}
+
+if ($hookEvent -eq 'session-end') {
+    Release-LocalSite
+    exit 0
 }
 
 Ensure-LocalSite

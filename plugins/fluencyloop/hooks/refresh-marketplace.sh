@@ -19,18 +19,49 @@ else
     exit 0
 fi
 
-# A session opened in an initialized project should already have its local reader by the time the
-# developer asks the assistant anything. The hook is deliberately silent: host hook output is not
-# reliably shown to the developer, and Node is optional. The skill announces a successful URL in
-# the first real FluencyLoop interaction instead.
+HOOK_EVENT="${1:---session-start}"
+# Both Codex and Claude Code supply a JSON hook payload on stdin. Session IDs are only used as
+# opaque, user-local lease keys; reject unexpected characters before passing one to the CLI.
+read_hook_session_id() {
+    local input session_id
+    input="$(cat 2>/dev/null || true)"
+    session_id="$(printf '%s' "$input" | tr '\n' ' ' | sed -nE 's/.*"session_id"[[:space:]]*:[[:space:]]*"([A-Za-z0-9._-]+)".*/\1/p' | head -n 1)"
+    [ "${#session_id}" -le 256 ] || session_id=""
+    printf '%s' "$session_id"
+}
+SESSION_ID="$(read_hook_session_id)"
+
+# A SessionStart lease keeps the reader alive even when no browser has requested it recently.
+# SessionEnd removes only its own lease: two agents can use the same initialized project without
+# either closing the other agent’s reader.
 ensure_local_site() {
     local root launcher
     launcher="$PLUGIN_DIR/fluencyloop"
     [ -x "$launcher" ] || return 0
     root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
     [ -n "$root" ] && [ -d "$root/.fluencyloop" ] || return 0
-    (cd "$root" && "$launcher" site --ensure --json >/dev/null 2>&1) || true
+    if [ -n "$SESSION_ID" ]; then
+        (cd "$root" && "$launcher" site --session-start "$SESSION_ID" --json >/dev/null 2>&1) || true
+    else
+        # Retain compatibility with hosts that do not pass a hook payload.
+        (cd "$root" && "$launcher" site --ensure --json >/dev/null 2>&1) || true
+    fi
 }
+
+release_local_site() {
+    local root launcher
+    [ -n "$SESSION_ID" ] || return 0
+    launcher="$PLUGIN_DIR/fluencyloop"
+    [ -x "$launcher" ] || return 0
+    root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+    [ -n "$root" ] && [ -d "$root/.fluencyloop" ] || return 0
+    (cd "$root" && "$launcher" site --session-end "$SESSION_ID" --json >/dev/null 2>&1) || true
+}
+
+if [ "$HOOK_EVENT" = "--session-end" ]; then
+    release_local_site
+    exit 0
+fi
 
 ensure_local_site
 

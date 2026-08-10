@@ -14,7 +14,7 @@ Describe 'FluencyLoop SessionStart hook' {
         Remove-Item Env:SITE_CALLS -ErrorAction SilentlyContinue
     }
 
-    It 'ensures a managed site only after FluencyLoop is initialized' {
+    It 'acquires and releases a managed-site lease for an initialized project session' {
         $script:repo = Initialize-TestRepo
         $pluginRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("fl-plugin-" + [guid]::NewGuid().ToString('N'))
         $calls = Join-Path ([System.IO.Path]::GetTempPath()) ("fl-site-calls-" + [guid]::NewGuid().ToString('N'))
@@ -23,9 +23,11 @@ Describe 'FluencyLoop SessionStart hook' {
         $env:PLUGIN_ROOT = $pluginRoot
         $env:SITE_CALLS = $calls
         try {
-            & $script:PwshExe -NoProfile -File $script:Hook
+            '{"session_id":"codex-session"}' | & $script:PwshExe -NoProfile -File $script:Hook
             $LASTEXITCODE | Should -Be 0
-            (Get-Content -LiteralPath $calls -Raw).Trim() | Should -Be 'site --ensure --json'
+            '{"session_id":"codex-session"}' | & $script:PwshExe -NoProfile -File $script:Hook --session-end
+            $LASTEXITCODE | Should -Be 0
+            (Get-Content -LiteralPath $calls -Raw).Trim() | Should -Be "site --session-start codex-session --json`nsite --session-end codex-session --json"
         } finally {
             Remove-Item -Recurse -Force -LiteralPath $pluginRoot -ErrorAction SilentlyContinue
             Remove-Item -Force -LiteralPath $calls -ErrorAction SilentlyContinue
