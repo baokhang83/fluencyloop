@@ -180,8 +180,10 @@ PY
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo
     export FLUENCYLOOP_HOME="$BATS_TEST_TMPDIR/managed-home-$RANDOM"
-    export FLUENCYLOOP_SITE_IDLE_MS=100
-    export FLUENCYLOOP_SITE_IDLE_CHECK_MS=20
+    # The child receives its first lease at spawn time. A one-millisecond idle window makes the
+    # former parent/child lease hand-off race fail deterministically instead of only on slow CI.
+    export FLUENCYLOOP_SITE_IDLE_MS=1
+    export FLUENCYLOOP_SITE_IDLE_CHECK_MS=1
     MANAGED_SITE=true
 
     run bash "$DIST/fluencyloop" site --session-start codex-session --json
