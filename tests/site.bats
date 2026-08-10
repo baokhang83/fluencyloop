@@ -173,6 +173,47 @@ PY
     [ "$(git status --porcelain)" = "$before" ]
 }
 
+@test "managed site stays up for concurrent agent sessions, then idles after the last one ends" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    export FLUENCYLOOP_HOME="$BATS_TEST_TMPDIR/managed-home-$RANDOM"
+    export FLUENCYLOOP_SITE_IDLE_MS=100
+    export FLUENCYLOOP_SITE_IDLE_CHECK_MS=20
+    MANAGED_SITE=true
+
+    run bash "$DIST/fluencyloop" site --session-start codex-session --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["session_count"] == 1,d'
+
+    run bash "$DIST/fluencyloop" site --session-start claude-session --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["session_count"] == 2,d'
+
+    sleep 0.3
+    run bash "$DIST/fluencyloop" site --status --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["session_count"] == 2,d'
+
+    run bash "$DIST/fluencyloop" site --session-end codex-session --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["session_count"] == 1,d'
+
+    sleep 0.3
+    run bash "$DIST/fluencyloop" site --status --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["session_count"] == 1,d'
+
+    run bash "$DIST/fluencyloop" site --session-end claude-session --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["session_count"] == 0,d'
+
+    sleep 0.3
+    run bash "$DIST/fluencyloop" site --status --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert not d["running"],d'
+    MANAGED_SITE=false
+}
+
 @test "managed site falls forward from busy port 44444 without killing its owner" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo

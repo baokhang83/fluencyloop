@@ -39,7 +39,7 @@ assert codex_plugin["skills"] == "./skills/"
 
 hooks = json.loads(read_text(dist / "hooks" / "hooks.json"))
 handler, = hooks["hooks"]["SessionStart"][0]["hooks"]
-assert hooks["hooks"]["SessionStart"][0]["matcher"] == "startup"
+assert hooks["hooks"]["SessionStart"][0]["matcher"] == "startup|resume"
 assert handler["type"] == "command"
 assert 'plugin_root="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"' in handler["command"]
 assert "CLAUDE_PLUGIN_ROOT" in handler["commandWindows"]
@@ -53,6 +53,10 @@ assert "ensure_local_site" in read_text(dist / "hooks" / "refresh-marketplace.sh
 assert "site --ensure --json" in read_text(dist / "hooks" / "refresh-marketplace.sh")
 assert "Ensure-LocalSite" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
 assert "site --ensure --json" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
+end_handler, = hooks["hooks"]["SessionEnd"][0]["hooks"]
+assert end_handler["type"] == "command"
+assert "--session-end" in end_handler["command"]
+assert "--session-end" in end_handler["commandWindows"]
 
 for alias, source in {
     "plan": "plan",
@@ -300,6 +304,26 @@ PY
     run cat "$calls"
     [ "$status" -eq 0 ]
     [ "$output" = 'site --ensure --json' ]
+}
+
+@test "session hooks acquire and release a site lease from the host session id" {
+    local plugin_root="$BATS_TEST_TMPDIR/local-plugin"
+    local calls="$BATS_TEST_TMPDIR/site-calls"
+    mkdir -p "$plugin_root"
+    printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" >> "$SITE_CALLS"\n' > "$plugin_root/fluencyloop"
+    chmod +x "$plugin_root/fluencyloop"
+    setup_initialized_repo
+
+    run bash -c 'printf "%s" "{\"session_id\":\"codex-session\"}" | env PLUGIN_ROOT="$1" SITE_CALLS="$2" bash "$3"' \
+        _ "$plugin_root" "$calls" "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    run bash -c 'printf "%s" "{\"session_id\":\"codex-session\"}" | env PLUGIN_ROOT="$1" SITE_CALLS="$2" bash "$3" --session-end' \
+        _ "$plugin_root" "$calls" "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+
+    run cat "$calls"
+    [ "$status" -eq 0 ]
+    [ "$output" = $'site --session-start codex-session --json\nsite --session-end codex-session --json' ]
 }
 
 @test "startup hook does not ensure a site in a non-FluencyLoop repository" {

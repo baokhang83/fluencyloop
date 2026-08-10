@@ -11,9 +11,15 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
+function positiveMillisecondsFromEnvironment(name, fallback) {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 const DEFAULT_PORT = 4173;
 const MANAGED_DEFAULT_PORT = 44444;
-const MANAGED_IDLE_MS = 2 * 60 * 60 * 1000;
+const MANAGED_IDLE_MS = positiveMillisecondsFromEnvironment('FLUENCYLOOP_SITE_IDLE_MS', 2 * 60 * 60 * 1000);
+const MANAGED_IDLE_CHECK_MS = positiveMillisecondsFromEnvironment('FLUENCYLOOP_SITE_IDLE_CHECK_MS', 60 * 1000);
 const MANAGED_TOUCH_INTERVAL_MS = 30 * 1000;
 const MANAGED_START_TIMEOUT_MS = 5000;
 const SITE_VERSION = fs.existsSync(path.join(__dirname, '..', 'VERSION'))
@@ -50,15 +56,22 @@ function usage(message) {
 function parseArgs(argv) {
   const options = {
     root: '', port: DEFAULT_PORT, portSpecified: false, ensure: false, status: false, stop: false, json: false,
+    sessionStart: '', sessionEnd: '',
     managedState: '', managedId: '', managedStartup: '',
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--root' || arg === '--port' || arg === '--managed-state' || arg === '--managed-id' || arg === '--managed-startup') {
+    if (arg === '--root' || arg === '--port' || arg === '--managed-state' || arg === '--managed-id' || arg === '--managed-startup'
+      || arg === '--session-start' || arg === '--session-end') {
       const value = argv[index + 1];
       if (!value) throw new Error(`${arg} needs a value`);
       index += 1;
       if (arg === '--root') options.root = path.resolve(value);
+      else if (arg === '--session-start' || arg === '--session-end') {
+        if (!/^[A-Za-z0-9._-]{1,256}$/.test(value)) throw new Error(`${arg} needs a safe session identifier`);
+        if (arg === '--session-start') options.sessionStart = value;
+        else options.sessionEnd = value;
+      }
       else if (arg === '--managed-state') options.managedState = path.resolve(value);
       else if (arg === '--managed-id') options.managedId = value;
       else if (arg === '--managed-startup') options.managedStartup = value;
@@ -77,8 +90,8 @@ function parseArgs(argv) {
     }
   }
   if (!options.root) throw new Error('the project root is required');
-  if ([options.ensure, options.status, options.stop].filter(Boolean).length > 1) {
-    throw new Error('choose only one of --ensure, --status, or --stop');
+  if ([options.ensure, options.status, options.stop, options.sessionStart, options.sessionEnd].filter(Boolean).length > 1) {
+    throw new Error('choose only one lifecycle action');
   }
   return options;
 }
@@ -217,8 +230,20 @@ function resultFor(metadata, extra = {}) {
     running: Boolean(metadata),
     url: metadata ? metadata.url : null,
     port: metadata ? metadata.port : null,
+    session_count: metadata && metadata.sessions ? Object.keys(metadata.sessions).length : 0,
     ...extra,
   };
+}
+
+function recordSession(metadata, sessionId) {
+  if (!sessionId) return;
+  if (!metadata.sessions || typeof metadata.sessions !== 'object' || Array.isArray(metadata.sessions)) metadata.sessions = {};
+  metadata.sessions[sessionId] = Date.now();
+}
+
+function hasActiveSessions(metadata) {
+  return Boolean(metadata && metadata.sessions && typeof metadata.sessions === 'object'
+    && !Array.isArray(metadata.sessions) && Object.keys(metadata.sessions).length > 0);
 }
 
 async function currentManagedSite(root, paths) {
@@ -286,10 +311,11 @@ function spawnManagedSite(root, paths, requestedPort) {
   return startup;
 }
 
-async function ensureManagedSite(root, paths, requestedPort) {
+async function ensureManagedSite(root, paths, requestedPort, sessionId = '') {
   return withSiteLock(paths, async () => {
     let metadata = await currentManagedSite(root, paths);
     if (metadata && metadata.version === SITE_VERSION) {
+      recordSession(metadata, sessionId);
       metadata.last_activity = Date.now();
       writeJsonAtomically(paths.state, metadata);
       return resultFor(metadata, { reused: true });
@@ -310,11 +336,28 @@ async function ensureManagedSite(root, paths, requestedPort) {
     while (Date.now() < deadline) {
       metadata = metadataFor(root, paths);
       if (metadata && metadata.startup === startup && await probeSite(metadata)) {
+        recordSession(metadata, sessionId);
+        writeJsonAtomically(paths.state, metadata);
         return resultFor(metadata, { reused: false });
       }
       await sleep(50);
     }
     throw new Error('managed site did not start before the timeout');
+  });
+}
+
+async function releaseManagedSession(root, paths, sessionId) {
+  return withSiteLock(paths, async () => {
+    const metadata = await currentManagedSite(root, paths);
+    if (!metadata) return resultFor(null, { released: false });
+    if (metadata.sessions && typeof metadata.sessions === 'object' && !Array.isArray(metadata.sessions)) {
+      delete metadata.sessions[sessionId];
+    }
+    // The final lease release begins the regular idle countdown, rather than making the reader
+    // disappear the moment an agent closes a session.
+    metadata.last_activity = Date.now();
+    writeJsonAtomically(paths.state, metadata);
+    return resultFor(metadata, { released: true });
   });
 }
 
@@ -891,13 +934,14 @@ function createServer(root, managed = null) {
     }
     try {
       const pathname = new URL(request.url, 'http://127.0.0.1').pathname;
-      touchManagedActivity(managed);
       if (pathname === '/health') {
         const health = { status: 'ok' };
         if (managed) health.site_id = managed.id;
         send(response, 200, 'application/json; charset=utf-8', request.method === 'HEAD' ? '' : JSON.stringify(health) + '\n');
         return;
       }
+      // Lifecycle probes use /health; they must not extend the site's idle timer.
+      touchManagedActivity(managed);
       const asset = SITE_ASSETS[pathname];
       if (asset) {
         const source = request.method === 'HEAD' ? '' : fs.readFileSync(path.join(__dirname, asset.file), asset.encoding ? 'utf8' : undefined);
@@ -977,6 +1021,7 @@ function recordManagedStart(root, managed, port) {
     url: 'http://127.0.0.1:' + port,
     version: SITE_VERSION,
     last_activity: Date.now(),
+    sessions: {},
   };
   ensureManagedDirectory({ directory: path.dirname(managed.state) });
   writeJsonAtomically(managed.state, metadata);
@@ -987,12 +1032,13 @@ function manageIdleLifetime(server, managed) {
   const interval = setInterval(() => {
     const metadata = readJson(managed.state);
     if (!metadata || metadata.id !== managed.id || metadata.pid !== process.pid) return;
+    if (hasActiveSessions(metadata)) return;
     if (Date.now() - Number(metadata.last_activity || 0) < MANAGED_IDLE_MS) return;
     server.close(() => {
       removeManagedState(managed);
       process.exit(0);
     });
-  }, 60 * 1000);
+  }, MANAGED_IDLE_CHECK_MS);
   interval.unref();
 }
 
@@ -1033,14 +1079,16 @@ try {
 if (options) {
   const root = canonicalRoot(options.root);
   const paths = managedPaths(root);
-  const manager = options.ensure || options.status || options.stop;
-  const operation = options.ensure
-    ? ensureManagedSite(root, paths, options.portSpecified ? options.port : MANAGED_DEFAULT_PORT)
+  const manager = options.ensure || options.status || options.stop || options.sessionStart || options.sessionEnd;
+  const operation = options.ensure || options.sessionStart
+    ? ensureManagedSite(root, paths, options.portSpecified ? options.port : MANAGED_DEFAULT_PORT, options.sessionStart)
     : options.status
       ? currentManagedSite(root, paths).then((metadata) => resultFor(metadata, { reused: Boolean(metadata) }))
       : options.stop
         ? stopManagedSite(root, paths)
-        : start(root, options.port, managedConfiguration(options));
+        : options.sessionEnd
+          ? releaseManagedSession(root, paths, options.sessionEnd)
+          : start(root, options.port, managedConfiguration(options));
   operation.then((result) => {
     if (manager) printManagedResult(result, options.json);
   }).catch((error) => {

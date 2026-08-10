@@ -93,6 +93,7 @@ the acceptance criteria and the tests; this document carries the reasoning.
 | F5 | Model-chosen diagrams, rendered in the site | [#93](https://github.com/baokhang83/fluencyloop/issues/93) | 4 | D1, F2 |
 | F6 | Managed local-site service | [#123](https://github.com/baokhang83/fluencyloop/issues/123) | 5 | F1, F2 |
 | F7 | Autostart and announce the local site | [#124](https://github.com/baokhang83/fluencyloop/issues/124) | 5 | F6 |
+| F8 | Keep the managed site alive for active agent sessions | [#129](https://github.com/baokhang83/fluencyloop/issues/129) | 5 | F7 |
 | G1 | Release 0.3 | [#94](https://github.com/baokhang83/fluencyloop/issues/94) | 5 | everything |
 
 ### Track A — Store
@@ -278,6 +279,13 @@ initialized FluencyLoop repository. At the first FluencyLoop interaction, the sk
 actual URL once. Hook output is not relied on for the announcement; Node remains optional and
 missing Node is a quiet no-op.
 
+**F8 · Keep the managed site alive for active agent sessions** · `type:bugfix` · S · needs F7
+
+SessionStart acquires a user-local site lease keyed by the host session, and SessionEnd releases
+only that lease. The reader ignores its idle timer while one or more Claude Code or Codex sessions
+remain active in the initialized project, then resumes its regular inactivity expiry after the last
+session ends.
+
 ### Track G — Ship
 
 **G1 · Release 0.3** · `type:infra` · M · needs everything
@@ -293,12 +301,12 @@ covering what stops being written and what the importer does. Single fast-forwar
 | 1 — store | A1, A2 | nothing else can start; A2 is the schema every other track writes against |
 | 2 — capture | A3, A4, A5, A6, A8 · B1 · F1 | the loop fills the store; markdown generation stops |
 | 3 — meaning | A7, B2, C1, D1, E1 | the store gains the levels above a decision |
-| 4 — reading | F2, F3, F4, F5, F6, F7 | the site renders what phases 2–3 produced, is ready when a session opens, and is worth opening |
+| 4 — reading | F2, F3, F4, F5, F6, F7, F8 | the site renders what phases 2–3 produced, is ready when a session opens, and is worth opening |
 | 5 — ship | G1 | single fast-forward promotion `dev` → `main` |
 
 ### Critical path
 
-**A1 → A2 → A5 → D1 → (F3 ‖ F5) → F6 → F7 → G1**
+**A1 → A2 → A5 → D1 → (F3 ‖ F5) → F6 → F7 → F8 → G1**
 
 The chain runs through *meaning*, not through the server. The site's two most valuable levels — the
 product overview and the architectural concepts — cannot exist until concepts are captured (**A5**)

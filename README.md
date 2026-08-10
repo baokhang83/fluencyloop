@@ -171,7 +171,8 @@ rest of the loop.
 When a Claude Code or Codex session opens in an initialized project with Node available,
 FluencyLoop quietly starts its local reader and reports the exact loopback URL at the first
 FluencyLoop interaction. It prefers `http://127.0.0.1:44444` and safely uses the next port when
-that one is busy.
+that one is busy. The reader stays available while one or more agent sessions are active in that
+project, then returns to its normal inactivity timeout after the final session ends.
 
 ## More detail
 
