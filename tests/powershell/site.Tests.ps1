@@ -37,7 +37,7 @@ Describe 'fluencyloop site' {
             '{"schema_version":"1","type":"decision","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","title":"deep-route","where":"site","why":"the dispatcher shares the bundled reader"}'
         ), [System.Text.UTF8Encoding]::new($false))
         [System.IO.File]::WriteAllLines((Join-Path $storeDir 'concepts.jsonl'), @(
-            '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","name":"PowerShell concept","problem":"verify the Windows entry point","how":"serve the same local routes","realized_by":"fluencyloop.ps1"}',
+            '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","name":"PowerShell concept","problem":"verify the Windows entry point","how":"serve the same local routes","realized_by":"fluencyloop.ps1","tags":"native dispatch"}',
             '{"schema_version":"1","type":"relation","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","from":"PowerShell concept","to":"ps-navigation","kind":"realized_by"}'
         ), [System.Text.UTF8Encoding]::new($false))
         [System.IO.File]::WriteAllLines((Join-Path $distillationDir 'product.md'), @(
@@ -92,11 +92,10 @@ Describe 'fluencyloop site' {
         $styles.StatusCode | Should -Be 200
         $styles.Headers['Content-Type'] | Should -Match 'text/css'
         $styles.Content | Should -Not -Match 'http://|https://'
-        $styles.Content | Should -Match '@font-face'
+        # The reader ships no bundled typeface: it sets type in the system UI font.
+        $styles.Content | Should -Not -Match '@font-face'
 
-        $font = Invoke-WebRequest -Uri "$url/assets/fonts/dm-sans.woff2" -UseBasicParsing
-        $font.StatusCode | Should -Be 200
-        $font.Headers['Content-Type'] | Should -Match 'font/woff2'
+        { Invoke-WebRequest -Uri "$url/assets/fonts/dm-sans.woff2" -UseBasicParsing } | Should -Throw -ExpectedMessage '*404*'
 
         $scripts = Invoke-WebRequest -Uri "$url/assets/site.js" -UseBasicParsing
         $scripts.StatusCode | Should -Be 200
@@ -112,6 +111,7 @@ Describe 'fluencyloop site' {
         $conceptPage.StatusCode | Should -Be 200
         $conceptPage.Content | Should -Match 'PowerShell concept'
         $conceptPage.Content | Should -Match 'href="/features/ps-navigation"'
+        $conceptPage.Content | Should -Match 'class="tag tone-0" data-tag="native-dispatch"'
 
         $featurePage = Invoke-WebRequest -Uri "$url/features/ps-navigation" -UseBasicParsing
         $featurePage.StatusCode | Should -Be 200

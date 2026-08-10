@@ -344,12 +344,18 @@ visible; the journal is its durable byproduct.
      it to the global concept stream. Do this selectively, never once per feature as a ritual:
 
      ```bash
-     fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...]
+     fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...] [--tag "<well-known concept>" ...]
      fluencyloop concept --relate "<from>|<to>|<kind>"
      ```
 
      Re-stating a name records the refined concept; use relations to connect concepts to each
      other, their realizing components, or the feature that changed them.
+
+     Add one to three `--tag` values naming the widely-known ideas the concept is an instance of —
+     at most three words each, naming the general pattern rather than restating the concept
+     (`append-only log`, `event sourcing`, `read model`, `idempotency`, `cache invalidation`). The
+     concept name is this product's own vocabulary, which a newcomer has never seen; the tags are
+     what lets them attach it to something they already know, and are what the local site filters on.
 
 4. **Log the engagement signal** *(cheap: one append, no level-guessing)*. Levels *adapt from
    demonstrated engagement* — you don't hand-edit them each slice. For each decision you just

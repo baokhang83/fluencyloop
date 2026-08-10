@@ -72,6 +72,30 @@ assert r["realized_by"].splitlines() == ["src/cache.js", "CacheClient"]
 '
 }
 
+@test "repeated --tag values join into one newline-delimited field" {
+    concept --name "read through cache" --problem "avoid repeated remote reads" \
+        --how "read the cache first" --realized-by "src/cache.js" \
+        --tag "read-through cache" --tag "cache-aside"
+
+    [ "$(wc -l < "$STORE")" -eq 1 ]
+    last_record | python3 -c '
+import json, sys
+r = json.load(sys.stdin)
+assert r["tags"].splitlines() == ["read-through cache", "cache-aside"]
+'
+}
+
+@test "omitting --tag writes no tags field, not an empty one" {
+    concept --name "read through cache" --problem "avoid repeated remote reads" \
+        --how "read the cache first" --realized-by "src/cache.js"
+
+    last_record | python3 -c '
+import json, sys
+r = json.load(sys.stdin)
+assert "tags" not in r
+'
+}
+
 @test "appends relations even when their concepts are unknown" {
     run concept --relate "unknown concept|CacheClient|realized_by"
     [ "$status" -eq 0 ]

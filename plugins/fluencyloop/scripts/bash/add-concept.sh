@@ -4,7 +4,8 @@
 # the irreducible explanation; this script assembles the schema record and never reads JSONL.
 #
 # Usage: add-concept.sh --name <name> --problem <problem> --how <how> \
-#          --realized-by <component|file|area> [--realized-by <...> ...]
+#          --realized-by <component|file|area> [--realized-by <...> ...] \
+#          [--tag <well-known concept>] [--tag <...> ...]
 #        add-concept.sh --relate <from|to|kind> [--relate <...> ...]
 
 set -euo pipefail
@@ -14,13 +15,14 @@ source "$SCRIPT_DIR/common.sh"
 require_fluency
 
 NAME=""; PROBLEM=""; HOW=""
-declare -a REALIZED_BY=() RELATIONS=()
+declare -a REALIZED_BY=() TAGS=() RELATIONS=()
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --name) shift; NAME="${1:-}" ;;
         --problem) shift; PROBLEM="${1:-}" ;;
         --how) shift; HOW="${1:-}" ;;
         --realized-by) shift; REALIZED_BY+=("${1:-}") ;;
+        --tag) shift; TAGS+=("${1:-}") ;;
         --relate) shift; RELATIONS+=("${1:-}") ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
@@ -36,6 +38,9 @@ if $CONCEPT_REQUESTED; then
     [ -n "${REALIZED_BY[*]-}" ] || { echo "Error: --realized-by is required for a concept." >&2; exit 1; }
 elif [ -n "${REALIZED_BY[*]-}" ]; then
     echo "Error: --realized-by requires --name, --problem, and --how." >&2
+    exit 1
+elif [ -n "${TAGS[*]-}" ]; then
+    echo "Error: --tag requires --name, --problem, and --how." >&2
     exit 1
 fi
 
@@ -55,11 +60,18 @@ STORE="$(concepts_store_path)"
 
 if $CONCEPT_REQUESTED; then
     REALIZED_LIST="$(IFS=$'\n'; printf '%s' "${REALIZED_BY[*]}")"
-    store_append_record "$STORE" concept "$FEATURE" "$SESSION" \
-        name "$NAME" \
-        problem "$PROBLEM" \
-        how "$HOW" \
+    declare -a CONCEPT_FIELDS=(
+        name "$NAME"
+        problem "$PROBLEM"
+        how "$HOW"
         realized_by "$REALIZED_LIST"
+    )
+    # Tags are optional, so an absent one leaves the field out entirely rather than writing an
+    # empty string: the schema asks writers to omit what they have nothing to say about.
+    if [ -n "${TAGS[*]-}" ]; then
+        CONCEPT_FIELDS+=(tags "$(IFS=$'\n'; printf '%s' "${TAGS[*]}")")
+    fi
+    store_append_record "$STORE" concept "$FEATURE" "$SESSION" "${CONCEPT_FIELDS[@]}"
 fi
 
 for relation in ${RELATIONS[@]+"${RELATIONS[@]}"}; do

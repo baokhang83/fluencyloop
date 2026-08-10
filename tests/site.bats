@@ -230,6 +230,46 @@ PY
     [[ "$output" == *'href="/"'* ]]
 }
 
+@test "site colors record cards by widely-known tags and filters records by them" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store/features"
+    printf '%s\n' '{"schema_version":"1","type":"feature","ts":"2026-08-11","feature":"tag-filter","session":"none","commit":"abcdef123","slug":"tag-filter","intent":"make project records scannable","branch":"feature/tag-filter","base_ref":"dev"}' \
+        >> "$TESTREPO/docs/fluencyloop/store/features/tag-filter.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"feature","ts":"2026-08-10","feature":"unlinked","session":"none","commit":"uncommitted","slug":"unlinked","intent":"remain visible until a tag is selected","branch":"feature/unlinked","base_ref":"dev"}' \
+        >> "$TESTREPO/docs/fluencyloop/store/features/unlinked.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"decision","ts":"2026-08-12","feature":"tag-filter","session":"001","commit":"fedcba987","title":"filter on tags","where":"site","why":"tags make the record easier to scan"}' \
+        >> "$TESTREPO/docs/fluencyloop/store/features/tag-filter.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-11","feature":"tag-filter","session":"001","commit":"abcdef123","name":"supersede on read","problem":"find connected work","how":"filter cards in place","realized_by":"site","tags":"append-only log\nevent sourcing"}' \
+        >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-11","feature":"global","session":"none","commit":"abcdef123","name":"untagged idea","problem":"stay renderable without a tag","how":"omit the field"}' \
+        >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"relation","ts":"2026-08-11","feature":"tag-filter","session":"001","commit":"abcdef123","from":"supersede on read","to":"tag-filter","kind":"realized_by"}' \
+        >> "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+    start_site --port 0
+
+    run request /concepts
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'data-catalog'* ]]
+    [[ "$output" == *'data-tag-filter="append-only-log"'* ]]
+    [[ "$output" == *'data-tag-filter="event-sourcing"'* ]]
+    [[ "$output" == *'class="tag tone-0" data-tag="append-only-log"'* ]]
+    [[ "$output" == *'class="tag tone-1" data-tag="event-sourcing"'* ]]
+    [[ "$output" == *'data-record-row data-tags="append-only-log event-sourcing"'* ]]
+    # A concept without --tag still renders: tags are optional, never a hard requirement.
+    [[ "$output" == *"untagged idea"* ]]
+
+    run request /features
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'data-tags="append-only-log event-sourcing"'* ]]
+    [[ "$output" == *'<time class="record-date" datetime="2026-08-11" title="Recorded 2026-08-11">2026-08-11</time>'* ]]
+    [[ "$output" == *'data-record-row data-tags=""'* ]]
+
+    run request /decisions/tag-filter/001/site/filter%20on%20tags
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'class="tag tone-0" data-tag="append-only-log"'* ]]
+}
+
 @test "site serves its visual layer locally with theme and motion safeguards" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo
@@ -246,21 +286,25 @@ PY
     [ "$status" -eq 0 ]
     [[ "$output" == *":root[data-theme=\"light\"]"* ]]
     [[ "$output" == *":root[data-theme=\"dark\"]"* ]]
-    [[ "$output" == *"@font-face"* ]]
-    [[ "$output" == *'url("/assets/fonts/dm-sans.woff2")'* ]]
     [[ "$output" == *"prefers-reduced-motion"* ]]
     [[ "$output" == *"overflow-x: hidden"* ]]
+    # The reader ships no bundled typeface: it sets type in the system UI font, so no @font-face
+    # or font asset should be served at all.
+    [[ "$output" != *"@font-face"* ]]
 
     run python3 - "$SITE_URL/assets/fonts/dm-sans.woff2" <<'PY'
 import sys
+import urllib.error
 import urllib.request
 
-with urllib.request.urlopen(sys.argv[1]) as response:
-    assert response.status == 200
-    assert response.headers["Content-Type"].startswith("font/woff2")
-    assert len(response.read()) > 1000
+try:
+    urllib.request.urlopen(sys.argv[1])
+    print("unexpectedly served")
+except urllib.error.HTTPError as error:
+    print(error.status)
 PY
     [ "$status" -eq 0 ]
+    [[ "$output" == *"404"* ]]
 
     run request /
     [ "$status" -eq 0 ]
