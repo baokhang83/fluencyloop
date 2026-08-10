@@ -61,7 +61,7 @@ function Get-FlLegacyImportedFeatureCount {
     }
     return $count
 }
-function Get-FlLegacyImportedFeatureSlugs {
+function Get-FlLegacyImportedFeatureSlug {
     $features = "$(FlStoreDir)/features"
     if (-not (Test-Path -LiteralPath $features -PathType Container)) { return @() }
     return @(
@@ -73,7 +73,7 @@ function Get-FlLegacyImportedFeatureSlugs {
 }
 function Get-FlLegacySemanticAssessmentCount {
     $count = 0
-    foreach ($feature in @(Get-FlLegacyImportedFeatureSlugs)) {
+    foreach ($feature in @(Get-FlLegacyImportedFeatureSlug)) {
         $store = FlFeatureStorePath $feature
         if (Select-String -LiteralPath $store -Pattern ('"type":"semantic_assessment".*"semantic_migration_revision":"' + $script:FlLegacySemanticMigrationRevision + '"') -Quiet) { $count++ }
     }
@@ -84,9 +84,9 @@ function Get-FlLegacyArchitecturalRecordCount {
     if (-not (Test-Path -LiteralPath $store -PathType Leaf)) { return 0 }
     return @([System.IO.File]::ReadAllLines($store) | Where-Object { $_ -match '"type":"concept"' }).Count
 }
-function Get-FlLegacySemanticUnassessedFeatures {
+function Get-FlLegacySemanticUnassessedFeature {
     $missing = @()
-    foreach ($feature in @(Get-FlLegacyImportedFeatureSlugs)) {
+    foreach ($feature in @(Get-FlLegacyImportedFeatureSlug)) {
         $store = FlFeatureStorePath $feature
         if (-not (Select-String -LiteralPath $store -Pattern ('"type":"semantic_assessment".*"semantic_migration_revision":"' + $script:FlLegacySemanticMigrationRevision + '"') -Quiet)) { $missing += $feature }
     }

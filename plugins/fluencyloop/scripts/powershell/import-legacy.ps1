@@ -25,8 +25,8 @@ if ($semanticStatus) {
     if ($auto) { [Console]::Error.WriteLine('Error: --auto cannot be combined with --semantic-status.'); exit 1 }
     if ($markSemanticComplete) { [Console]::Error.WriteLine('Error: --semantic-status and --mark-semantic-complete cannot be combined.'); exit 1 }
     if ($assessFeature -or $assessSummary) { [Console]::Error.WriteLine('Error: --semantic-status cannot be combined with --assess.'); exit 1 }
-    $imported = @(Get-FlLegacyImportedFeatureSlugs)
-    $unassessed = @(Get-FlLegacySemanticUnassessedFeatures)
+    $imported = @(Get-FlLegacyImportedFeatureSlug)
+    $unassessed = @(Get-FlLegacySemanticUnassessedFeature)
     $architecturalRecords = Get-FlLegacyArchitecturalRecordCount
     if ($json) { [pscustomobject]@{ imported_features = $imported; unassessed_features = $unassessed; architectural_records = $architecturalRecords } | ConvertTo-Json -Compress }
     else {
@@ -62,7 +62,7 @@ if ($markSemanticComplete) {
     $count = Get-FlLegacyImportedFeatureCount
     if ($count -eq 0) { [Console]::Error.WriteLine('Error: no imported legacy features are available to mark.'); exit 1 }
     $assessed = Get-FlLegacySemanticAssessmentCount
-    $missing = @(Get-FlLegacySemanticUnassessedFeatures)
+    $missing = @(Get-FlLegacySemanticUnassessedFeature)
     if ($missing.Count -gt 0) { [Console]::Error.WriteLine("Error: semantic migration is incomplete: assessed $assessed of $count imported feature(s). Missing: $($missing -join ',')."); exit 1 }
     $architecturalRecords = Get-FlLegacyArchitecturalRecordCount
     if ($architecturalRecords -eq 0) { [Console]::Error.WriteLine('Error: semantic migration is incomplete: no evidence-backed architectural records were recorded.'); exit 1 }
