@@ -76,6 +76,31 @@ real-time teaching happened" when it did. Only a genuine from-nothing reconstruc
 blind-backfill framing. Such a log is also the best raw material for a rich knowledge-transfer
 record (step 4).
 
+### Legacy repository migration
+
+When automatic import has found a pre-0.3 history (feature records carry `imported_from` and
+`docs/fluencyloop/features/` contains multiple historical feature directories), the default scope
+is **every imported feature**, not the current branch or the first plausible release. Enumerate
+those feature directories in a stable order, read their imported decisions and knowledge plus the
+relevant history, and examine every one before reporting migration complete. Only use a narrower
+scope when the developer explicitly names one PR, commit range, or feature.
+
+The importer has already declared each historical feature and its `000-legacy-import` session.
+Do **not** call `fluencyloop feature` or `fluencyloop session` for them: those commands create or
+switch branches. Attribute concrete reconstructed records directly to the existing imported
+session instead:
+
+```bash
+fluencyloop decision --feature "<legacy-slug>" --session 000-legacy-import ...
+fluencyloop knowledge --feature "<legacy-slug>" --session 000-legacy-import ...
+fluencyloop concept --feature "<legacy-slug>" --session 000-legacy-import ...
+```
+
+Every legacy feature must be assessed, but not every feature merits a new architectural record.
+Skip unsupported records rather than inventing a concept per feature. At completion, report the
+number of imported features examined and the decisions, knowledge records, concepts, and relations
+actually added; never call a one-feature reconstruction a completed repository migration.
+
 ## 2. Assemble records before writing
 
 Do the evidence work first. Before running `fluencyloop feature`, `fluencyloop session`, or any
@@ -96,8 +121,9 @@ Each command has a complete minimum payload:
 - concept: `--name`, `--problem`, `--how`, and at least one `--realized-by`; or a complete
   `--relate "from|to|kind"`.
 
-Only after that plan exists, create the feature and session and append the concrete records. This
-keeps an evidence-free reconstruction from changing branches or leaving an empty session behind.
+Only after that plan exists, create the feature and session for a new backfill, or use the existing
+legacy target above, then append the concrete records. This keeps an evidence-free reconstruction
+from changing branches or leaving an empty session behind.
 
 ## 3. Reconstruct — carefully
 

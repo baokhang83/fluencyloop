@@ -6,6 +6,7 @@
 # Usage: add-concept.sh --name <name> --problem <problem> --how <how> \
 #          --realized-by <component|file|area> [--realized-by <...> ...] \
 #          [--tag <well-known concept>] [--tag <...> ...]
+#          [--feature <feature-slug> --session <session-slug-or-legacy-path>]
 #        add-concept.sh --relate <from|to|kind> [--relate <...> ...]
 
 set -euo pipefail
@@ -14,7 +15,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 require_fluency
 
-NAME=""; PROBLEM=""; HOW=""
+NAME=""; PROBLEM=""; HOW=""; FEATURE_OVERRIDE=""; SESSION_OVERRIDE=""; TARGET_OVERRIDE=false
 declare -a REALIZED_BY=() TAGS=() RELATIONS=()
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -24,6 +25,8 @@ while [ "$#" -gt 0 ]; do
         --realized-by) shift; REALIZED_BY+=("${1:-}") ;;
         --tag) shift; TAGS+=("${1:-}") ;;
         --relate) shift; RELATIONS+=("${1:-}") ;;
+        --feature) shift; FEATURE_OVERRIDE="${1:-}"; TARGET_OVERRIDE=true ;;
+        --session) shift; SESSION_OVERRIDE="${1:-}"; TARGET_OVERRIDE=true ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
     shift
@@ -49,10 +52,17 @@ if ! $CONCEPT_REQUESTED && [ -z "${RELATIONS[*]-}" ]; then
     exit 1
 fi
 
-FEATURE="$(state_get feature)"
+if $TARGET_OVERRIDE && { [ -z "$FEATURE_OVERRIDE" ] || [ -z "$SESSION_OVERRIDE" ]; }; then
+    echo "Error: --feature and --session must be used together for a historical record." >&2
+    exit 1
+fi
+
+FEATURE="$FEATURE_OVERRIDE"
+[ -n "$FEATURE" ] || FEATURE="$(state_get feature)"
 [ -n "$FEATURE" ] || FEATURE="$(current_feature_slug)"
 [ -n "$FEATURE" ] || FEATURE="global"
-SESSION="$(state_get last_session)"
+SESSION="$SESSION_OVERRIDE"
+[ -n "$SESSION" ] || SESSION="$(state_get last_session)"
 SESSION="${SESSION##*/}"
 SESSION="${SESSION%.md}"
 [ -n "$SESSION" ] || SESSION="none"

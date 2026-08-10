@@ -61,4 +61,17 @@ Describe 'add-knowledge.ps1' {
         (Invoke-FlAll 'add-knowledge.ps1' '--component' 'cache|keeps values|after a miss') | Should -Match 'no active session'
         @([System.IO.File]::ReadAllLines($script:store)).Count | Should -Be 2
     }
+
+    It 'targets an imported feature without changing branch state' {
+        (Invoke-FlExit 'add-knowledge.ps1' '--feature' 'legacy-caching' '--session' '000-legacy-import' `
+            '--component' 'cache reader|serves entries|during a cache hit') | Should -Be 0
+        $store = "$script:repo/docs/fluencyloop/store/features/legacy-caching.jsonl"
+        $record = ([System.IO.File]::ReadAllLines($store) | Select-Object -Last 1) | ConvertFrom-Json
+        $record.feature | Should -Be 'legacy-caching'
+        $record.session | Should -Be '000-legacy-import'
+    }
+
+    It 'requires both historical target flags' {
+        (Invoke-FlExit 'add-knowledge.ps1' '--feature' 'legacy-caching' '--component' 'cache|keeps values|after a miss') | Should -Not -Be 0
+    }
 }

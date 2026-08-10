@@ -87,4 +87,17 @@ Describe 'add-concept.ps1' {
         $record.feature | Should -Be '001-add-caching'
         $record.session | Should -Be '001-wire-the-cache'
     }
+
+    It 'attributes a concept to an imported feature without changing branch state' {
+        (Invoke-FlExit 'add-concept.ps1' '--feature' 'legacy-caching' '--session' '000-legacy-import' `
+            '--name' 'bounded cache history' '--problem' 'retain useful values without indefinite growth' `
+            '--how' 'the cache keeps a bounded set of entries' '--realized-by' 'src/cache.js') | Should -Be 0
+        $record = ([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json
+        $record.feature | Should -Be 'legacy-caching'
+        $record.session | Should -Be '000-legacy-import'
+    }
+
+    It 'requires both historical target flags' {
+        (Invoke-FlExit 'add-concept.ps1' '--feature' 'legacy-caching' '--relate' 'a|b|uses') | Should -Not -Be 0
+    }
 }

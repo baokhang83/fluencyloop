@@ -111,3 +111,23 @@ assert r["feature"] == "001-add-caching"
 assert r["session"] == "001-wire-the-cache"
 '
 }
+
+@test "can attribute a record to a legacy feature without changing branch state" {
+    run concept --feature "legacy-caching" --session "000-legacy-import" \
+        --name "bounded cache history" --problem "retain useful values without indefinite growth" \
+        --how "the legacy cache keeps a bounded set of entries" --realized-by "src/cache.js"
+    [ "$status" -eq 0 ]
+    last_record | python3 -c '
+import json, sys
+r = json.load(sys.stdin)
+assert r["feature"] == "legacy-caching"
+assert r["session"] == "000-legacy-import"
+'
+    [ "$(git branch --show-current)" = "feature/001-add-caching" ]
+}
+
+@test "requires both historical target flags" {
+    run concept --feature "legacy-caching" --relate "a|b|uses"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"--feature and --session"* ]]
+}
