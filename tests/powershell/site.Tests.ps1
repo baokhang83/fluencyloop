@@ -107,7 +107,7 @@ Describe 'fluencyloop site' {
         $data.Headers['Content-Type'] | Should -Match 'application/json'
         ($data.Content | ConvertFrom-Json).project | Should -Not -BeNullOrEmpty
 
-        $conceptPage = Invoke-WebRequest -Uri "$url/concepts/powershell-concept" -UseBasicParsing
+        $conceptPage = Invoke-WebRequest -Uri "$url/records/powershell-concept" -UseBasicParsing
         $conceptPage.StatusCode | Should -Be 200
         $conceptPage.Content | Should -Match 'PowerShell concept'
         $conceptPage.Content | Should -Match 'href="/features/ps-navigation"'

@@ -594,7 +594,7 @@ function buildNavigation(data) {
 }
 
 function conceptPath(concept) {
-  return `/concepts/${encodeURIComponent(concept.slug || slugFor(concept.name))}`;
+  return `/records/${encodeURIComponent(concept.slug || slugFor(concept.name))}`;
 }
 
 function featurePath(feature) {
@@ -731,7 +731,7 @@ function filterableCatalog(tags, items, emptyMessage) {
 
 function conceptItem(concept) {
   return {
-    label: 'Concept',
+    label: 'Record',
     title: concept.name,
     href: conceptPath(concept),
     summary: concept.problem,
@@ -783,7 +783,7 @@ function layout(data, title, body, crumbs = []) {
       <nav aria-label="Primary">
         <a class="site-mark" href="/" aria-label="Product overview">FL</a>
         <span class="project-name">${escapeHtml(data.project)}</span>
-        <span class="nav-links">${link('/', 'Overview')}${link('/concepts', 'Concepts')}${link('/features', 'Features')}</span>
+        <span class="nav-links">${link('/', 'Overview')}${link('/records', 'Records')}${link('/features', 'Features')}</span>
         <button type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">Theme</button>
       </nav>
       ${breadcrumb}
@@ -810,8 +810,8 @@ function renderProduct(data) {
   const concepts = recordList(
     newestFirst(navigation.concepts.map(conceptItem)),
     navigation.hasCapturedHistoryWithoutConcepts
-      ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
-      : 'No architectural concepts have been recorded yet. Capture one with fluencyloop concept.',
+      ? 'No architectural records have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize the architecture, or capture one directly with fluencyloop concept.'
+      : 'No architectural records have been recorded yet. Capture one with fluencyloop concept.',
   );
   const features = recordList(newestFirst(navigation.features.map(featureItem)), 'No features have been recorded yet.');
   const overview = navigation.product
@@ -825,7 +825,7 @@ function renderProduct(data) {
   return layout(data, 'Product overview', `
     <header class="record-header"><p class="eyebrow">Product overview</p><h1>${escapeHtml(data.project)}</h1></header>
     <section><h2>Technical overview</h2>${overview}</section>
-    <section><h2>Architectural concepts</h2>${concepts}</section>
+    <section><h2>Architectural records</h2>${concepts}</section>
     <section><h2>Features as deltas</h2>${features}</section>
     <section><h2>Initiative constraints</h2>${renderConstraints(navigation.requirements, navigation.openQuestions)}</section>
     <section><h2>Available distillations</h2>${distillations}</section>
@@ -836,13 +836,13 @@ function renderConceptList(data) {
   const concepts = data.navigation.concepts.length
     ? filterableCatalog(data.navigation.tags, newestFirst(data.navigation.concepts.map(conceptItem)), '')
     : emptyState(data.navigation.hasCapturedHistoryWithoutConcepts
-      ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
-      : 'No architectural concepts have been recorded yet. The product overview remains available while the store is empty.');
+      ? 'No architectural records have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize the architecture, or capture one directly with fluencyloop concept.'
+      : 'No architectural records have been recorded yet. The product overview remains available while the store is empty.');
   const relationships = data.navigation.relations.length
     ? `<ul class="relation-list">${data.navigation.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} <span class="relation-kind">${escapeHtml(relation.kind)}</span> &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
     : emptyState('No relationships have been recorded yet.');
-  return layout(data, 'Architectural concepts', `<h1>Architectural concepts</h1><section><h2>Concepts</h2>${concepts}</section><section><h2>Relationship graph</h2>${relationships}</section>`, [
-    { href: '/', label: 'Product overview' }, { label: 'Architectural concepts' },
+  return layout(data, 'Architectural records', `<h1>Architectural records</h1><section><h2>Records</h2>${concepts}</section><section><h2>Relationship graph</h2>${relationships}</section>`, [
+    { href: '/', label: 'Product overview' }, { label: 'Architectural records' },
   ]);
 }
 
@@ -858,27 +858,27 @@ function renderConcept(data, concept) {
   const realizedBy = String(concept.realized_by || '').split(/\r?\n/).filter(Boolean);
   const relationships = concept.relations.length
     ? `<ul class="relation-list">${concept.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} <span class="relation-kind">${escapeHtml(relation.kind)}</span> &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
-    : emptyState('This concept has no recorded relationships yet.');
+    : emptyState('This architectural record has no recorded relationships yet.');
   const features = recordList(
     newestFirst(concept.features.map((feature) => featureItem(data.navigation.features.find((item) => item.slug === feature.slug) || feature))),
     'No feature is currently linked to this concept.',
   );
   const explanation = concept.distillation
     ? markdown(concept.distillation.content)
-    : emptyState('No concept explanation has been distilled yet.');
+    : emptyState('No architectural record explanation has been distilled yet.');
   return layout(data, concept.name, `
     <header class="record-header">
-      <p class="eyebrow">Architectural concept</p>
+      <p class="eyebrow">Architectural record</p>
       <h1>${escapeHtml(concept.name)}</h1>
       ${tagList(concept.tags)}
       ${recordMeta(concept)}
     </header>
     <section><h2>Problem in this product</h2><p>${escapeHtml(concept.problem)}</p><h2>How it works</h2><p>${escapeHtml(concept.how)}</p>
     <h2>Realized by</h2>${realizedBy.length ? `<ul>${realizedBy.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : emptyState('No implementation area was recorded.')}</section>
-    <section><h2>Concept explanation</h2>${explanation}</section>
+    <section><h2>Architectural record explanation</h2>${explanation}</section>
     <section><h2>Relationships</h2>${relationships}</section>
-    <section><h2>Features that change this concept</h2>${features}</section>
-  `, [{ href: '/', label: 'Product overview' }, { href: '/concepts', label: 'Architectural concepts' }, { label: concept.name }]);
+    <section><h2>Features that change this record</h2>${features}</section>
+  `, [{ href: '/', label: 'Product overview' }, { href: '/records', label: 'Architectural records' }, { label: concept.name }]);
 }
 
 function renderFeatureList(data) {
@@ -895,7 +895,7 @@ function renderFeatureList(data) {
 function renderFeature(data, feature) {
   const concepts = recordList(
     newestFirst(feature.concepts.map((concept) => conceptItem(data.navigation.concepts.find((item) => item.name === concept.name) || concept))),
-    'This feature has no recorded concept links yet.',
+    'This feature has no linked architectural records yet.',
   );
   const decisions = recordList(
     newestFirst(feature.decisions.map((decision) => decisionItem(decision, feature.tags))),
@@ -913,7 +913,7 @@ function renderFeature(data, feature) {
     </header>
     ${feature.record && feature.record.intent ? `<p>${escapeHtml(feature.record.intent)}</p>` : ''}
     <section><h2>Feature delta</h2>${delta}</section>
-    <section><h2>Concepts changed</h2>${concepts}</section>
+    <section><h2>Architectural records changed</h2>${concepts}</section>
     <section><h2>Constraints for this feature</h2>${renderConstraints(feature.requirements, feature.openQuestions)}</section>
     <section><h2>Decisions</h2>${decisions}</section>
   `, [{ href: '/', label: 'Product overview' }, { href: '/features', label: 'Features' }, { label: feature.slug }]);
@@ -922,7 +922,7 @@ function renderFeature(data, feature) {
 function renderDecision(data, feature, decision) {
   const concepts = recordList(
     newestFirst(feature.concepts.map((concept) => conceptItem(data.navigation.concepts.find((item) => item.name === concept.name) || concept))),
-    'No concept link was recorded for this feature.',
+    'No architectural record link was recorded for this feature.',
   );
   return layout(data, decision.title, `
     <header class="record-header">
@@ -936,13 +936,18 @@ function renderDecision(data, feature, decision) {
       ${decision.alternative ? `<h2>Alternative rejected</h2><p>${escapeHtml(decision.alternative)}</p>` : ''}
       <h2>Where</h2><p><code>${escapeHtml(decision.where)}</code></p>
     </section>
-    <section class="detail-section"><h2>Concepts served</h2>${concepts}</section>
+    <section class="detail-section"><h2>Architectural records served</h2>${concepts}</section>
   `, [{ href: '/', label: 'Product overview' }, { href: '/features', label: 'Features' }, { href: featurePath(feature), label: feature.slug }, { label: decision.title }]);
 }
 
 function send(response, status, contentType, body) {
   response.writeHead(status, { 'Content-Type': contentType, 'Cache-Control': 'no-store' });
   response.end(body);
+}
+
+function redirect(response, location) {
+  response.writeHead(308, { Location: location, 'Cache-Control': 'no-store' });
+  response.end();
 }
 
 function createServer(root, managed = null) {
@@ -952,7 +957,8 @@ function createServer(root, managed = null) {
       return;
     }
     try {
-      const pathname = new URL(request.url, 'http://127.0.0.1').pathname;
+      const requestUrl = new URL(request.url, 'http://127.0.0.1');
+      const pathname = requestUrl.pathname;
       if (pathname === '/health') {
         const health = { status: 'ok' };
         if (managed) health.site_id = managed.id;
@@ -973,13 +979,17 @@ function createServer(root, managed = null) {
         send(response, 200, 'application/json; charset=utf-8', request.method === 'HEAD' ? '' : `${JSON.stringify(data)}\n`);
         return;
       }
+      if (pathname === '/concepts' || pathname.startsWith('/concepts/')) {
+        redirect(response, `/records${pathname.slice('/concepts'.length)}${requestUrl.search}`);
+        return;
+      }
       const segments = pathname.split('/').filter(Boolean).map((segment) => decodeURIComponent(segment));
       let page = null;
       if (segments.length === 0) {
         page = renderProduct(data);
-      } else if (segments.length === 1 && segments[0] === 'concepts') {
+      } else if (segments.length === 1 && segments[0] === 'records') {
         page = renderConceptList(data);
-      } else if (segments.length === 2 && segments[0] === 'concepts') {
+      } else if (segments.length === 2 && segments[0] === 'records') {
         const concept = data.navigation.concepts.find((item) => item.slug === segments[1]);
         if (concept) page = renderConcept(data, concept);
       } else if (segments.length === 1 && segments[0] === 'features') {
