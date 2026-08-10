@@ -114,6 +114,30 @@ Describe 'import-legacy.ps1' {
         $records[0].intent | Should -Be 'native 0.3 work'
     }
 
+    It 'retries a completed legacy import once when the importer revision advances' {
+        $text = @(
+            '# Session',
+            '### Hard-won conditions (gotchas, root causes, limitations)',
+            '- **Windows pack-file locks**, so scratch cleanup is best effort while **isolated cleanup** is deterministic. · status: follow-up'
+        ) -join "`n"
+        [System.IO.File]::WriteAllText($script:legacy, $text + "`n", (New-Object System.Text.UTF8Encoding($false)))
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $script:store) | Out-Null
+        [System.IO.File]::WriteAllText($script:store,
+            '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"001-add-caching","session":"none","commit":"abc","slug":"001-add-caching","intent":"Imported pre-0.3 session history.","branch":"legacy-import/001-add-caching","base_ref":"legacy","imported_from":"docs/fluencyloop/features/001-add-caching#feature"}' + [Environment]::NewLine +
+            '{"schema_version":"1","type":"session","ts":"2026-08-09","feature":"001-add-caching","session":"000-legacy-import","commit":"abc","slug":"000-legacy-import","intent":"Backfill pre-0.3 session history.","imported_from":"docs/fluencyloop/features/001-add-caching#backfill-session"}' + [Environment]::NewLine,
+            (New-Object System.Text.UTF8Encoding($false)))
+
+        $j = (& $script:PwshExe -NoProfile -File "$script:Bin/check.ps1" '--json') | ConvertFrom-Json
+        $j.fluency | Should -Be $true
+        ([System.IO.File]::ReadAllText("$script:repo/docs/fluencyloop/store/.legacy-import-revision")).Trim() | Should -Be '2'
+
+        $records = @([System.IO.File]::ReadAllLines($script:store) | ForEach-Object { $_ | ConvertFrom-Json })
+        $record = $records | Where-Object { $_.type -eq 'condition' }
+        $record.subject | Should -Be 'Windows pack-file locks'
+        $record.why | Should -Match '^, so scratch cleanup'
+        $record.why | Should -Match '\*\*isolated cleanup\*\*'
+    }
+
     # The five cases below are regressions found by running the importer against a real 47-feature
     # corpus (blastradius): none are synthetic edge cases. Backfilled decisions there wrap `why:`
     # and `alternative:` across lines, cite more than one file in `where:`, annotate `trust:` with
@@ -231,6 +255,22 @@ Describe 'import-legacy.ps1' {
             $record = [System.IO.File]::ReadAllLines($script:store) | Select-Object -First 1 | ConvertFrom-Json
             $record.subject | Should -Be 'The OOM was linear heap growth, not a leak in one build.'
             $record.why | Should -Match 'held for the whole run\.$'
+        }
+
+        It 'accepts punctuation immediately after a bold knowledge title' {
+            $text = @(
+                '# Session',
+                '### Hard-won conditions (gotchas, root causes, limitations)',
+                '- **Windows pack-file locks**, so scratch cleanup is best effort while **isolated cleanup** is deterministic. · status: follow-up'
+            ) -join "`n"
+            [System.IO.File]::WriteAllText($script:legacy, $text + "`n", (New-Object System.Text.UTF8Encoding($false)))
+
+            $out = Invoke-FlAll 'import-legacy.ps1'
+            $out | Should -Not -Match 'skipped malformed'
+            $record = [System.IO.File]::ReadAllLines($script:store) | Select-Object -First 1 | ConvertFrom-Json
+            $record.subject | Should -Be 'Windows pack-file locks'
+            $record.why | Should -Match '^, so scratch cleanup'
+            $record.why | Should -Match '\*\*isolated cleanup\*\*'
         }
 
         It "an em-dash-separated bullet's role text has no leftover leading dash" {

@@ -43,6 +43,34 @@ function FlRequireFluency {
 # First 0.3 use must carry legacy history forward without asking. Check the importer's
 # per-feature declaration marker as well as the store directory: an early 0.3 importer may have
 # copied decisions without the declarations added later. Marked retries are idempotent.
+#
+# Bump this when a legacy parser correction can recover records that an earlier importer skipped.
+# It gives already-migrated repositories one automatic, idempotent repair pass without running the
+# full legacy scan on every normal command thereafter.
+$script:FlLegacyImportRevision = '2'
+
+function Get-FlLegacyImportRevisionPath { "$(FlStoreDir)/.legacy-import-revision" }
+
+function Test-FlLegacyImportNeedsRevision([string]$legacy) {
+    $revisionPath = Get-FlLegacyImportRevisionPath
+    if ((Test-Path -LiteralPath $revisionPath -PathType Leaf) -and
+        (([System.IO.File]::ReadAllText($revisionPath)).Trim() -eq $script:FlLegacyImportRevision)) {
+        return $false
+    }
+    foreach ($featureDir in @(Get-ChildItem -LiteralPath $legacy -Directory -ErrorAction SilentlyContinue)) {
+        $feature = $featureDir.Name
+        $store = FlFeatureStorePath $feature
+        if (-not (Test-Path -LiteralPath $store -PathType Leaf)) { continue }
+        $root = FlRepoRoot
+        $source = $featureDir.FullName.Substring($root.Length).TrimStart([char[]]@([char]92, [char]47)) -replace '\\', '/'
+        $marker = '"imported_from":"' + (FlJsonEscape "$source#feature") + '"'
+        # Only retry a repository that has actually received a legacy import. A native 0.3
+        # feature can legitimately share the same docs layout and must not be imported as legacy.
+        if (Select-String -LiteralPath $store -SimpleMatch -Quiet -Pattern $marker) { return $true }
+    }
+    return $false
+}
+
 function Test-FlLegacyImportIncomplete([string]$legacy) {
     foreach ($featureDir in @(Get-ChildItem -LiteralPath $legacy -Directory -ErrorAction SilentlyContinue)) {
         $sessions = Join-Path $featureDir.FullName 'sessions'
@@ -71,7 +99,9 @@ function FlMaybeImportLegacy {
     $legacy = "$(FlDocsDir)/features"
     $store = FlStoreDir
     if (-not (Test-Path -LiteralPath $legacy -PathType Container)) { return }
-    if ((Test-Path -LiteralPath $store -PathType Container) -and -not (Test-FlLegacyImportIncomplete $legacy)) { return }
+    if ((Test-Path -LiteralPath $store -PathType Container) -and
+        -not (Test-FlLegacyImportIncomplete $legacy) -and
+        -not (Test-FlLegacyImportNeedsRevision $legacy)) { return }
     $importer = Join-Path $PSScriptRoot 'import-legacy.ps1'
     if (-not (Test-Path -LiteralPath $importer -PathType Leaf)) { return }
     $previous = $env:FLUENCYLOOP_IMPORTING

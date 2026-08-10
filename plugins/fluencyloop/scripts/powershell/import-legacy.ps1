@@ -131,12 +131,10 @@ function Import-LegacySession([string]$file) {
     $script:inComment = $false; $section = ''
     Clear-DecisionState
     $script:inKnowledge = $false; $script:knName = ''; $script:knBody = ''; $script:knSection = ''
-    # The legacy writer separates a bullet's bolded name from its prose two ways: most bullets
-    # use an em dash ("**Name** — prose"), but some end the bold span in its own sentence-closing
-    # punctuation and run straight into the prose with just a space ("**Name.** prose"). Both are
-    # accepted here; a leading em dash left over from the first style is stripped below so a
-    # bullet parsed either way produces the same role/subject text.
-    $bulletPattern = '^- \*\*(.+)\*\* (.*)$'
+    # Split at the first closing bold span. A greedy regular expression would mistake later
+    # emphasis in the explanatory prose for the close, and requiring a space after the close
+    # rejects valid prose such as "**Windows**, so ...".
+    $bulletPattern = '^- \*\*(.+?)\*\*(.*)$'
     $emDashPrefix = [string][char]0x2014 + ' '
 
     foreach ($line in [System.IO.File]::ReadAllLines($file)) {
@@ -196,6 +194,7 @@ function Import-LegacySession([string]$file) {
                 Complete-KnowledgeBullet
                 $script:inKnowledge = $true; $script:knSection = $section
                 $script:knName = $matches[1]; $script:knBody = $matches[2]
+                if ($script:knBody.StartsWith(' ')) { $script:knBody = $script:knBody.Substring(1) }
                 if ($script:knBody.StartsWith($emDashPrefix)) { $script:knBody = $script:knBody.Substring($emDashPrefix.Length) }
                 Complete-KnowledgeBulletIfClosed
             } elseif ($script:inKnowledge -and $line.StartsWith('- **')) {
@@ -241,5 +240,9 @@ function Import-LegacyFeature([System.IO.DirectoryInfo]$featureDir) {
 foreach ($featureDir in @(Get-ChildItem -LiteralPath $legacyRoot -Directory -ErrorAction SilentlyContinue)) {
     Import-LegacyFeature $featureDir
 }
+
+# A parser correction can safely ask an already-migrated repository for one more scan. Mark this
+# completed pass so ordinary commands do not repeatedly walk its legacy Markdown afterwards.
+[System.IO.File]::WriteAllText((Get-FlLegacyImportRevisionPath), $script:FlLegacyImportRevision + [Environment]::NewLine, (New-Object System.Text.UTF8Encoding($false)))
 
 if (-not $auto) { FlOut "Imported $script:imported legacy record(s); skipped $script:skipped." }

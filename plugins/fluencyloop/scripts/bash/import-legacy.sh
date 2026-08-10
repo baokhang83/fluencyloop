@@ -164,12 +164,10 @@ import_session() {
     DECISION_TITLE=""; DECISION_WHERE=""; DECISION_WHY=""; DECISION_ALT=""
     DECISION_DESIGN=""; DECISION_CONST=""; DECISION_TRUST=""; DECISION_BAD=false
     IN_KNOWLEDGE=false; KN_NAME=""; KN_BODY=""; KN_SECTION=""
-    # The legacy writer separates a bullet's bolded name from its prose two ways: most bullets
-    # use an em dash ("**Name** — prose"), but some end the bold span in its own sentence-closing
-    # punctuation and run straight into the prose with just a space ("**Name.** prose"). Both are
-    # accepted here; a leading em dash left over from the first style is stripped below so a
-    # bullet parsed either way produces the same role/subject text.
-    local line bullet_re='^- \*\*(.+)\*\* (.*)$'
+    # Split at the first closing bold span. A greedy regular expression would mistake later
+    # emphasis in the explanatory prose for the close, and requiring a space after the close
+    # rejects valid prose such as "**Windows**, so ...".
+    local line raw parsed_name parsed_body
     while IFS= read -r line || [ -n "$line" ]; do
         if $IN_COMMENT; then
             [[ "$line" == *"-->"* ]] && IN_COMMENT=false
@@ -229,12 +227,24 @@ import_session() {
             '## '*) flush_knowledge; SECTION=""; continue ;;
         esac
         if [ "$SECTION" = components ] || [ "$SECTION" = conditions ]; then
-            if [[ "$line" =~ $bullet_re ]]; then
+            parsed_name=""
+            parsed_body=""
+            if [[ "$line" == '- **'* ]]; then
+                raw="${line#- \*\*}"
+                if [[ "$raw" == *'**'* ]]; then
+                    # %% removes from the first closing ** through the end; # removes through
+                    # that same first close. Preserve punctuation immediately following it.
+                    parsed_name="${raw%%\*\**}"
+                    parsed_body="${raw#*\*\*}"
+                    parsed_body="${parsed_body# }"
+                fi
+            fi
+            if [ -n "$parsed_name" ]; then
                 # A new bullet opening mid-accumulation means the previous one never reached its
                 # status marker; flush it now so it is reported rather than silently discarded.
                 flush_knowledge
                 IN_KNOWLEDGE=true; KN_SECTION="$SECTION"
-                KN_NAME="${BASH_REMATCH[1]}"; KN_BODY="${BASH_REMATCH[2]}"
+                KN_NAME="$parsed_name"; KN_BODY="$parsed_body"
                 KN_BODY="${KN_BODY#"— "}"
                 maybe_flush_knowledge
             elif $IN_KNOWLEDGE && [[ "$line" == '- **'* ]]; then
@@ -287,5 +297,9 @@ import_feature() {
 while IFS= read -r -d '' feature_dir; do
     import_feature "$feature_dir"
 done < <(find "$LEGACY_ROOT" -mindepth 1 -maxdepth 1 -type d -print0)
+
+# A parser correction can safely ask an already-migrated repository for one more scan. Mark this
+# completed pass so ordinary commands do not repeatedly walk its legacy Markdown afterwards.
+printf '%s\n' "$LEGACY_IMPORT_REVISION" > "$(legacy_import_revision_path)"
 
 $AUTO || echo "Imported $IMPORTED legacy record(s); skipped $SKIPPED."
