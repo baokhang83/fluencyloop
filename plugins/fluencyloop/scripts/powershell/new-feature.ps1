@@ -10,15 +10,16 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 
-$jsonMode = $false; $slug = ''; $prefix = ''; $plan = ''; $rest = @()
+$jsonMode = $false; $slug = ''; $prefix = ''; $plan = ''; $requestedBase = ''; $rest = @()
 for ($i = 0; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--json'   { $jsonMode = $true }
         '--slug'   { $i++; $slug = [string]$args[$i] }
         '--prefix' { $i++; $prefix = [string]$args[$i] }
         '--plan'   { $i++; $plan = [string]$args[$i] }
+        '--base'   { $i++; $requestedBase = [string]$args[$i] }
         { $_ -eq '-h' -or $_ -eq '--help' } {
-            FlOut 'Usage: new-feature.ps1 [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] <intent...>'
+            FlOut 'Usage: new-feature.ps1 [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] [--base <ref>] <intent...>'
             exit 0
         }
         default {
@@ -65,7 +66,9 @@ if (-not $slug) {
 }
 $branch = FlBranchFor $slug
 
-# Switch to the feature branch (create it if new). Capture the fork point as the base ref.
+# Switch to the feature branch. A new feature started while another feature is active must not
+# silently become a stacked branch: reuse that active feature's recorded integration base. An
+# explicit --base is the opt-in escape hatch for intentionally stacked work.
 $createdBranch = 'false'
 $baseRef = ''
 & git show-ref --verify --quiet "refs/heads/$branch" 2>$null
@@ -74,8 +77,16 @@ if ($LASTEXITCODE -eq 0) {
 } else {
     & git rev-parse --verify --quiet HEAD *> $null
     if ($LASTEXITCODE -eq 0) {
-        $baseRef = (& git branch --show-current | Select-Object -First 1)
-        & git checkout -b $branch *> $null
+        $currentBranch = (& git branch --show-current | Select-Object -First 1)
+        $baseRef = $requestedBase
+        $stateBranch = FlStateGet 'branch'
+        if (-not $baseRef -and $currentBranch -like 'feature/*' -and $stateBranch -eq $currentBranch) {
+            $baseRef = FlStateGet 'base_ref'
+        }
+        if (-not $baseRef) { $baseRef = $currentBranch }
+        & git rev-parse --verify --quiet $baseRef *> $null
+        if ($LASTEXITCODE -ne 0) { [Console]::Error.WriteLine("Error: feature base ref does not exist: $baseRef"); exit 1 }
+        & git checkout -b $branch $baseRef *> $null
     } else {
         # `git init` leaves an unborn branch. Start this feature as the first branch without
         # creating an empty commit or requiring the developer's Git identity.

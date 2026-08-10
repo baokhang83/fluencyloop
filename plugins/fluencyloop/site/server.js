@@ -617,8 +617,49 @@ function link(href, label) {
   return `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
 }
 
+function inlineMarkdown(text) {
+  return escapeHtml(text)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+
+// Distillations are regular Markdown, not source code. Keep the renderer deliberately small and
+// dependency-free, while making headings, paragraphs, lists, emphasis, and inline code readable.
 function prose(content) {
-  return content.trim() ? `<pre class="distillation-prose">${escapeHtml(content.trim())}</pre>` : '';
+  const lines = content.trim().split(/\r?\n/);
+  if (!content.trim()) return '';
+  const rendered = [];
+  let paragraph = [];
+  let list = [];
+  const flushParagraph = () => {
+    if (paragraph.length) rendered.push(`<p>${inlineMarkdown(paragraph.join(' '))}</p>`);
+    paragraph = [];
+  };
+  const flushList = () => {
+    if (list.length) rendered.push(`<ul>${list.map((item) => `<li>${inlineMarkdown(item)}</li>`).join('')}</ul>`);
+    list = [];
+  };
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    const heading = /^(#{1,6})\s+(.+)$/.exec(line);
+    const item = /^[-*]\s+(.+)$/.exec(line);
+    if (!line) { flushParagraph(); flushList(); continue; }
+    if (heading) {
+      flushParagraph(); flushList();
+      // The page already supplies the document title, so omit a leading H1 rather than repeating it.
+      if (!(index === 0 && heading[1].length === 1)) {
+        const level = Math.min(heading[1].length + 1, 6);
+        rendered.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+      }
+      continue;
+    }
+    if (item) { flushParagraph(); list.push(item[1]); continue; }
+    flushList();
+    paragraph.push(line);
+  }
+  flushParagraph(); flushList();
+  return rendered.join('');
 }
 
 function diagramCaption(value) {

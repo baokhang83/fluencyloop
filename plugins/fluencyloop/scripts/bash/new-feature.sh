@@ -2,7 +2,7 @@
 # new-feature.sh — declare a feature (Stage 2 entry). Deterministic: creates the branch, records
 # it in state, and appends the feature declaration to the store. A feature IS a branch.
 #
-# Usage: new-feature.sh [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] <intent...>
+# Usage: new-feature.sh [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] [--base <ref>] <intent...>
 #
 # The feature dir name always leads with a number so `features/` sorts and scans instead of
 # reading as a flat pile: pass --prefix for a ticket id (e.g. "JIRA-1234") or a PR number
@@ -18,6 +18,7 @@ JSON_MODE=false
 SLUG=""
 PREFIX=""
 PLAN=""
+REQUESTED_BASE=""
 ARGS=()
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -25,8 +26,9 @@ while [ "$#" -gt 0 ]; do
         --slug) shift; SLUG="${1:-}" ;;
         --prefix) shift; PREFIX="${1:-}" ;;
         --plan) shift; PLAN="${1:-}" ;;
+        --base) shift; REQUESTED_BASE="${1:-}" ;;
         -h|--help)
-            echo "Usage: new-feature.sh [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] <intent...>"
+            echo "Usage: new-feature.sh [--json] [--slug <slug>] [--prefix <ticket-or-pr-id>] [--plan <plan-slug>] [--base <ref>] <intent...>"
             exit 0
             ;;
         # An intent never starts with a dash, so a flag-shaped token here is a typo or an
@@ -73,16 +75,26 @@ if [ -z "$SLUG" ]; then
 fi
 BRANCH="$(branch_for "$SLUG")"
 
-# Switch to the feature branch (create it if new, from the current HEAD). Capture what we
-# forked from as the base ref (used later for the PR-view diff).
+# Switch to the feature branch. A new feature started while another feature is active must not
+# silently become a stacked branch: reuse that active feature's recorded integration base. An
+# explicit --base is the opt-in escape hatch for intentionally stacked work.
 CREATED_BRANCH=false
 BASE_REF=""
 if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
     git checkout "$BRANCH" >/dev/null 2>&1
 else
     if git rev-parse --verify --quiet HEAD >/dev/null; then
-        BASE_REF="$(git branch --show-current)"
-        git checkout -b "$BRANCH" >/dev/null 2>&1
+        CURRENT_BRANCH="$(git branch --show-current)"
+        BASE_REF="$REQUESTED_BASE"
+        if [ -z "$BASE_REF" ] && [[ "$CURRENT_BRANCH" = feature/* ]] && [ "$(state_get branch)" = "$CURRENT_BRANCH" ]; then
+            BASE_REF="$(state_get base_ref)"
+        fi
+        [ -n "$BASE_REF" ] || BASE_REF="$CURRENT_BRANCH"
+        git rev-parse --verify --quiet "$BASE_REF" >/dev/null || {
+            echo "Error: feature base ref does not exist: $BASE_REF" >&2
+            exit 1
+        }
+        git checkout -b "$BRANCH" "$BASE_REF" >/dev/null 2>&1
     else
         # `git init` leaves an unborn branch. Start this feature as the first branch without
         # creating an empty commit or requiring the developer's Git identity.

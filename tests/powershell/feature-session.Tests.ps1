@@ -116,6 +116,19 @@ Describe 'new-feature.ps1 + new-session.ps1' {
         $s.base_ref | Should -Be 'trunk'
     }
 
+    It 'a separate feature reuses the active feature integration base instead of stacking' {
+        $script:repo = Initialize-TestRepo
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'first independent feature' | Out-Null
+        git add -A 2>&1 | Out-Null; git commit -q -m 'first feature' 2>&1 | Out-Null
+        $firstBranch = (git branch --show-current)
+
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'second independent feature' | Out-Null
+        $secondBranch = (git branch --show-current)
+        $state = Get-Content -Raw "$script:repo/.fluencyloop/state.json" | ConvertFrom-Json
+        $state.base_ref | Should -Be 'main'
+        (git merge-base $firstBranch $secondBranch) | Should -Be (git rev-parse main)
+    }
+
     It 'new-feature reuses a legacy unnumbered branch without changing its markdown' {
         $script:repo = Initialize-TestRepo
         git checkout -q -b 'feature/add-caching' 2>&1 | Out-Null
