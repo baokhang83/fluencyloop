@@ -54,6 +54,53 @@ append_imported() {
     IMPORTED=$((IMPORTED + 1))
 }
 
+# Feature declarations are append-only too, but an earlier importer wrote a literal placeholder
+# under the same stable source marker. Match the current intent as well as that marker so revision
+# upgrades can append one superseding declaration instead of being permanently skipped.
+feature_intent_is_imported() {
+    local store="$1" source="$2" intent="$3" source_marker intent_marker line
+    [ -f "$store" ] || return 1
+    source_marker="\"imported_from\":\"$(json_escape "$source")\""
+    intent_marker="\"intent\":\"$(json_escape "$intent")\""
+    while IFS= read -r line; do
+        [[ "$line" == *"$source_marker"* && "$line" == *"$intent_marker"* ]] && return 0
+    done < "$store"
+    return 1
+}
+
+append_imported_feature() {
+    local store="$1" feature="$2" source="$3" intent="$4"
+    if feature_intent_is_imported "$store" "$source" "$intent"; then
+        SKIPPED=$((SKIPPED + 1))
+        return
+    fi
+    store_append_record "$store" feature "$feature" none \
+        slug "$feature" \
+        intent "$intent" \
+        branch "legacy-import/$feature" \
+        base_ref legacy \
+        imported_from "$source"
+    IMPORTED=$((IMPORTED + 1))
+}
+
+# Prefer the existing design heading: it is the original one-line feature intent, not a new
+# interpretation. Older histories without a design still get a useful, honestly-derived fallback
+# from their first session title rather than a fixed placeholder.
+legacy_feature_intent() {
+    local feature_dir="$1" design session_file title
+    design="$feature_dir/design.md"
+    if [ -f "$design" ]; then
+        title="$(sed -n 's/^# Design:[[:space:]]*//p' "$design" | head -1)"
+        [ -n "$title" ] && { printf '%s' "$title"; return; }
+    fi
+    for session_file in "$feature_dir"/sessions/*.md; do
+        [ -f "$session_file" ] || continue
+        title="$(sed -n 's/^#[[:space:]]*Session:[[:space:]]*//p' "$session_file" | head -1)"
+        [ -n "$title" ] && { printf 'Record legacy history: %s.' "$title"; return; }
+    done
+    printf 'Recover legacy history for %s.' "$(basename "$feature_dir")"
+}
+
 warn_skip() {
     echo "Warning: skipped malformed legacy record in $1" >&2
     SKIPPED=$((SKIPPED + 1))
@@ -264,7 +311,7 @@ import_session() {
 }
 
 import_feature() {
-    local feature_dir="$1" sessions_dir session_file
+    local feature_dir="$1" sessions_dir session_file feature_intent
     FEATURE="$(basename "$feature_dir")"
     STORE="$(feature_store_path "$FEATURE")"
     SOURCE_BASE="$(repo_rel "$feature_dir")"
@@ -284,11 +331,8 @@ import_feature() {
     FEATURE="$(basename "$feature_dir")"
     STORE="$(feature_store_path "$FEATURE")"
     SOURCE_BASE="$(repo_rel "$feature_dir")"
-    append_imported "$STORE" feature "$FEATURE" none "$SOURCE_BASE#feature" \
-        slug "$FEATURE" \
-        intent "Imported pre-0.3 session history." \
-        branch "legacy-import/$FEATURE" \
-        base_ref "legacy"
+    feature_intent="$(legacy_feature_intent "$feature_dir")"
+    append_imported_feature "$STORE" "$FEATURE" "$SOURCE_BASE#feature" "$feature_intent"
     append_imported "$STORE" session "$FEATURE" 000-legacy-import "$SOURCE_BASE#backfill-session" \
         slug 000-legacy-import \
         intent "Backfill pre-0.3 session history."

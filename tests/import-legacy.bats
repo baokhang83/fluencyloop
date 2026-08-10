@@ -8,6 +8,8 @@ setup() {
     LEGACY="$TESTREPO/docs/fluencyloop/features/001-add-caching/sessions/001-wire-cache.md"
     STORE="$TESTREPO/docs/fluencyloop/store/features/001-add-caching.jsonl"
     mkdir -p "$(dirname "$LEGACY")"
+    printf '%s\n' '# Design: add a bounded cache to the request path' \
+        > "$TESTREPO/docs/fluencyloop/features/001-add-caching/design.md"
     printf '%s\n' \
         '# Session: cache wiring' \
         '## Decision: choose an LRU cache' \
@@ -58,6 +60,7 @@ for n, record in enumerate(records, 1):
         assert record['session'] == '001-wire-cache'
         assert record['imported_from'].endswith(f'#decision-{n}')
 assert feature['slug'] == '001-add-caching'
+assert feature['intent'] == 'add a bounded cache to the request path'
 assert feature['branch'] == 'legacy-import/001-add-caching'
 assert feature['base_ref'] == 'legacy'
 assert feature['imported_from'].endswith('#feature')
@@ -81,7 +84,7 @@ PY
     run bash "$BIN/check.sh" --json
     [ "$status" -eq 0 ]
     [ -f "$STORE" ]
-    [ "$(tr -d '\r\n' < "$(dirname "$STORE")/../.legacy-import-revision")" = "2" ]
+    [ "$(tr -d '\r\n' < "$(dirname "$STORE")/../.legacy-import-revision")" = "3" ]
 }
 
 @test "a normal command repairs a store imported before declaration records existed" {
@@ -129,7 +132,7 @@ PY
 
     run bash "$BIN/check.sh" --json
     [ "$status" -eq 0 ]
-    [ "$(tr -d '\r\n' < "$(dirname "$STORE")/../.legacy-import-revision")" = "2" ]
+    [ "$(tr -d '\r\n' < "$(dirname "$STORE")/../.legacy-import-revision")" = "3" ]
 
     python3 - "$STORE" <<'PY'
 import json, sys
@@ -139,6 +142,8 @@ record = next(record for record in records if record['type'] == 'condition')
 assert record['subject'] == 'Windows pack-file locks', record
 assert record['why'].startswith(', so scratch cleanup'), record
 assert '**isolated cleanup**' in record['why'], record
+feature = [record for record in records if record['type'] == 'feature'][-1]
+assert feature['intent'] == 'add a bounded cache to the request path', feature
 PY
 }
 

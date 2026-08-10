@@ -430,6 +430,21 @@ main section:has(> .empty-state) { padding: var(--space-4); }
   margin: var(--space-2) 0 0;
   list-style: none;
 }
+/* Each <li> is a pure semantic wrapper around one .tag, not a box that should participate in
+   layout: giving it display:flex still leaves Chrome's list-item marker accounting attached to
+   its generated box, producing inconsistent item heights (and therefore vertical offsets)
+   across a wrapped row. Removing the box entirely makes .tag itself the flex item. */
+.tag-list li {
+  display: contents;
+}
+
+.tag-overflow {
+  align-self: center;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
 
 .tag {
   display: inline-flex;
