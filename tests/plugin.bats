@@ -57,6 +57,7 @@ end_handler, = hooks["hooks"]["SessionEnd"][0]["hooks"]
 assert end_handler["type"] == "command"
 assert "--session-end" in end_handler["command"]
 assert "--session-end" in end_handler["commandWindows"]
+assert end_handler["timeout"] == 3
 
 for alias, source in {
     "plan": "plan",
