@@ -49,6 +49,10 @@ assert '[ -f "$hook" ]' in handler["command"]
 assert "Test-Path -LiteralPath $hook -PathType Leaf" in handler["commandWindows"]
 assert (dist / "hooks" / "refresh-marketplace.sh").is_file()
 assert (dist / "hooks" / "refresh-marketplace.ps1").is_file()
+assert "ensure_local_site" in read_text(dist / "hooks" / "refresh-marketplace.sh")
+assert "site --ensure --json" in read_text(dist / "hooks" / "refresh-marketplace.sh")
+assert "Ensure-LocalSite" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
+assert "site --ensure --json" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
 
 for alias, source in {
     "plan": "plan",
@@ -66,6 +70,15 @@ for alias, source in {
     assert "## Bundled CLI (Codex)" in source_text
     assert "~/.local/bin/fluencyloop" in source_text
     assert "Invoke `fluencyloop …` directly" in source_text
+    assert "## Local site — announce once" in alias_text
+    assert "site --status --json" in alias_text
+    assert "FluencyLoop site: <url>" in alias_text
+    assert "## Local site — announce once" in source_text
+    assert "site --status --json" in source_text
+    assert "FluencyLoop site: <url>" in source_text
+router_text = read_text(dist / "skills" / "fluencyloop" / "SKILL.md")
+assert "## Local site — announce once" in router_text
+assert "Fast Path above remains exempt" in router_text
 feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
@@ -267,9 +280,40 @@ PY
 }
 
 @test "Codex startup refresh hook is safe outside an installed plugin root" {
+    setup_repo
     run env PLUGIN_ROOT="$DIST" bash "$DIST/hooks/refresh-marketplace.sh"
     [ "$status" -eq 0 ]
     [ -z "$output" ]
+}
+
+@test "startup hook ensures a site only in an initialized FluencyLoop repository" {
+    local plugin_root="$BATS_TEST_TMPDIR/local-plugin"
+    local calls="$BATS_TEST_TMPDIR/site-calls"
+    mkdir -p "$plugin_root"
+    printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" >> "$SITE_CALLS"\n' > "$plugin_root/fluencyloop"
+    chmod +x "$plugin_root/fluencyloop"
+    setup_initialized_repo
+
+    run env PLUGIN_ROOT="$plugin_root" SITE_CALLS="$calls" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+    run cat "$calls"
+    [ "$status" -eq 0 ]
+    [ "$output" = 'site --ensure --json' ]
+}
+
+@test "startup hook does not ensure a site in a non-FluencyLoop repository" {
+    local plugin_root="$BATS_TEST_TMPDIR/local-plugin"
+    local calls="$BATS_TEST_TMPDIR/site-calls"
+    mkdir -p "$plugin_root"
+    printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" >> "$SITE_CALLS"\n' > "$plugin_root/fluencyloop"
+    chmod +x "$plugin_root/fluencyloop"
+    setup_repo
+
+    run env PLUGIN_ROOT="$plugin_root" SITE_CALLS="$calls" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+    [ ! -e "$calls" ]
 }
 
 @test "startup command no-ops when no host exports a plugin root" {
@@ -363,6 +407,7 @@ PY
 @test "startup command resolves the hook from a Claude plugin root" {
     local hook_command
 
+    setup_repo
     run python3 - "$DIST/hooks/hooks.json" <<'PY'
 import json
 import pathlib

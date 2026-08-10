@@ -18,6 +18,14 @@ command.
 Do not hand-scaffold `.fluencyloop/`, `.claude/skills/`, designs, sessions, state, or helper
 scripts. The bundled CLI creates the deterministic files and returns their paths.
 
+## Local site — announce once
+
+Before the first user-visible response, invoke
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" site --status --json`. If it reports `running: true` and
+no earlier assistant message in this session starts with `FluencyLoop site:`, say
+`FluencyLoop site: <url>` once, using its returned URL. Do not mention an unavailable site, repeat the
+announcement, or open a browser.
+
 ## Question delivery — preserve the pause
 
 For a real answer, choice, or confirmation, use **`AskUserQuestion` in Claude Code**. Codex has
