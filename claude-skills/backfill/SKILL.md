@@ -27,6 +27,14 @@ command.
 Do not hand-scaffold `.fluencyloop/`, `.claude/skills/`, designs, sessions, state, or helper
 scripts. The bundled CLI creates the deterministic files and returns their paths.
 
+## Local site — announce once
+
+Before the first user-visible response, invoke
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" site --status --json`. If it reports `running: true` and
+no earlier assistant message in this session starts with `FluencyLoop site:`, say
+`FluencyLoop site: <url>` once, using its returned URL. Do not mention an unavailable site, repeat the
+announcement, or open a browser.
+
 ## Automatic trust handling
 
 Backfill never asks for a trust confirmation. It records uncertainty as `trust: unverified`; only

@@ -24,6 +24,23 @@ if ($null -eq $hostKind) {
     exit 0
 }
 
+# Start the reader quietly only for an initialized project. The first FluencyLoop skill response
+# owns the user-visible URL because hook output is not consistently surfaced by either host.
+function Ensure-LocalSite {
+    $launcher = Join-Path $pluginDir 'fluencyloop.ps1'
+    if (-not (Test-Path -LiteralPath $launcher -PathType Leaf)) { return }
+    $root = (& git rev-parse --show-toplevel 2>$null | Select-Object -First 1)
+    $gitExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+    if ($gitExitCode -ne 0 -or -not $root) { return }
+    if (-not (Test-Path -LiteralPath (Join-Path $root '.fluencyloop') -PathType Container)) { return }
+    # The dispatcher uses `exit`; run it in a child host so it cannot skip this hook's marketplace
+    # refresh below.
+    $hostExe = (Get-Process -Id $PID).Path
+    & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --json *> $null
+}
+
+Ensure-LocalSite
+
 $parts = [IO.Path]::GetFullPath($pluginDir) -split '[\\/]'
 $marketplace = $null
 for ($i = 0; $i -lt ($parts.Length - 2); $i++) {

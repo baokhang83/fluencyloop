@@ -19,6 +19,21 @@ else
     exit 0
 fi
 
+# A session opened in an initialized project should already have its local reader by the time the
+# developer asks the assistant anything. The hook is deliberately silent: host hook output is not
+# reliably shown to the developer, and Node is optional. The skill announces a successful URL in
+# the first real FluencyLoop interaction instead.
+ensure_local_site() {
+    local root launcher
+    launcher="$PLUGIN_DIR/fluencyloop"
+    [ -x "$launcher" ] || return 0
+    root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+    [ -n "$root" ] && [ -d "$root/.fluencyloop" ] || return 0
+    (cd "$root" && "$launcher" site --ensure --json >/dev/null 2>&1) || true
+}
+
+ensure_local_site
+
 # Give Codex a stable, readable command name without restoring a second runtime. This small
 # wrapper dispatches to the plugin bundle currently loaded by the host and is refreshed each
 # session. Unlike a symbolic link, it also works on hosts that restrict link creation. Never

@@ -168,6 +168,11 @@ without it. Only the local `fluencyloop site` viewer needs **Node.js 18 or newer
 Node modules; when it is missing, that command explains how to install it without interrupting the
 rest of the loop.
 
+When a Claude Code or Codex session opens in an initialized project with Node available,
+FluencyLoop quietly starts its local reader and reports the exact loopback URL at the first
+FluencyLoop interaction. It prefers `http://127.0.0.1:44444` and safely uses the next port when
+that one is busy.
+
 ## More detail
 
 Read [MANIFESTO.md](MANIFESTO.md) for the product principles, calibration and privacy model, and
