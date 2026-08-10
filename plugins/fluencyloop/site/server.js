@@ -10,12 +10,15 @@ const os = require('node:os');
 const path = require('node:path');
 
 const DEFAULT_PORT = 4173;
+// No font files: the site sets type in the reader's own interface font. That keeps the reader
+// byte-for-byte local without shipping a typeface, and matches the register of the tools the
+// project record sits beside.
 const SITE_ASSETS = {
   '/assets/site.css': { file: 'site.css', contentType: 'text/css; charset=utf-8' },
   '/assets/site.js': { file: 'site.js', contentType: 'application/javascript; charset=utf-8' },
-  '/assets/fonts/dm-sans.woff2': { file: 'fonts/dm-sans.woff2.b64', contentType: 'font/woff2', encoding: 'base64' },
-  '/assets/fonts/fraunces.woff2': { file: 'fonts/fraunces.woff2.b64', contentType: 'font/woff2', encoding: 'base64' },
 };
+// How many tag colours the palette cycles through before repeating.
+const TAG_TONES = 8;
 const IDENTITY_FIELDS = {
   feature: ['slug'],
   session: ['feature', 'slug'],
@@ -189,9 +192,35 @@ function distillationIndex(distillations) {
   return index;
 }
 
+// A concept's name is this product's own vocabulary, which a newcomer has never met. Its tags name
+// the widely-known ideas behind it, so they are the one axis shared across unrelated features —
+// which is what makes them worth filtering on.
+function parseTags(concept) {
+  return String(concept?.tags || '').split(/\r?\n/).map((tag) => tag.trim()).filter(Boolean);
+}
+
+// Colour comes from position in the sorted project-wide tag list, not from a hash of the name:
+// two tags can never collide onto one colour while the palette has room, and a given project
+// renders the same colours on every request.
+function buildTagIndex(concepts) {
+  const names = new Set();
+  for (const concept of concepts) for (const tag of parseTags(concept)) names.add(tag);
+  return [...names]
+    .sort((left, right) => left.localeCompare(right))
+    .map((name, index) => ({ name, slug: slugFor(name), tone: index % TAG_TONES }));
+}
+
+function uniqueTags(tags) {
+  return [...new Map(tags.map((tag) => [tag.slug, tag])).values()]
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
 function buildNavigation(data) {
   const records = data.store.records;
   const concepts = sortByLabel(byType(records, 'concept'));
+  const tagIndex = buildTagIndex(concepts);
+  const tagByName = new Map(tagIndex.map((tag) => [tag.name, tag]));
+  const tagsOf = (concept) => parseTags(concept).map((name) => tagByName.get(name)).filter(Boolean);
   const conceptByName = new Map(concepts.map((concept) => [concept.name, concept]));
   const features = new Map();
   const addFeature = (slug) => {
@@ -222,6 +251,9 @@ function buildNavigation(data) {
       ...feature,
       record,
       concepts: sortByLabel([...feature.concepts].map((name) => conceptByName.get(name))),
+      // A feature carries the tags of every concept it touches, so the same shared vocabulary
+      // filters features and decisions as well as the concepts that define it.
+      tags: uniqueTags([...feature.concepts].flatMap((name) => tagsOf(conceptByName.get(name)))),
       decisions: sortByLabel(byType(records, 'decision').filter((decision) => decision.feature === feature.slug)),
       requirements: sortByLabel(byType(records, 'requirement').filter((item) => item.feature === feature.slug)),
       openQuestions: sortByLabel(byType(records, 'open_question').filter((item) => item.feature === feature.slug)),
@@ -231,9 +263,11 @@ function buildNavigation(data) {
 
   return {
     product: distillations.get('product.md') || null,
+    tags: tagIndex,
     concepts: concepts.map((concept) => ({
       ...concept,
       slug: slugFor(concept.name),
+      tags: tagsOf(concept),
       distillation: distillations.get(`concepts/${slugFor(concept.name)}.md`) || null,
       relations: relations.filter((relation) => relation.from === concept.name || relation.to === concept.name),
       features: featureList.filter((feature) => feature.concepts.some((item) => item.name === concept.name)),
@@ -298,7 +332,111 @@ function markdown(content) {
 }
 
 function emptyState(message) {
-  return `<p>${escapeHtml(message)}</p>`;
+  return `<p class="empty-state">${escapeHtml(message)}</p>`;
+}
+
+// Every catalog row states when the record was written and which commit it describes. Those two
+// facts are what let a reader judge whether the record still applies to the code in front of them.
+function recordMeta(record) {
+  if (!record) return '<div class="record-meta"></div>';
+  const date = record.ts
+    ? `<time class="record-date" datetime="${escapeHtml(record.ts)}" title="Recorded ${escapeHtml(record.ts)}">${escapeHtml(record.ts)}</time>`
+    : '';
+  let commit = '';
+  if (record.commit === 'uncommitted') commit = '<span class="record-commit is-pending">uncommitted</span>';
+  else if (record.commit) commit = `<code class="record-commit">${escapeHtml(record.commit.slice(0, 7))}</code>`;
+  return `<div class="record-meta">${date}${commit}</div>`;
+}
+
+function tagList(tags) {
+  if (!tags || !tags.length) return '';
+  return `<ul class="tag-list">${tags
+    .map((tag) => `<li><span class="tag tone-${tag.tone}" data-tag="${escapeHtml(tag.slug)}">${escapeHtml(tag.name)}</span></li>`)
+    .join('')}</ul>`;
+}
+
+function recordRow(item) {
+  const tags = item.tags || [];
+  return `<li class="record-row" data-record-row data-tags="${escapeHtml(tags.map((tag) => tag.slug).join(' '))}">
+    <span class="record-kind">${escapeHtml(item.label)}</span>
+    <div class="record-body">
+      <h3 class="record-title">${item.href ? link(item.href, item.title) : escapeHtml(item.title)}</h3>
+      ${item.summary ? `<p class="record-summary">${escapeHtml(item.summary)}</p>` : ''}
+      ${tagList(tags)}
+    </div>
+    ${recordMeta(item.record)}
+  </li>`;
+}
+
+function recordList(items, emptyMessage) {
+  if (!items.length) return emptyState(emptyMessage);
+  return `<ol class="record-list">${items.map(recordRow).join('')}</ol>`;
+}
+
+// The toolbar is progressive enhancement: the server always renders every row, and the script
+// below hides the ones that stop matching. Without JavaScript the catalog is simply complete.
+function catalogToolbar(tags) {
+  const chips = tags.length
+    ? `<div class="tag-filter" role="group" aria-label="Filter by architectural concept">
+        <button type="button" class="tag tag-button is-all" data-tag-filter="all" aria-pressed="true">All</button>
+        ${tags.map((tag) => `<button type="button" class="tag tag-button tone-${tag.tone}" data-tag-filter="${escapeHtml(tag.slug)}" aria-pressed="false">${escapeHtml(tag.name)}</button>`).join('')}
+      </div>`
+    : '';
+  return `<div class="catalog-toolbar">
+    <label class="catalog-search">
+      <span class="visually-hidden">Search records</span>
+      <input type="search" data-catalog-search placeholder="Search records" autocomplete="off" spellcheck="false">
+    </label>
+    ${chips}
+  </div>`;
+}
+
+function filterableCatalog(tags, items, emptyMessage) {
+  if (!items.length) return emptyState(emptyMessage);
+  return `<div class="catalog" data-catalog>
+    ${catalogToolbar(tags)}
+    <p class="catalog-status" data-catalog-status role="status" aria-live="polite"></p>
+    ${recordList(items, emptyMessage)}
+  </div>`;
+}
+
+function conceptItem(concept) {
+  return {
+    label: 'Concept',
+    title: concept.name,
+    href: conceptPath(concept),
+    summary: concept.problem,
+    tags: concept.tags,
+    record: concept,
+  };
+}
+
+function featureItem(feature) {
+  return {
+    label: 'Feature',
+    title: feature.slug,
+    href: featurePath(feature),
+    summary: feature.record ? feature.record.intent : '',
+    tags: feature.tags,
+    record: feature.record,
+  };
+}
+
+function decisionItem(decision, tags) {
+  return {
+    label: 'Decision',
+    title: decision.title,
+    href: decisionPath(decision),
+    summary: decision.why,
+    tags,
+    record: decision,
+  };
+}
+
+// Newest first: a catalog is read to find what changed recently, and `ts` is the only date a
+// record carries. Records without one sort last rather than disappearing.
+function newestFirst(items) {
+  return [...items].sort((left, right) => String(right.record?.ts || '').localeCompare(String(left.record?.ts || '')));
 }
 
 function layout(data, title, body, crumbs = []) {
@@ -313,7 +451,12 @@ function layout(data, title, body, crumbs = []) {
   <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} — ${escapeHtml(data.project)} — FluencyLoop</title><link rel="stylesheet" href="/assets/site.css"></head>
   <body data-depth="${Math.min(crumbs.length, 3)}">
     <main id="content" tabindex="-1">
-      <nav aria-label="Primary">${link('/', 'Product overview')} · ${link('/concepts', 'Architectural concepts')} · ${link('/features', 'Features')}<button type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">Theme</button></nav>
+      <nav aria-label="Primary">
+        <a class="site-mark" href="/" aria-label="Product overview">FL</a>
+        <span class="project-name">${escapeHtml(data.project)}</span>
+        <span class="nav-links">${link('/', 'Overview')}${link('/concepts', 'Concepts')}${link('/features', 'Features')}</span>
+        <button type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">Theme</button>
+      </nav>
       ${breadcrumb}
       ${storeWarning}
       ${body}
@@ -325,34 +468,33 @@ function layout(data, title, body, crumbs = []) {
 
 function renderConstraints(requirements, openQuestions) {
   const answered = requirements.length
-    ? `<ul>${requirements.map((item) => `<li><strong>${escapeHtml(item.gap)}</strong><br>Answer: ${escapeHtml(item.answer)}<br>Consequence: ${escapeHtml(item.consequence)}</li>`).join('')}</ul>`
+    ? `<ul class="constraint-list">${requirements.map((item) => `<li><p class="constraint-gap">${escapeHtml(item.gap)}</p><p class="constraint-detail"><span>Answer</span> ${escapeHtml(item.answer)}</p><p class="constraint-detail"><span>Consequence</span> ${escapeHtml(item.consequence)}</p></li>`).join('')}</ul>`
     : emptyState('No answered requirements were recorded at this level.');
   const open = openQuestions.length
-    ? `<ul>${openQuestions.map((item) => `<li><strong>${escapeHtml(item.gap)}</strong><br>Why it matters: ${escapeHtml(item.why_it_matters)}</li>`).join('')}</ul>`
+    ? `<ul class="constraint-list">${openQuestions.map((item) => `<li><p class="constraint-gap">${escapeHtml(item.gap)}</p><p class="constraint-detail"><span>Why it matters</span> ${escapeHtml(item.why_it_matters)}</p></li>`).join('')}</ul>`
     : emptyState('No open questions were recorded at this level.');
-  return `<section><h2>Requirements</h2>${answered}<h2>Open questions</h2>${open}</section>`;
+  return `<h3>Requirements</h3>${answered}<h3>Open questions</h3>${open}`;
 }
 
 function renderProduct(data) {
   const navigation = data.navigation;
-  const concepts = navigation.concepts.length
-    ? `<ul>${navigation.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
-    : emptyState(navigation.hasCapturedHistoryWithoutConcepts
+  const concepts = recordList(
+    newestFirst(navigation.concepts.map(conceptItem)),
+    navigation.hasCapturedHistoryWithoutConcepts
       ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
-      : 'No architectural concepts have been recorded yet. Capture one with fluencyloop concept.');
-  const features = navigation.features.length
-    ? `<ul>${navigation.features.map((feature) => `<li>${link(featurePath(feature), feature.slug)}${feature.record && feature.record.intent ? ` — ${escapeHtml(feature.record.intent)}` : ''}</li>`).join('')}</ul>`
-    : emptyState('No features have been recorded yet.');
+      : 'No architectural concepts have been recorded yet. Capture one with fluencyloop concept.',
+  );
+  const features = recordList(newestFirst(navigation.features.map(featureItem)), 'No features have been recorded yet.');
   const overview = navigation.product
     ? markdown(navigation.product.content)
     : emptyState(navigation.hasCapturedHistoryWithoutConcepts
       ? 'No product overview has been distilled yet. Ask your assistant to "fluencyloop backfill" the imported history to synthesize one, or it will appear automatically once a feature materially changes the product shape.'
       : 'No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
   const distillations = data.distillations.length
-    ? `<ul>${data.distillations.map((item) => `<li>${escapeHtml(item.path)}</li>`).join('')}</ul>`
+    ? `<ul class="path-list">${data.distillations.map((item) => `<li><code>${escapeHtml(item.path)}</code></li>`).join('')}</ul>`
     : emptyState('No distillations have been written yet.');
   return layout(data, 'Product overview', `
-    <header><h1>${escapeHtml(data.project)}</h1><p>Product overview</p></header>
+    <header class="record-header"><p class="eyebrow">Product overview</p><h1>${escapeHtml(data.project)}</h1></header>
     <section><h2>Technical overview</h2>${overview}</section>
     <section><h2>Architectural concepts</h2>${concepts}</section>
     <section><h2>Features as deltas</h2>${features}</section>
@@ -363,12 +505,12 @@ function renderProduct(data) {
 
 function renderConceptList(data) {
   const concepts = data.navigation.concepts.length
-    ? `<ul>${data.navigation.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
+    ? filterableCatalog(data.navigation.tags, newestFirst(data.navigation.concepts.map(conceptItem)), '')
     : emptyState(data.navigation.hasCapturedHistoryWithoutConcepts
       ? 'No architectural concepts have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize concepts, or capture one directly with fluencyloop concept.'
       : 'No architectural concepts have been recorded yet. The product overview remains available while the store is empty.');
   const relationships = data.navigation.relations.length
-    ? `<ul>${data.navigation.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
+    ? `<ul class="relation-list">${data.navigation.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} <span class="relation-kind">${escapeHtml(relation.kind)}</span> &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
     : emptyState('No relationships have been recorded yet.');
   return layout(data, 'Architectural concepts', `<h1>Architectural concepts</h1><section><h2>Concepts</h2>${concepts}</section><section><h2>Relationship graph</h2>${relationships}</section>`, [
     { href: '/', label: 'Product overview' }, { label: 'Architectural concepts' },
@@ -386,16 +528,22 @@ function endpointLink(navigation, endpoint) {
 function renderConcept(data, concept) {
   const realizedBy = String(concept.realized_by || '').split(/\r?\n/).filter(Boolean);
   const relationships = concept.relations.length
-    ? `<ul>${concept.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} — ${escapeHtml(relation.kind)} &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
+    ? `<ul class="relation-list">${concept.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} <span class="relation-kind">${escapeHtml(relation.kind)}</span> &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
     : emptyState('This concept has no recorded relationships yet.');
-  const features = concept.features.length
-    ? `<ul>${concept.features.map((feature) => `<li>${link(featurePath(feature), feature.slug)}</li>`).join('')}</ul>`
-    : emptyState('No feature is currently linked to this concept.');
+  const features = recordList(
+    newestFirst(concept.features.map((feature) => featureItem(data.navigation.features.find((item) => item.slug === feature.slug) || feature))),
+    'No feature is currently linked to this concept.',
+  );
   const explanation = concept.distillation
     ? markdown(concept.distillation.content)
     : emptyState('No concept explanation has been distilled yet.');
   return layout(data, concept.name, `
-    <h1>${escapeHtml(concept.name)}</h1>
+    <header class="record-header">
+      <p class="eyebrow">Architectural concept</p>
+      <h1>${escapeHtml(concept.name)}</h1>
+      ${tagList(concept.tags)}
+      ${recordMeta(concept)}
+    </header>
     <section><h2>Problem in this product</h2><p>${escapeHtml(concept.problem)}</p><h2>How it works</h2><p>${escapeHtml(concept.how)}</p>
     <h2>Realized by</h2>${realizedBy.length ? `<ul>${realizedBy.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : emptyState('No implementation area was recorded.')}</section>
     <section><h2>Concept explanation</h2>${explanation}</section>
@@ -405,26 +553,35 @@ function renderConcept(data, concept) {
 }
 
 function renderFeatureList(data) {
-  const features = data.navigation.features.length
-    ? `<ul>${data.navigation.features.map((feature) => `<li>${link(featurePath(feature), feature.slug)}${feature.record && feature.record.intent ? ` — ${escapeHtml(feature.record.intent)}` : ''}</li>`).join('')}</ul>`
-    : emptyState('No features have been recorded yet.');
+  const features = filterableCatalog(
+    data.navigation.tags,
+    newestFirst(data.navigation.features.map(featureItem)),
+    'No features have been recorded yet.',
+  );
   return layout(data, 'Features', `<h1>Features as deltas</h1>${features}`, [
     { href: '/', label: 'Product overview' }, { label: 'Features' },
   ]);
 }
 
 function renderFeature(data, feature) {
-  const concepts = feature.concepts.length
-    ? `<ul>${feature.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)} — ${escapeHtml(concept.problem)}</li>`).join('')}</ul>`
-    : emptyState('This feature has no recorded concept links yet.');
-  const decisions = feature.decisions.length
-    ? `<ul>${feature.decisions.map((decision) => `<li>${link(decisionPath(decision), decision.title)} — ${escapeHtml(decision.why)}</li>`).join('')}</ul>`
-    : emptyState('No decisions have been recorded for this feature yet.');
+  const concepts = recordList(
+    newestFirst(feature.concepts.map((concept) => conceptItem(data.navigation.concepts.find((item) => item.name === concept.name) || concept))),
+    'This feature has no recorded concept links yet.',
+  );
+  const decisions = recordList(
+    newestFirst(feature.decisions.map((decision) => decisionItem(decision, feature.tags))),
+    'No decisions have been recorded for this feature yet.',
+  );
   const delta = feature.distillation
     ? markdown(feature.distillation.content)
     : emptyState('No feature delta has been distilled yet.');
   return layout(data, feature.slug, `
-    <h1>${escapeHtml(feature.slug)}</h1>
+    <header class="record-header">
+      <p class="eyebrow">Feature</p>
+      <h1>${escapeHtml(feature.slug)}</h1>
+      ${tagList(feature.tags)}
+      ${recordMeta(feature.record)}
+    </header>
     ${feature.record && feature.record.intent ? `<p>${escapeHtml(feature.record.intent)}</p>` : ''}
     <section><h2>Feature delta</h2>${delta}</section>
     <section><h2>Concepts changed</h2>${concepts}</section>
@@ -434,16 +591,23 @@ function renderFeature(data, feature) {
 }
 
 function renderDecision(data, feature, decision) {
-  const concepts = feature.concepts.length
-    ? `<ul>${feature.concepts.map((concept) => `<li>${link(conceptPath(concept), concept.name)}</li>`).join('')}</ul>`
-    : emptyState('No concept link was recorded for this feature.');
+  const concepts = recordList(
+    newestFirst(feature.concepts.map((concept) => conceptItem(data.navigation.concepts.find((item) => item.name === concept.name) || concept))),
+    'No concept link was recorded for this feature.',
+  );
   return layout(data, decision.title, `
-    <h1>${escapeHtml(decision.title)}</h1>
-    <p>Decision in ${link(featurePath(feature), feature.slug)}.</p>
-    <section><h2>Why</h2><p>${escapeHtml(decision.why)}</p>
-    ${decision.alternative ? `<h2>Alternative rejected</h2><p>${escapeHtml(decision.alternative)}</p>` : ''}
-    <h2>Where</h2><p>${escapeHtml(decision.where)}</p></section>
-    <section><h2>Concepts served</h2>${concepts}</section>
+    <header class="record-header">
+      <p class="eyebrow">Decision in ${link(featurePath(feature), feature.slug)}</p>
+      <h1>${escapeHtml(decision.title)}</h1>
+      ${tagList(feature.tags)}
+      ${recordMeta(decision)}
+    </header>
+    <section class="detail-section">
+      <h2>Why</h2><p>${escapeHtml(decision.why)}</p>
+      ${decision.alternative ? `<h2>Alternative rejected</h2><p>${escapeHtml(decision.alternative)}</p>` : ''}
+      <h2>Where</h2><p><code>${escapeHtml(decision.where)}</code></p>
+    </section>
+    <section class="detail-section"><h2>Concepts served</h2>${concepts}</section>
   `, [{ href: '/', label: 'Product overview' }, { href: '/features', label: 'Features' }, { href: featurePath(feature), label: feature.slug }, { label: decision.title }]);
 }
 

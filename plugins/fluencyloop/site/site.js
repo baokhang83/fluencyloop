@@ -140,6 +140,76 @@ function renderDiagram(figure) {
   }
 }
 
+// Rows filter by two independent axes that compose with AND: free text (title, summary, tag names,
+// and record kind) and a set of selected tags, which is OR among themselves — picking two tags
+// widens the result to either, the way most faceted filters read. The server renders every row
+// unfiltered, so this is pure progressive enhancement: without JavaScript the catalog is complete.
+// State round-trips through the URL so a filtered view is something you can link to.
+function installCatalogFilters() {
+  document.querySelectorAll('[data-catalog]').forEach((catalog) => {
+    const rows = [...catalog.querySelectorAll('[data-record-row]')];
+    const tagControls = [...catalog.querySelectorAll('[data-tag-filter]')];
+    const searchInput = catalog.querySelector('[data-catalog-search]');
+    const status = catalog.querySelector('[data-catalog-status]');
+    if (!rows.length) return;
+
+    const rowText = new WeakMap();
+    rows.forEach((row) => rowText.set(row, row.textContent.toLowerCase()));
+
+    const params = new URLSearchParams(window.location.search);
+    const selected = new Set((params.get('tag') || '').split(',').filter(Boolean));
+    let query = params.get('q') || '';
+    if (searchInput) searchInput.value = query;
+
+    const syncUrl = () => {
+      const next = new URLSearchParams(window.location.search);
+      query ? next.set('q', query) : next.delete('q');
+      selected.size ? next.set('tag', [...selected].join(',')) : next.delete('tag');
+      const search = next.toString();
+      const url = window.location.pathname + (search ? `?${search}` : '') + window.location.hash;
+      window.history.replaceState(null, '', url);
+    };
+
+    const applyFilters = () => {
+      const needle = query.trim().toLowerCase();
+      let shown = 0;
+      rows.forEach((row) => {
+        const tags = (row.dataset.tags || '').split(' ').filter(Boolean);
+        const matchesTags = selected.size === 0 || tags.some((tag) => selected.has(tag));
+        const matchesText = !needle || rowText.get(row).includes(needle);
+        const matches = matchesTags && matchesText;
+        row.hidden = !matches;
+        if (matches) shown += 1;
+      });
+      tagControls.forEach((control) => {
+        const isAll = control.dataset.tagFilter === 'all';
+        const active = isAll ? selected.size === 0 : selected.has(control.dataset.tagFilter);
+        control.setAttribute('aria-pressed', String(active));
+      });
+      if (status) {
+        status.textContent = shown === rows.length
+          ? ''
+          : `${shown} record${shown === 1 ? '' : 's'} of ${rows.length} shown.`;
+      }
+      syncUrl();
+    };
+
+    tagControls.forEach((control) => control.addEventListener('click', () => {
+      const tag = control.dataset.tagFilter;
+      if (tag === 'all') selected.clear();
+      else selected.has(tag) ? selected.delete(tag) : selected.add(tag);
+      applyFilters();
+    }));
+
+    searchInput?.addEventListener('input', () => {
+      query = searchInput.value;
+      applyFilters();
+    });
+
+    applyFilters();
+  });
+}
+
 // Keep personal presentation preferences in the browser, never in the project store.
 (() => {
   const root = document.documentElement;
@@ -176,4 +246,5 @@ function renderDiagram(figure) {
 
   requestAnimationFrame(() => { document.body.dataset.motion = 'ready'; });
   document.querySelectorAll('.diagram[data-mermaid]').forEach(renderDiagram);
+  installCatalogFilters();
 })();
