@@ -51,13 +51,42 @@ require_fluency() {
 }
 
 # First 0.3 use must carry legacy history forward without asking. The importer itself sets the
-# guard so this call is never recursive. Its record markers make direct retries safe too.
+# guard so this call is never recursive. Check for its per-feature declaration marker, rather than
+# only an absent store directory: an early 0.3 importer may already have copied decisions but not
+# the feature/session declarations added later. Retrying is safe because every imported record has
+# a stable marker.
+legacy_import_incomplete() {
+    local legacy="$1" feature_dir sessions_dir feature source store marker legacy_marker
+    while IFS= read -r -d '' feature_dir; do
+        sessions_dir="$feature_dir/sessions"
+        [ -d "$sessions_dir" ] || continue
+        if ! find "$sessions_dir" -mindepth 1 -maxdepth 1 -type f -name '*.md' -print -quit | grep -q .; then
+            continue
+        fi
+        feature="$(basename "$feature_dir")"
+        source="$(repo_rel "$feature_dir")#feature"
+        store="$(feature_store_path "$feature")"
+        [ ! -f "$store" ] && return 0
+        marker="\"imported_from\":\"$(json_escape "$source")\""
+        grep -Fq "$marker" "$store" && continue
+        # Only repair a pre-declaration import. A native 0.3 feature may share a legacy slug;
+        # without an imported marker, appending a synthetic feature record would supersede its
+        # real declaration on read.
+        legacy_marker="\"imported_from\":\"$(json_escape "$(repo_rel "$feature_dir")/")"
+        if grep -Fq "$legacy_marker" "$store"; then
+            return 0
+        fi
+    done < <(find "$legacy" -mindepth 1 -maxdepth 1 -type d -print0)
+    return 1
+}
+
 maybe_import_legacy() {
     [ "${FLUENCYLOOP_IMPORTING:-}" = "1" ] && return 0
     local legacy store importer
     legacy="$(docs_dir)/features"
     store="$(store_dir)"
-    [ -d "$legacy" ] && [ ! -d "$store" ] || return 0
+    [ -d "$legacy" ] || return 0
+    [ ! -d "$store" ] || legacy_import_incomplete "$legacy" || return 0
     importer="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/import-legacy.sh"
     [ -f "$importer" ] || return 0
     FLUENCYLOOP_IMPORTING=1 bash "$importer" --auto

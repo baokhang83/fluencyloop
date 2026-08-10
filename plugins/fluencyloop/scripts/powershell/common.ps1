@@ -40,13 +40,38 @@ function FlRequireFluency {
     FlMaybeImportLegacy
 }
 
-# First 0.3 use must carry legacy history forward without asking. import-legacy.ps1 sets the
-# guard too, so a direct import never re-enters this hook.
+# First 0.3 use must carry legacy history forward without asking. Check the importer's
+# per-feature declaration marker as well as the store directory: an early 0.3 importer may have
+# copied decisions without the declarations added later. Marked retries are idempotent.
+function Test-FlLegacyImportIncomplete([string]$legacy) {
+    foreach ($featureDir in @(Get-ChildItem -LiteralPath $legacy -Directory -ErrorAction SilentlyContinue)) {
+        $sessions = Join-Path $featureDir.FullName 'sessions'
+        if (-not (Test-Path -LiteralPath $sessions -PathType Container) -or -not @(Get-ChildItem -LiteralPath $sessions -Filter '*.md' -File -ErrorAction SilentlyContinue).Count) {
+            continue
+        }
+        $feature = $featureDir.Name
+        $store = FlFeatureStorePath $feature
+        $root = FlRepoRoot
+        $source = $featureDir.FullName.Substring($root.Length).TrimStart([char[]]@([char]92, [char]47)) -replace '\\', '/'
+        $marker = '"imported_from":"' + (FlJsonEscape "$source#feature") + '"'
+        if (-not (Test-Path -LiteralPath $store -PathType Leaf)) {
+            return $true
+        }
+        if (Select-String -LiteralPath $store -SimpleMatch -Quiet -Pattern $marker) { continue }
+        # Only repair a pre-declaration import. A native 0.3 feature may share a legacy slug;
+        # without an imported marker, appending a synthetic record would supersede it on read.
+        $legacyMarker = '"imported_from":"' + (FlJsonEscape "$source/")
+        if (Select-String -LiteralPath $store -SimpleMatch -Quiet -Pattern $legacyMarker) { return $true }
+    }
+    return $false
+}
+
 function FlMaybeImportLegacy {
     if ($env:FLUENCYLOOP_IMPORTING -eq '1') { return }
     $legacy = "$(FlDocsDir)/features"
     $store = FlStoreDir
-    if (-not (Test-Path -LiteralPath $legacy -PathType Container) -or (Test-Path -LiteralPath $store -PathType Container)) { return }
+    if (-not (Test-Path -LiteralPath $legacy -PathType Container)) { return }
+    if ((Test-Path -LiteralPath $store -PathType Container) -and -not (Test-FlLegacyImportIncomplete $legacy)) { return }
     $importer = Join-Path $PSScriptRoot 'import-legacy.ps1'
     if (-not (Test-Path -LiteralPath $importer -PathType Leaf)) { return }
     $previous = $env:FLUENCYLOOP_IMPORTING

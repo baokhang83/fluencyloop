@@ -215,12 +215,31 @@ function Import-LegacySession([string]$file) {
     Complete-KnowledgeBullet
 }
 
-foreach ($featureDir in @(Get-ChildItem -LiteralPath $legacyRoot -Directory -ErrorAction SilentlyContinue)) {
+function Import-LegacyFeature([System.IO.DirectoryInfo]$featureDir) {
+    $feature = $featureDir.Name
     $sessionsDir = Join-Path $featureDir.FullName 'sessions'
-    if (-not (Test-Path -LiteralPath $sessionsDir -PathType Container)) { continue }
-    foreach ($sessionFile in @(Get-ChildItem -LiteralPath $sessionsDir -Filter '*.md' -File -ErrorAction SilentlyContinue)) {
+    if (-not (Test-Path -LiteralPath $sessionsDir -PathType Container)) { return }
+    $sessionFiles = @(Get-ChildItem -LiteralPath $sessionsDir -Filter '*.md' -File -ErrorAction SilentlyContinue)
+    if (-not $sessionFiles.Count) { return }
+    foreach ($sessionFile in $sessionFiles) {
         Import-LegacySession $sessionFile.FullName
     }
+
+    # Legacy Markdown establishes the feature but cannot truthfully recreate its historic branch
+    # or native 0.3 sessions. Declare one explicit import session while leaving the imported
+    # decisions/components/conditions attached to their original legacy session slugs.
+    $store = FlFeatureStorePath $feature
+    $root = FlRepoRoot
+    $source = $featureDir.FullName.Substring($root.Length).TrimStart([char[]]@([char]92, [char]47)) -replace '\\', '/'
+    Add-ImportedRecord $store 'feature' $feature 'none' "$source#feature" @(
+        'slug', $feature, 'intent', 'Imported pre-0.3 session history.',
+        'branch', "legacy-import/$feature", 'base_ref', 'legacy')
+    Add-ImportedRecord $store 'session' $feature '000-legacy-import' "$source#backfill-session" @(
+        'slug', '000-legacy-import', 'intent', 'Backfill pre-0.3 session history.')
+}
+
+foreach ($featureDir in @(Get-ChildItem -LiteralPath $legacyRoot -Directory -ErrorAction SilentlyContinue)) {
+    Import-LegacyFeature $featureDir
 }
 
 if (-not $auto) { FlOut "Imported $script:imported legacy record(s); skipped $script:skipped." }
