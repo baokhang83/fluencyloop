@@ -66,9 +66,10 @@ legacy_import_revision_path() {
 }
 
 # Semantic reconstruction needs model judgment, unlike the deterministic Markdown importer. The
-# completed marker records that every imported feature was assessed once, so starting later work
-# does not repeatedly trigger a repository-wide migration.
-LEGACY_SEMANTIC_MIGRATION_REVISION=1
+# completed marker is only valid after every imported feature has an explicit assessment and the
+# migration has produced architectural records; otherwise later work must resume the migration.
+# Revision 2 deliberately reopens repositories marked by the earlier, empty-completion rule.
+LEGACY_SEMANTIC_MIGRATION_REVISION=2
 legacy_semantic_migration_path() { printf '%s/.legacy-semantic-migration-revision' "$(store_dir)"; }
 
 legacy_imported_feature_count() {
@@ -77,6 +78,39 @@ legacy_imported_feature_count() {
         grep -Eq '"type":"feature".*"imported_from":"' "$store" && count=$((count + 1))
     done < <(find "$(store_dir)/features" -maxdepth 1 -type f -name '*.jsonl' -print 2>/dev/null)
     printf '%s' "$count"
+}
+
+legacy_imported_feature_slugs() {
+    local store slug
+    while IFS= read -r store; do
+        grep -Eq '"type":"feature".*"imported_from":"' "$store" || continue
+        slug="$(basename "$store" .jsonl)"
+        printf '%s\n' "$slug"
+    done < <(find "$(store_dir)/features" -maxdepth 1 -type f -name '*.jsonl' -print 2>/dev/null | LC_ALL=C sort)
+}
+
+legacy_semantic_assessment_count() {
+    local store count=0
+    while IFS= read -r store; do
+        grep -Eq '"type":"semantic_assessment".*"semantic_migration_revision":"'"$LEGACY_SEMANTIC_MIGRATION_REVISION"'"' "$store" && count=$((count + 1))
+    done < <(find "$(store_dir)/features" -maxdepth 1 -type f -name '*.jsonl' -print 2>/dev/null)
+    printf '%s' "$count"
+}
+
+legacy_architectural_record_count() {
+    local store count
+    store="$(concepts_store_path)"
+    [ -f "$store" ] || { printf '0'; return; }
+    count="$(grep -c '"type":"concept"' "$store" || true)"
+    printf '%s' "${count:-0}"
+}
+
+legacy_semantic_unassessed_features() {
+    local feature store
+    while IFS= read -r feature; do
+        store="$(feature_store_path "$feature")"
+        grep -Eq '"type":"semantic_assessment".*"semantic_migration_revision":"'"$LEGACY_SEMANTIC_MIGRATION_REVISION"'"' "$store" || printf '%s\n' "$feature"
+    done < <(legacy_imported_feature_slugs)
 }
 
 legacy_semantic_migration_pending() {

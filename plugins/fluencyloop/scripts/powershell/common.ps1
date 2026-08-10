@@ -48,7 +48,7 @@ function FlRequireFluency {
 # It gives already-migrated repositories one automatic, idempotent repair pass without running the
 # full legacy scan on every normal command thereafter.
 $script:FlLegacyImportRevision = '2'
-$script:FlLegacySemanticMigrationRevision = '1'
+$script:FlLegacySemanticMigrationRevision = '2'
 
 function Get-FlLegacyImportRevisionPath { "$(FlStoreDir)/.legacy-import-revision" }
 function Get-FlLegacySemanticMigrationPath { "$(FlStoreDir)/.legacy-semantic-migration-revision" }
@@ -60,6 +60,37 @@ function Get-FlLegacyImportedFeatureCount {
         if (Select-String -LiteralPath $store.FullName -Pattern '"type":"feature".*"imported_from":"' -Quiet) { $count++ }
     }
     return $count
+}
+function Get-FlLegacyImportedFeatureSlugs {
+    $features = "$(FlStoreDir)/features"
+    if (-not (Test-Path -LiteralPath $features -PathType Container)) { return @() }
+    return @(
+        Get-ChildItem -LiteralPath $features -Filter '*.jsonl' -File -ErrorAction SilentlyContinue |
+            Sort-Object Name |
+            Where-Object { Select-String -LiteralPath $_.FullName -Pattern '"type":"feature".*"imported_from":"' -Quiet } |
+            ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) }
+    )
+}
+function Get-FlLegacySemanticAssessmentCount {
+    $count = 0
+    foreach ($feature in @(Get-FlLegacyImportedFeatureSlugs)) {
+        $store = FlFeatureStorePath $feature
+        if (Select-String -LiteralPath $store -Pattern ('"type":"semantic_assessment".*"semantic_migration_revision":"' + $script:FlLegacySemanticMigrationRevision + '"') -Quiet) { $count++ }
+    }
+    return $count
+}
+function Get-FlLegacyArchitecturalRecordCount {
+    $store = FlConceptsStorePath
+    if (-not (Test-Path -LiteralPath $store -PathType Leaf)) { return 0 }
+    return @([System.IO.File]::ReadAllLines($store) | Where-Object { $_ -match '"type":"concept"' }).Count
+}
+function Get-FlLegacySemanticUnassessedFeatures {
+    $missing = @()
+    foreach ($feature in @(Get-FlLegacyImportedFeatureSlugs)) {
+        $store = FlFeatureStorePath $feature
+        if (-not (Select-String -LiteralPath $store -Pattern ('"type":"semantic_assessment".*"semantic_migration_revision":"' + $script:FlLegacySemanticMigrationRevision + '"') -Quiet)) { $missing += $feature }
+    }
+    return $missing
 }
 function Test-FlLegacySemanticMigrationPending {
     if ((Get-FlLegacyImportedFeatureCount) -eq 0) { return $false }

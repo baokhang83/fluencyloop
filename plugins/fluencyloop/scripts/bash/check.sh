@@ -146,7 +146,7 @@ known_identity() {
 
 valid_record_type() {
     case "$1" in
-        feature|session|decision|component|condition|concept|relation|principle|requirement|open_question) return 0 ;;
+        feature|session|decision|component|condition|concept|relation|semantic_assessment|principle|requirement|open_question) return 0 ;;
         *) return 1 ;;
     esac
 }

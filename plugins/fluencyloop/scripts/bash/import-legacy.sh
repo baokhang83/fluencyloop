@@ -3,7 +3,7 @@
 # Originals under docs/fluencyloop/features are read-only. Each imported record carries a stable
 # imported_from marker; re-runs recognise that exact raw marker without parsing JSON.
 #
-# Usage: import-legacy.sh [--auto|--mark-semantic-complete]
+# Usage: import-legacy.sh [--auto|--semantic-status [--json]|--assess <feature> --summary <text> [--record <name> ...]|--mark-semantic-complete]
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,22 +15,93 @@ source "$SCRIPT_DIR/common.sh"
 export FLUENCYLOOP_IMPORTING=1
 
 AUTO=false; MARK_SEMANTIC_COMPLETE=false
-for arg in "$@"; do
-    case "$arg" in
+ASSESS_FEATURE=""; ASSESS_SUMMARY=""
+declare -a ASSESS_RECORDS=()
+SEMANTIC_STATUS=false; JSON=false
+while [ "$#" -gt 0 ]; do
+    case "$1" in
         --auto) AUTO=true ;;
         --mark-semantic-complete) MARK_SEMANTIC_COMPLETE=true ;;
-        *) echo "Unknown option: $arg" >&2; exit 1 ;;
+        --assess) shift; ASSESS_FEATURE="${1:-}" ;;
+        --summary) shift; ASSESS_SUMMARY="${1:-}" ;;
+        --record) shift; ASSESS_RECORDS+=("${1:-}") ;;
+        --semantic-status) SEMANTIC_STATUS=true ;;
+        --json) JSON=true ;;
+        *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
+    shift
 done
 require_fluency
+
+json_array_from_lines() {
+    local item first=true
+    printf '['
+    while IFS= read -r item; do
+        $first || printf ','
+        first=false
+        printf '"%s"' "$(json_escape "$item")"
+    done
+    printf ']'
+}
+
+if $SEMANTIC_STATUS; then
+    $AUTO && { echo "Error: --auto cannot be combined with --semantic-status." >&2; exit 1; }
+    $MARK_SEMANTIC_COMPLETE && { echo "Error: --semantic-status and --mark-semantic-complete cannot be combined." >&2; exit 1; }
+    [ -z "$ASSESS_FEATURE$ASSESS_SUMMARY" ] || { echo "Error: --semantic-status cannot be combined with --assess." >&2; exit 1; }
+    if $JSON; then
+        printf '{"imported_features":'; json_array_from_lines < <(legacy_imported_feature_slugs)
+        printf ',"unassessed_features":'; json_array_from_lines < <(legacy_semantic_unassessed_features)
+        printf ',"architectural_records":%s}\n' "$(legacy_architectural_record_count)"
+    else
+        echo "Imported legacy features: $(legacy_imported_feature_count)"
+        echo "Assessed: $(legacy_semantic_assessment_count)"
+        echo "Architectural records: $(legacy_architectural_record_count)"
+        echo "Unassessed features:"
+        legacy_semantic_unassessed_features
+    fi
+    exit 0
+fi
+
+if [ -n "$ASSESS_FEATURE$ASSESS_SUMMARY" ]; then
+    $AUTO && { echo "Error: --auto cannot be combined with --assess." >&2; exit 1; }
+    $MARK_SEMANTIC_COMPLETE && { echo "Error: --assess and --mark-semantic-complete cannot be combined." >&2; exit 1; }
+    [ -n "$ASSESS_FEATURE" ] || { echo "Error: --assess requires an imported feature slug." >&2; exit 1; }
+    [ -n "$ASSESS_SUMMARY" ] || { echo "Error: --summary is required with --assess." >&2; exit 1; }
+    store="$(feature_store_path "$ASSESS_FEATURE")"
+    grep -Eq '"type":"feature".*"imported_from":"' "$store" 2>/dev/null || {
+        echo "Error: $ASSESS_FEATURE is not an imported legacy feature." >&2; exit 1;
+    }
+    if grep -Eq '"type":"semantic_assessment".*"semantic_migration_revision":"'"$LEGACY_SEMANTIC_MIGRATION_REVISION"'"' "$store"; then
+        echo "Semantic migration assessment already recorded for $ASSESS_FEATURE."
+        exit 0
+    fi
+    fields=(summary "$ASSESS_SUMMARY" semantic_migration_revision "$LEGACY_SEMANTIC_MIGRATION_REVISION")
+    if [ "${#ASSESS_RECORDS[@]}" -gt 0 ]; then
+        fields+=(architectural_records "$(IFS=$'\n'; printf '%s' "${ASSESS_RECORDS[*]}")")
+    fi
+    store_append_record "$store" semantic_assessment "$ASSESS_FEATURE" 000-legacy-import "${fields[@]}"
+    echo "Recorded semantic migration assessment for $ASSESS_FEATURE."
+    exit 0
+fi
 
 if $MARK_SEMANTIC_COMPLETE; then
     $AUTO && { echo "Error: --auto and --mark-semantic-complete cannot be combined." >&2; exit 1; }
     count="$(legacy_imported_feature_count)"
     [ "$count" -gt 0 ] || { echo "Error: no imported legacy features are available to mark." >&2; exit 1; }
+    assessed="$(legacy_semantic_assessment_count)"
+    missing="$(legacy_semantic_unassessed_features)"
+    if [ -n "$missing" ]; then
+        echo "Error: semantic migration is incomplete: assessed $assessed of $count imported feature(s). Missing: $(printf '%s' "$missing" | paste -sd ',')." >&2
+        exit 1
+    fi
+    architectural_records="$(legacy_architectural_record_count)"
+    [ "$architectural_records" -gt 0 ] || {
+        echo "Error: semantic migration is incomplete: no evidence-backed architectural records were recorded." >&2
+        exit 1
+    }
     mkdir -p "$(store_dir)"
     printf '%s\n' "$LEGACY_SEMANTIC_MIGRATION_REVISION" > "$(legacy_semantic_migration_path)"
-    echo "Marked semantic migration complete for $count imported feature(s)."
+    echo "Marked semantic migration complete for $count imported feature(s), $assessed assessment(s), and $architectural_records architectural record(s)."
     exit 0
 fi
 
