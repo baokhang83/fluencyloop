@@ -81,6 +81,7 @@ PY
     run bash "$BIN/check.sh" --json
     [ "$status" -eq 0 ]
     [ -f "$STORE" ]
+    [ "$(tr -d '\r\n' < "$(dirname "$STORE")/../.legacy-import-revision")" = "2" ]
 }
 
 @test "a normal command repairs a store imported before declaration records existed" {
@@ -113,6 +114,31 @@ with open(sys.argv[1], encoding='utf-8') as fh:
     records = [json.loads(line) for line in fh]
 assert len(records) == 1, records
 assert records[0]['intent'] == 'native 0.3 work', records
+PY
+}
+
+@test "a completed legacy import is retried once when the importer revision advances" {
+    printf '%s\n' \
+        '# Session' \
+        '### Hard-won conditions (gotchas, root causes, limitations)' \
+        '- **Windows pack-file locks**, so scratch cleanup is best effort while **isolated cleanup** is deterministic. · status: follow-up' > "$LEGACY"
+    mkdir -p "$(dirname "$STORE")"
+    printf '%s\n' \
+        '{"schema_version":"1","type":"feature","ts":"2026-08-09","feature":"001-add-caching","session":"none","commit":"abc","slug":"001-add-caching","intent":"Imported pre-0.3 session history.","branch":"legacy-import/001-add-caching","base_ref":"legacy","imported_from":"docs/fluencyloop/features/001-add-caching#feature"}' \
+        '{"schema_version":"1","type":"session","ts":"2026-08-09","feature":"001-add-caching","session":"000-legacy-import","commit":"abc","slug":"000-legacy-import","intent":"Backfill pre-0.3 session history.","imported_from":"docs/fluencyloop/features/001-add-caching#backfill-session"}' > "$STORE"
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+    [ "$(tr -d '\r\n' < "$(dirname "$STORE")/../.legacy-import-revision")" = "2" ]
+
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    records = [json.loads(line) for line in fh]
+record = next(record for record in records if record['type'] == 'condition')
+assert record['subject'] == 'Windows pack-file locks', record
+assert record['why'].startswith(', so scratch cleanup'), record
+assert '**isolated cleanup**' in record['why'], record
 PY
 }
 
@@ -228,6 +254,24 @@ with open(sys.argv[1], encoding='utf-8') as fh:
     record = json.loads(fh.readline())
 assert record['subject'] == 'The OOM was linear heap growth, not a leak in one build.', record
 assert record['why'].endswith('held for the whole run.'), record
+PY
+}
+
+@test "accepts punctuation immediately after a bold knowledge title" {
+    printf '%s\n' \
+        '# Session' \
+        '### Hard-won conditions (gotchas, root causes, limitations)' \
+        '- **Windows pack-file locks**, so scratch cleanup is best effort while **isolated cleanup** is deterministic. · status: follow-up' > "$LEGACY"
+    run bash "$BIN/import-legacy.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"skipped malformed"* ]]
+    python3 - "$STORE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as fh:
+    record = json.loads(fh.readline())
+assert record['subject'] == 'Windows pack-file locks', record
+assert record['why'].startswith(', so scratch cleanup'), record
+assert '**isolated cleanup**' in record['why'], record
 PY
 }
 

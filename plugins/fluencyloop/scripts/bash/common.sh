@@ -55,6 +55,35 @@ require_fluency() {
 # only an absent store directory: an early 0.3 importer may already have copied decisions but not
 # the feature/session declarations added later. Retrying is safe because every imported record has
 # a stable marker.
+#
+# Bump this when a legacy parser correction can recover records that an earlier importer skipped.
+# It gives already-migrated repositories one automatic, idempotent repair pass without running the
+# full legacy scan on every normal command thereafter.
+LEGACY_IMPORT_REVISION=2
+
+legacy_import_revision_path() {
+    printf '%s/.legacy-import-revision' "$(store_dir)"
+}
+
+legacy_import_needs_revision() {
+    local legacy="$1" revision feature_dir feature source store marker
+    revision="$(legacy_import_revision_path)"
+    if [ -f "$revision" ] && [ "$(tr -d '\r\n' < "$revision")" = "$LEGACY_IMPORT_REVISION" ]; then
+        return 1
+    fi
+    while IFS= read -r -d '' feature_dir; do
+        feature="$(basename "$feature_dir")"
+        source="$(repo_rel "$feature_dir")#feature"
+        store="$(feature_store_path "$feature")"
+        [ -f "$store" ] || continue
+        marker="\"imported_from\":\"$(json_escape "$source")\""
+        # Only retry a repository that has actually received a legacy import. A native 0.3
+        # feature can legitimately share the same docs layout and must not be imported as legacy.
+        grep -Fq "$marker" "$store" && return 0
+    done < <(find "$legacy" -mindepth 1 -maxdepth 1 -type d -print0)
+    return 1
+}
+
 legacy_import_incomplete() {
     local legacy="$1" feature_dir sessions_dir feature source store marker legacy_marker
     while IFS= read -r -d '' feature_dir; do
@@ -86,7 +115,7 @@ maybe_import_legacy() {
     legacy="$(docs_dir)/features"
     store="$(store_dir)"
     [ -d "$legacy" ] || return 0
-    [ ! -d "$store" ] || legacy_import_incomplete "$legacy" || return 0
+    [ ! -d "$store" ] || legacy_import_incomplete "$legacy" || legacy_import_needs_revision "$legacy" || return 0
     importer="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/import-legacy.sh"
     [ -f "$importer" ] || return 0
     FLUENCYLOOP_IMPORTING=1 bash "$importer" --auto
