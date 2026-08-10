@@ -52,7 +52,7 @@ git diff <base>..<ref>
 
 If `.fluencyloop/state.json` exists, read it for the `feature` slug and `base_ref` rather than
 guessing. Usually it's **absent** for backfill (the work skipped the loop, so nothing wrote it) —
-derive the base from git as above; §2 writes a fresh state record when it reconstructs the feature.
+derive the base from git as above; §3 writes a fresh state record when it reconstructs the feature.
 
 **Quantify the drift deterministically** with `fluencyloop check --json`: its `unjournaled_commits`
 counts commits since the last journaled session. A non-zero count with no matching sessions is exactly the skipped-loop work
@@ -64,9 +64,32 @@ description. If one exists, **reconstruct from it**, cite it as a source, and fr
 as backed by a contemporaneous record (stronger than post-hoc memory) — do **not** write "no
 real-time teaching happened" when it did. Only a genuine from-nothing reconstruction gets the
 blind-backfill framing. Such a log is also the best raw material for a rich knowledge-transfer
-record (step 3).
+record (step 4).
 
-## 2. Reconstruct — carefully
+## 2. Assemble records before writing
+
+Do the evidence work first. Before running `fluencyloop feature`, `fluencyloop session`, or any
+writer, prepare a concrete, non-empty record plan in the conversation: feature intent, session
+intent, and the exact fields for each supported decision, component, condition, concept, or
+relationship. Examples below are templates, never commands to execute with placeholders omitted.
+
+**Never invoke a bare writer to discover its syntax.** Do not run `fluencyloop decision`,
+`fluencyloop knowledge`, or `fluencyloop concept` without arguments. If the evidence supports no
+record of one type, skip that command entirely and say why; an empty command is neither a check
+nor a harmless no-op.
+
+Each command has a complete minimum payload:
+
+- decision: `--title`, `--where`, `--why`, `--alternative`, and `--trust unverified`;
+- knowledge: at least one complete `--component "name|role|conditions"` or
+  `--gotcha "subject|why"`;
+- concept: `--name`, `--problem`, `--how`, and at least one `--realized-by`; or a complete
+  `--relate "from|to|kind"`.
+
+Only after that plan exists, create the feature and session and append the concrete records. This
+keeps an evidence-free reconstruction from changing branches or leaving an empty session behind.
+
+## 3. Reconstruct — carefully
 
 Read the diff, the history, and the code (plus any ADR/spec/notes the work cites) and infer
 the **decisions that were actually made** — the genuine forks, not every line. For each, the
@@ -102,7 +125,7 @@ These commands write `.fluencyloop/state.json` (feature, branch, `stage: build`,
 work's real base was not the branch you ran this from, correct `base_ref` to the ref your §1 diff
 used. **Do not create or edit session journals, `design.md`, diagrams, or any other Markdown.**
 
-## 3. Capture the knowledge and concepts the code now embodies
+## 4. Capture the knowledge and concepts the code now embodies
 
 Backfill the feature's component inventory and hard-won conditions in one batched store write.
 Cover the whole relevant pipeline, not just the files that contained a decision; this is the
@@ -128,7 +151,7 @@ fluencyloop concept --relate "<from>|<to>|<kind>"
 Both commands append store records; neither creates Markdown. Keep their prose person-neutral:
 record what the code does and why, never anyone's competence or prior knowledge.
 
-## 4. Correct later without rewriting history
+## 5. Correct later without rewriting history
 
 Do not ask for trust confirmation. If the developer later volunteers an independent verification
 or correction, append a new `fluencyloop decision` record with the same `title` and `where`
@@ -136,7 +159,7 @@ identity, the corrected values, and `--trust verified` when they can vouch for i
 later line supersedes the earlier unverified record on read; never edit or delete the original
 JSONL line. Otherwise, leave the existing `trust: unverified` record honest.
 
-## 5. Recommend one distillation pass after the reconstruction settles
+## 6. Recommend one distillation pass after the reconstruction settles
 
 After the decisions, knowledge, and concepts are settled, recommend one bounded distillation
 pass. Do not create a turn-by-turn summary while reconstructing: the store already preserves the
@@ -166,3 +189,5 @@ backfilled.
   These files are committed and name an identifiable author (GDPR); the per-developer picture
   stays only in the global, uncommitted calibration profile.
 - **Still never gates.** Backfill documents after the fact; it does not block anything.
+- **No empty writer calls.** Omit a record type that has no evidence; never invoke a writer with
+  missing required fields.
