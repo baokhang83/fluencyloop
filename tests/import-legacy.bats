@@ -85,6 +85,20 @@ PY
     [ "$status" -eq 0 ]
     [ -f "$STORE" ]
     [ "$(tr -d '\r\n' < "$(dirname "$STORE")/../.legacy-import-revision")" = "3" ]
+    result="$(printf '%s\n' "$output" | tail -n 1)"
+    [ "$(echo "$result" | json_field legacy_imported_features)" = "1" ]
+    [ "$(echo "$result" | json_field legacy_migration_pending)" = "True" ] || [ "$(echo "$result" | json_field legacy_migration_pending)" = "true" ]
+}
+
+@test "marks an assessed imported history so feature startup does not repeat migration" {
+    bash "$BIN/check.sh" --json >/dev/null
+    run bash "$BIN/import-legacy.sh" --mark-semantic-complete
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Marked semantic migration complete for 1 imported feature"* ]]
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | json_field legacy_migration_pending)" = "False" ] || [ "$(echo "$output" | json_field legacy_migration_pending)" = "false" ]
 }
 
 @test "a normal command repairs a store imported before declaration records existed" {

@@ -88,6 +88,10 @@ feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in feature_text
 assert "state_matches_branch" in feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in feature_text
+assert "**Migrate imported history before normal feature work.**" in feature_text
+assert "legacy_migration_pending" in feature_text
+assert "ticket numbering" in feature_text
+assert "fluencyloop import --mark-semantic-complete" in feature_text
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
 assert "`store` must be a path under `docs/fluencyloop/`" in feature_text
@@ -95,6 +99,10 @@ codex_feature_text = read_text(dist / "skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in codex_feature_text
 assert "state_matches_branch" in codex_feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in codex_feature_text
+assert "**Migrate imported history before normal feature work.**" in codex_feature_text
+assert "legacy_migration_pending" in codex_feature_text
+assert "ticket numbering" in codex_feature_text
+assert "fluencyloop import --mark-semantic-complete" in codex_feature_text
 assert "### Codex teaching gate - visible before the journal" in codex_feature_text
 assert "before any `fluencyloop decision`" in codex_feature_text
 assert "No reply is not a `wave`" in codex_feature_text

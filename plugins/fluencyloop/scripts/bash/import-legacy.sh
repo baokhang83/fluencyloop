@@ -3,7 +3,7 @@
 # Originals under docs/fluencyloop/features are read-only. Each imported record carries a stable
 # imported_from marker; re-runs recognise that exact raw marker without parsing JSON.
 #
-# Usage: import-legacy.sh [--auto]
+# Usage: import-legacy.sh [--auto|--mark-semantic-complete]
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,14 +14,25 @@ source "$SCRIPT_DIR/common.sh"
 # directly rather than by that hook.
 export FLUENCYLOOP_IMPORTING=1
 
-AUTO=false
+AUTO=false; MARK_SEMANTIC_COMPLETE=false
 for arg in "$@"; do
     case "$arg" in
         --auto) AUTO=true ;;
+        --mark-semantic-complete) MARK_SEMANTIC_COMPLETE=true ;;
         *) echo "Unknown option: $arg" >&2; exit 1 ;;
     esac
 done
 require_fluency
+
+if $MARK_SEMANTIC_COMPLETE; then
+    $AUTO && { echo "Error: --auto and --mark-semantic-complete cannot be combined." >&2; exit 1; }
+    count="$(legacy_imported_feature_count)"
+    [ "$count" -gt 0 ] || { echo "Error: no imported legacy features are available to mark." >&2; exit 1; }
+    mkdir -p "$(store_dir)"
+    printf '%s\n' "$LEGACY_SEMANTIC_MIGRATION_REVISION" > "$(legacy_semantic_migration_path)"
+    echo "Marked semantic migration complete for $count imported feature(s)."
+    exit 0
+fi
 
 LEGACY_ROOT="$(docs_dir)/features"
 STORE_ROOT="$(store_dir)"

@@ -60,6 +60,21 @@ calibration, feature declaration, session, or writer command. If it is `false`, 
 state the checkout branch and `state_branch`, and ask the developer which existing feature context
 to preserve. Do not create a new feature, switch branches, or overwrite state to guess a repair.
 
+**Migrate imported history before normal feature work.** Parse `legacy_migration_pending` next.
+When it is `true`, do not inspect the active feature, calibration, preferences, ticket numbering,
+or the new intent yet—and do not ask the developer anything. This is an automatic, repository-wide
+migration, not a new feature.
+
+1. Enumerate all `legacy_imported_features` in stable order and assess every imported feature's
+   existing decisions, components, conditions, and relevant history. Use the imported
+   `000-legacy-import` session with `--feature <slug> --session 000-legacy-import`; never create
+   or switch historical feature branches.
+2. Add only evidence-backed architectural records and relations. Do not invent a concept per
+   feature, and do not repeat the already-imported decision/knowledge records.
+3. After every imported feature has been assessed, run
+   `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`. Continue
+   to the normal feature flow only when `legacy_migration_pending` is `false`.
+
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
 `base_ref`), written by `fluencyloop feature` / `fluencyloop session` and committed with the branch. Prefer
