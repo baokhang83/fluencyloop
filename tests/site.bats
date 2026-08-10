@@ -262,7 +262,7 @@ PY
     run request /features
     [ "$status" -eq 0 ]
     [[ "$output" == *'data-tags="append-only-log event-sourcing"'* ]]
-    [[ "$output" == *'Recorded <time datetime="2026-08-11">2026-08-11</time>'* ]]
+    [[ "$output" == *'<time class="record-date" datetime="2026-08-11" title="Recorded 2026-08-11">2026-08-11</time>'* ]]
     [[ "$output" == *'data-record-row data-tags=""'* ]]
 
     run request /decisions/tag-filter/001/site/filter%20on%20tags
