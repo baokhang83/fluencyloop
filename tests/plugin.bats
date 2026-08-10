@@ -144,6 +144,12 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "person-neutral" in feature_skill_text
 claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
+assert "**Migrate imported history before planning.**" in claude_plan_text
+assert "legacy_migration_pending" in claude_plan_text
+assert "fluencyloop import --mark-semantic-complete" in claude_plan_text
+assert "**Migrate imported history before planning.**" in codex_plan_text
+assert "legacy_migration_pending" in codex_plan_text
+assert "fluencyloop import --mark-semantic-complete" in codex_plan_text
 assert "### Codex architecture teaching gate - before decomposition" in codex_plan_text
 assert "before writing the task breakdown, roadmap" in codex_plan_text
 assert "Do not decompose the work" in codex_plan_text
