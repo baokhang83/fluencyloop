@@ -7,22 +7,69 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 $env:FLUENCYLOOP_IMPORTING = '1'
 
-$auto = $false; $markSemanticComplete = $false
-foreach ($arg in $args) {
+$auto = $false; $markSemanticComplete = $false; $assessFeature = ''; $assessSummary = ''; $assessRecords = @(); $semanticStatus = $false; $json = $false
+for ($i = 0; $i -lt $args.Count; $i++) {
+    $arg = $args[$i]
     if ($arg -eq '--auto') { $auto = $true }
     elseif ($arg -eq '--mark-semantic-complete') { $markSemanticComplete = $true }
+    elseif ($arg -eq '--assess') { $i++; if ($i -ge $args.Count) { [Console]::Error.WriteLine('Error: --assess requires an imported feature slug.'); exit 1 }; $assessFeature = $args[$i] }
+    elseif ($arg -eq '--summary') { $i++; if ($i -ge $args.Count) { [Console]::Error.WriteLine('Error: --summary requires text.'); exit 1 }; $assessSummary = $args[$i] }
+    elseif ($arg -eq '--record') { $i++; if ($i -ge $args.Count) { [Console]::Error.WriteLine('Error: --record requires a record name.'); exit 1 }; $assessRecords += $args[$i] }
+    elseif ($arg -eq '--semantic-status') { $semanticStatus = $true }
+    elseif ($arg -eq '--json') { $json = $true }
     else { [Console]::Error.WriteLine("Unknown option: $arg"); exit 1 }
 }
 FlRequireFluency
+
+if ($semanticStatus) {
+    if ($auto) { [Console]::Error.WriteLine('Error: --auto cannot be combined with --semantic-status.'); exit 1 }
+    if ($markSemanticComplete) { [Console]::Error.WriteLine('Error: --semantic-status and --mark-semantic-complete cannot be combined.'); exit 1 }
+    if ($assessFeature -or $assessSummary) { [Console]::Error.WriteLine('Error: --semantic-status cannot be combined with --assess.'); exit 1 }
+    $imported = @(Get-FlLegacyImportedFeatureSlug)
+    $unassessed = @(Get-FlLegacySemanticUnassessedFeature)
+    $architecturalRecords = Get-FlLegacyArchitecturalRecordCount
+    if ($json) { [pscustomobject]@{ imported_features = $imported; unassessed_features = $unassessed; architectural_records = $architecturalRecords } | ConvertTo-Json -Compress }
+    else {
+        FlOut "Imported legacy features: $($imported.Count)"
+        FlOut "Assessed: $(Get-FlLegacySemanticAssessmentCount)"
+        FlOut "Architectural records: $architecturalRecords"
+        FlOut 'Unassessed features:'
+        $unassessed | ForEach-Object { FlOut $_ }
+    }
+    exit 0
+}
+
+if ($assessFeature -or $assessSummary) {
+    if ($auto) { [Console]::Error.WriteLine('Error: --auto cannot be combined with --assess.'); exit 1 }
+    if ($markSemanticComplete) { [Console]::Error.WriteLine('Error: --assess and --mark-semantic-complete cannot be combined.'); exit 1 }
+    if (-not $assessFeature) { [Console]::Error.WriteLine('Error: --assess requires an imported feature slug.'); exit 1 }
+    if (-not $assessSummary) { [Console]::Error.WriteLine('Error: --summary is required with --assess.'); exit 1 }
+    $featureStore = FlFeatureStorePath $assessFeature
+    if (-not (Test-Path -LiteralPath $featureStore -PathType Leaf) -or -not (Select-String -LiteralPath $featureStore -Pattern '"type":"feature".*"imported_from":"' -Quiet)) {
+        [Console]::Error.WriteLine("Error: $assessFeature is not an imported legacy feature."); exit 1
+    }
+    $assessmentPattern = '"type":"semantic_assessment".*"semantic_migration_revision":"' + $script:FlLegacySemanticMigrationRevision + '"'
+    if (Select-String -LiteralPath $featureStore -Pattern $assessmentPattern -Quiet) { FlOut "Semantic migration assessment already recorded for $assessFeature."; exit 0 }
+    $kv = @('summary', $assessSummary, 'semantic_migration_revision', $script:FlLegacySemanticMigrationRevision)
+    if ($assessRecords.Count -gt 0) { $kv += @('architectural_records', ($assessRecords -join "`n")) }
+    FlStoreAppendRecord $featureStore 'semantic_assessment' $assessFeature '000-legacy-import' $kv
+    FlOut "Recorded semantic migration assessment for $assessFeature."
+    exit 0
+}
 
 if ($markSemanticComplete) {
     if ($auto) { [Console]::Error.WriteLine('Error: --auto and --mark-semantic-complete cannot be combined.'); exit 1 }
     $count = Get-FlLegacyImportedFeatureCount
     if ($count -eq 0) { [Console]::Error.WriteLine('Error: no imported legacy features are available to mark.'); exit 1 }
+    $assessed = Get-FlLegacySemanticAssessmentCount
+    $missing = @(Get-FlLegacySemanticUnassessedFeature)
+    if ($missing.Count -gt 0) { [Console]::Error.WriteLine("Error: semantic migration is incomplete: assessed $assessed of $count imported feature(s). Missing: $($missing -join ',')."); exit 1 }
+    $architecturalRecords = Get-FlLegacyArchitecturalRecordCount
+    if ($architecturalRecords -eq 0) { [Console]::Error.WriteLine('Error: semantic migration is incomplete: no evidence-backed architectural records were recorded.'); exit 1 }
     $store = FlStoreDir
     if (-not (Test-Path -LiteralPath $store -PathType Container)) { New-Item -ItemType Directory -Force -Path $store | Out-Null }
     [System.IO.File]::WriteAllText((Get-FlLegacySemanticMigrationPath), $script:FlLegacySemanticMigrationRevision + [Environment]::NewLine, (New-Object System.Text.UTF8Encoding($false)))
-    FlOut "Marked semantic migration complete for $count imported feature(s)."
+    FlOut "Marked semantic migration complete for $count imported feature(s), $assessed assessment(s), and $architecturalRecords architectural record(s)."
     exit 0
 }
 

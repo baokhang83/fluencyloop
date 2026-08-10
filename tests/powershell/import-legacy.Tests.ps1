@@ -85,6 +85,24 @@ Describe 'import-legacy.ps1' {
         Test-Path -LiteralPath $script:store | Should -BeTrue
     }
 
+    It 'requires architectural records and an assessment for every imported feature before completion' {
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 0
+        (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 1
+        (Invoke-FlAll 'import-legacy.ps1' '--mark-semantic-complete') | Should -Match 'assessed 0 of 1 imported feature'
+
+        $status = (& $script:PwshExe -NoProfile -File "$script:Bin/import-legacy.ps1" '--semantic-status' '--json') | ConvertFrom-Json
+        $status.architectural_records | Should -Be 0
+        @($status.unassessed_features) | Should -Contain '001-add-caching'
+
+        (Invoke-FlExit 'add-concept.ps1' '--name' 'bounded cache' '--problem' 'keep repeated reads fast without unbounded memory' '--how' 'reuse values through an LRU cache' '--realized-by' 'src/cache.js' '--feature' '001-add-caching' '--session' '000-legacy-import') | Should -Be 0
+        (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 1
+        (Invoke-FlExit 'import-legacy.ps1' '--assess' '001-add-caching' '--summary' 'The imported cache decisions establish bounded reuse for repeated reads.' '--record' 'bounded cache') | Should -Be 0
+        (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 0
+
+        $j = (& $script:PwshExe -NoProfile -File "$script:Bin/check.ps1" '--json') | ConvertFrom-Json
+        $j.legacy_migration_pending | Should -BeFalse
+    }
+
     It 'a normal command repairs a store imported before declaration records existed' {
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $script:store) | Out-Null
         [System.IO.File]::WriteAllText($script:store,

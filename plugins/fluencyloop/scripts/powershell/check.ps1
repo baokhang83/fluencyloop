@@ -93,7 +93,7 @@ function Get-StoreStringField($Record, [string]$Name) {
 }
 
 function Test-StoreRecordType([string]$Type) {
-    return $Type -in @('feature', 'session', 'decision', 'component', 'condition', 'concept', 'relation', 'principle', 'requirement', 'open_question')
+    return $Type -in @('feature', 'session', 'decision', 'component', 'condition', 'concept', 'relation', 'semantic_assessment', 'principle', 'requirement', 'open_question')
 }
 
 function Test-KnownIdentity([string]$Identity) {

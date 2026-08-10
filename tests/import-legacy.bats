@@ -90,11 +90,36 @@ PY
     [ "$(echo "$result" | json_field legacy_migration_pending)" = "True" ] || [ "$(echo "$result" | json_field legacy_migration_pending)" = "true" ]
 }
 
-@test "marks an assessed imported history so feature startup does not repeat migration" {
+@test "requires architectural records and an assessment for every imported feature before completion" {
     bash "$BIN/check.sh" --json >/dev/null
     run bash "$BIN/import-legacy.sh" --mark-semantic-complete
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"assessed 0 of 1 imported feature"* ]]
+
+    run bash "$BIN/import-legacy.sh" --semantic-status --json
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Marked semantic migration complete for 1 imported feature"* ]]
+    [ "$(echo "$output" | json_field architectural_records)" = "0" ]
+    [[ "$output" == *'"001-add-caching"'* ]]
+
+    bash "$BIN/add-concept.sh" \
+        --name "bounded cache" \
+        --problem "keep repeated reads fast without unbounded memory" \
+        --how "reuse values through an LRU cache" \
+        --realized-by "src/cache.js" \
+        --feature 001-add-caching --session 000-legacy-import >/dev/null
+    run bash "$BIN/import-legacy.sh" --mark-semantic-complete
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"assessed 0 of 1 imported feature"* ]]
+
+    run bash "$BIN/import-legacy.sh" --assess 001-add-caching \
+        --summary "The imported cache decisions establish bounded reuse for repeated reads." \
+        --record "bounded cache"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Recorded semantic migration assessment"* ]]
+
+    run bash "$BIN/import-legacy.sh" --mark-semantic-complete
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"1 assessment(s), and 1 architectural record(s)"* ]]
 
     run bash "$BIN/check.sh" --json
     [ "$status" -eq 0 ]

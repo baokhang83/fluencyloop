@@ -92,6 +92,8 @@ assert "**Migrate imported history before normal feature work.**" in feature_tex
 assert "legacy_migration_pending" in feature_text
 assert "ticket numbering" in feature_text
 assert "fluencyloop import --mark-semantic-complete" in feature_text
+assert "fluencyloop import --semantic-status --json" in feature_text
+assert "This is required for every imported feature" in feature_text
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
 assert "`store` must be a path under `docs/fluencyloop/`" in feature_text
@@ -103,6 +105,8 @@ assert "**Migrate imported history before normal feature work.**" in codex_featu
 assert "legacy_migration_pending" in codex_feature_text
 assert "ticket numbering" in codex_feature_text
 assert "fluencyloop import --mark-semantic-complete" in codex_feature_text
+assert "fluencyloop import --semantic-status --json" in codex_feature_text
+assert "This is required for every imported feature" in codex_feature_text
 assert "### Codex teaching gate - visible before the journal" in codex_feature_text
 assert "before any `fluencyloop decision`" in codex_feature_text
 assert "No reply is not a `wave`" in codex_feature_text
@@ -147,9 +151,11 @@ codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "**Migrate imported history before planning.**" in claude_plan_text
 assert "legacy_migration_pending" in claude_plan_text
 assert "fluencyloop import --mark-semantic-complete" in claude_plan_text
+assert "fluencyloop import --semantic-status --json" in claude_plan_text
 assert "**Migrate imported history before planning.**" in codex_plan_text
 assert "legacy_migration_pending" in codex_plan_text
 assert "fluencyloop import --mark-semantic-complete" in codex_plan_text
+assert "fluencyloop import --semantic-status --json" in codex_plan_text
 assert "### Codex architecture teaching gate - before decomposition" in codex_plan_text
 assert "before writing the task breakdown, roadmap" in codex_plan_text
 assert "Do not decompose the work" in codex_plan_text

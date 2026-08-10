@@ -64,15 +64,23 @@ When it is `true`, do not inspect the active feature, calibration, preferences, 
 or the new intent yet—and do not ask the developer anything. This is an automatic, repository-wide
 migration, not a new feature.
 
-1. Enumerate all `legacy_imported_features` in stable order and assess every imported feature's
-   existing decisions, components, conditions, and relevant history. Use the imported
-   `000-legacy-import` session with `--feature <slug> --session 000-legacy-import`; never create
-   or switch historical feature branches.
-2. Add only evidence-backed architectural records and relations. Do not invent a concept per
-   feature, and do not repeat the already-imported decision/knowledge records.
-3. After every imported feature has been assessed, run the bundled
+1. Run `fluencyloop import --semantic-status --json` and work through **every**
+   `unassessed_features` entry in its stable order. For each one, read its imported store records
+   and the relevant legacy history—not just the feature title. Never create or switch historical
+   feature branches.
+2. Add the evidence-backed architectural records and relations that the feature establishes or
+   changes, using `fluencyloop concept --feature <slug> --session 000-legacy-import`. Do not invent
+   one record per feature and do not repeat the already-imported decision/knowledge records. A
+   feature with no product-level architectural effect is valid, but its assessment must say why.
+3. Record that evidence pass immediately with
+   `fluencyloop import --assess <slug> --summary "<evidence-based outcome>" --record "<record name>"`
+   (repeat `--record` for every architectural record it contributed; omit it only for a genuinely
+   local feature). This is required for every imported feature; it is the completion coverage, not
+   a substitute for the architectural records themselves.
+4. Run `fluencyloop import --semantic-status --json` again. Only when its
+   `unassessed_features` array is empty **and** `architectural_records` is non-zero may you run
    `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`. Continue
-   to the normal feature flow only when `legacy_migration_pending` is `false`.
+   to normal feature flow only when `legacy_migration_pending` is `false`.
 
 **Read the loop state.** If `.fluencyloop/state.json` exists, read it *first* — it is the loop's
 single source of truth for the active feature (`feature` slug, `branch`, `stage`, `last_session`,
