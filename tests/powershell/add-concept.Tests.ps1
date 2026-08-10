@@ -56,6 +56,26 @@ Describe 'add-concept.ps1' {
         $realizedBy[1] | Should -Be 'CacheClient'
     }
 
+    It 'repeated --tag values join into one newline-delimited field' {
+        & $script:PwshExe -NoProfile -File "$script:Bin/add-concept.ps1" '--name' 'read through cache' '--problem' 'avoid repeated remote reads' `
+            '--how' 'read the cache first' '--realized-by' 'src/cache.js' '--tag' 'read-through cache' '--tag' 'cache-aside' | Out-Null
+
+        @([System.IO.File]::ReadAllLines($script:store)).Count | Should -Be 1
+        $record = ([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json
+        $tags = @($record.tags -split "`n")
+        $tags.Count | Should -Be 2
+        $tags[0] | Should -Be 'read-through cache'
+        $tags[1] | Should -Be 'cache-aside'
+    }
+
+    It 'omitting --tag writes no tags field, not an empty one' {
+        & $script:PwshExe -NoProfile -File "$script:Bin/add-concept.ps1" '--name' 'read through cache' '--problem' 'avoid repeated remote reads' `
+            '--how' 'read the cache first' '--realized-by' 'src/cache.js' | Out-Null
+
+        $record = ([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 1) | ConvertFrom-Json
+        ($record.PSObject.Properties.Name -contains 'tags') | Should -BeFalse
+    }
+
     It 'appends relations even when their concepts are unknown' {
         (Invoke-FlExit 'add-concept.ps1' '--relate' 'unknown concept|CacheClient|realized_by') | Should -Be 0
 

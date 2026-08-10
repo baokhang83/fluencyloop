@@ -152,9 +152,15 @@ but retain the feature and session that last established them.
 | `problem` | Product problem the concept solves. | A5 |
 | `how` | How the concept works. | A5 |
 | `realized_by` | One or more components or code areas that realize it, newline-delimited. | A5 |
+| `tags` | One or more widely-known architectural concepts this is an instance of, newline-delimited. Optional. | A5 |
+
+A concept's `name` is the product's own vocabulary, which a newcomer has never seen. `tags` name the
+general, widely-recognized ideas behind it, so a reader can attach the unfamiliar name to something
+already known. Each tag is at most three words, and names the general pattern rather than restating
+the concept: `append-only log`, `event sourcing`, `read model`, `idempotency`, `cache invalidation`.
 
 ```json
-{"schema_version":"1","type":"concept","ts":"2026-08-08","feature":"a2-store-schema","session":"001-schema-contract","commit":"7f8ff2e","name":"supersede on read","problem":"correct append-only records without rewriting history","how":"the reader keeps the last record for an identity","realized_by":"the site store reader"}
+{"schema_version":"1","type":"concept","ts":"2026-08-08","feature":"a2-store-schema","session":"001-schema-contract","commit":"7f8ff2e","name":"supersede on read","problem":"correct append-only records without rewriting history","how":"the reader keeps the last record for an identity","realized_by":"the site store reader","tags":"append-only log\nevent sourcing"}
 ```
 
 ### `relation`

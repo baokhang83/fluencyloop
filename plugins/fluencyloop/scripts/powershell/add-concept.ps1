@@ -5,13 +5,14 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 
-$name = ''; $problem = ''; $how = ''; $realizedBy = @(); $relations = @()
+$name = ''; $problem = ''; $how = ''; $realizedBy = @(); $tags = @(); $relations = @()
 for ($i = 0; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
         '--name'        { $i++; $name = [string]$args[$i] }
         '--problem'     { $i++; $problem = [string]$args[$i] }
         '--how'         { $i++; $how = [string]$args[$i] }
         '--realized-by' { $i++; $realizedBy += [string]$args[$i] }
+        '--tag'         { $i++; $tags += [string]$args[$i] }
         '--relate'      { $i++; $relations += [string]$args[$i] }
         default         { [Console]::Error.WriteLine("Unknown option: $($args[$i])"); exit 1 }
     }
@@ -27,6 +28,9 @@ if ($conceptRequested) {
     if ($realizedBy.Count -eq 0) { [Console]::Error.WriteLine('Error: --realized-by is required for a concept.'); exit 1 }
 } elseif ($realizedBy.Count -gt 0) {
     [Console]::Error.WriteLine('Error: --realized-by requires --name, --problem, and --how.')
+    exit 1
+} elseif ($tags.Count -gt 0) {
+    [Console]::Error.WriteLine('Error: --tag requires --name, --problem, and --how.')
     exit 1
 }
 
@@ -44,8 +48,11 @@ if (-not $session) { $session = 'none' }
 $store = FlConceptsStorePath
 
 if ($conceptRequested) {
-    FlStoreAppendRecord $store 'concept' $feature $session @(
-        'name', $name, 'problem', $problem, 'how', $how, 'realized_by', ($realizedBy -join "`n"))
+    $fields = @('name', $name, 'problem', $problem, 'how', $how, 'realized_by', ($realizedBy -join "`n"))
+    # Tags are optional, so an absent one leaves the field out entirely rather than writing an
+    # empty string: the schema asks writers to omit what they have nothing to say about.
+    if ($tags.Count -gt 0) { $fields += @('tags', ($tags -join "`n")) }
+    FlStoreAppendRecord $store 'concept' $feature $session $fields
 }
 
 foreach ($relation in $relations) {

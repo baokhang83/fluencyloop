@@ -177,12 +177,18 @@ explained, capture it in the global stream — not as a once-per-plan ritual and
 component inventory:
 
 ```bash
-fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...]
+fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...] [--tag "<well-known concept>" ...]
 fluencyloop concept --relate "<from>|<to>|<kind>"
 ```
 
 Use a later record with the same name to refine it as the implementation teaches more; relations
 may connect concepts to other concepts, components, or planned features.
+
+Add one to three `--tag` values naming the widely-known ideas the concept is an instance of — at
+most three words each, naming the general pattern rather than restating the concept (`append-only
+log`, `event sourcing`, `read model`, `idempotency`, `cache invalidation`). The concept name is this
+product's own vocabulary, which a newcomer has never seen; the tags are what lets them attach it to
+something they already know, and are what the local site filters on.
 
 ## 3. Break it into task items
 
