@@ -53,6 +53,21 @@ in the current project directory when needed, then creates FluencyLoop's state. 
 continuing. Only stop if `init` itself fails. Do not hand-create `.fluencyloop`, `docs`, or
 `.claude/skills`.
 
+**Migrate imported history before planning.** Parse `legacy_migration_pending` from the bundled
+`fluencyloop check --json` before reading the constitution, calibration, requirements, or the
+initiative intent. When it is `true`, do not ask the developer anything or scaffold a plan. This
+is an automatic, repository-wide migration:
+
+1. Enumerate all `legacy_imported_features` in stable order and assess every imported feature's
+   existing decisions, components, conditions, and relevant history. Use the imported
+   `000-legacy-import` session with `--feature <slug> --session 000-legacy-import`; never create
+   or switch historical feature branches.
+2. Add only evidence-backed architectural records and relations. Do not invent a concept per
+   feature, and do not repeat the already-imported decision/knowledge records.
+3. After every imported feature has been assessed, run the bundled
+   `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`. Continue
+   to planning only when `legacy_migration_pending` is `false`.
+
 **Read the constitution up front** — `docs/fluencyloop/constitution.md`, and **if it's a pointer**
 (a `Source of truth:` line naming another file, e.g. `.specify/memory/constitution.md`), read
 *that* file. The architecture you design in §2 is checked against it. If it's still the **empty

@@ -7,12 +7,24 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 $env:FLUENCYLOOP_IMPORTING = '1'
 
-$auto = $false
+$auto = $false; $markSemanticComplete = $false
 foreach ($arg in $args) {
     if ($arg -eq '--auto') { $auto = $true }
+    elseif ($arg -eq '--mark-semantic-complete') { $markSemanticComplete = $true }
     else { [Console]::Error.WriteLine("Unknown option: $arg"); exit 1 }
 }
 FlRequireFluency
+
+if ($markSemanticComplete) {
+    if ($auto) { [Console]::Error.WriteLine('Error: --auto and --mark-semantic-complete cannot be combined.'); exit 1 }
+    $count = Get-FlLegacyImportedFeatureCount
+    if ($count -eq 0) { [Console]::Error.WriteLine('Error: no imported legacy features are available to mark.'); exit 1 }
+    $store = FlStoreDir
+    if (-not (Test-Path -LiteralPath $store -PathType Container)) { New-Item -ItemType Directory -Force -Path $store | Out-Null }
+    [System.IO.File]::WriteAllText((Get-FlLegacySemanticMigrationPath), $script:FlLegacySemanticMigrationRevision + [Environment]::NewLine, (New-Object System.Text.UTF8Encoding($false)))
+    FlOut "Marked semantic migration complete for $count imported feature(s)."
+    exit 0
+}
 
 $legacyRoot = "$(FlDocsDir)/features"
 $storeRoot = FlStoreDir

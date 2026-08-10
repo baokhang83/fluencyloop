@@ -48,8 +48,25 @@ function FlRequireFluency {
 # It gives already-migrated repositories one automatic, idempotent repair pass without running the
 # full legacy scan on every normal command thereafter.
 $script:FlLegacyImportRevision = '2'
+$script:FlLegacySemanticMigrationRevision = '1'
 
 function Get-FlLegacyImportRevisionPath { "$(FlStoreDir)/.legacy-import-revision" }
+function Get-FlLegacySemanticMigrationPath { "$(FlStoreDir)/.legacy-semantic-migration-revision" }
+function Get-FlLegacyImportedFeatureCount {
+    $features = "$(FlStoreDir)/features"
+    if (-not (Test-Path -LiteralPath $features -PathType Container)) { return 0 }
+    $count = 0
+    foreach ($store in @(Get-ChildItem -LiteralPath $features -Filter '*.jsonl' -File -ErrorAction SilentlyContinue)) {
+        if (Select-String -LiteralPath $store.FullName -Pattern '"type":"feature".*"imported_from":"' -Quiet) { $count++ }
+    }
+    return $count
+}
+function Test-FlLegacySemanticMigrationPending {
+    if ((Get-FlLegacyImportedFeatureCount) -eq 0) { return $false }
+    $marker = Get-FlLegacySemanticMigrationPath
+    return -not ((Test-Path -LiteralPath $marker -PathType Leaf) -and
+        (([System.IO.File]::ReadAllText($marker)).Trim() -eq $script:FlLegacySemanticMigrationRevision))
+}
 
 function Test-FlLegacyImportNeedsRevision([string]$legacy) {
     $revisionPath = Get-FlLegacyImportRevisionPath

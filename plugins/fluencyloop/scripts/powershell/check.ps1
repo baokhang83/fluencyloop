@@ -17,6 +17,8 @@ $gitRepoStr = if ($root) { 'true' } else { 'false' }
 $fdir = FlFluencyDir
 $fluencyStr = if ($fdir -and (Test-Path -LiteralPath $fdir -PathType Container)) { 'true' } else { 'false' }
 if ($fluencyStr -eq 'true') { FlMaybeImportLegacy }
+$legacyImportedFeatures = Get-FlLegacyImportedFeatureCount
+$legacyMigrationPending = Test-FlLegacySemanticMigrationPending
 
 $branch = & git rev-parse --abbrev-ref HEAD 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $branch) { $branch = '' } else { $branch = ($branch | Select-Object -First 1) }
@@ -179,6 +181,8 @@ if ($jsonMode) {
     $storeErrorsJson = ConvertTo-Json -InputObject @($script:storeErrors) -Compress -Depth 3
     $json = '{"git_repo":' + $gitRepoStr +
             ',"fluency":' + $fluencyStr +
+            ',"legacy_imported_features":' + $legacyImportedFeatures +
+            ',"legacy_migration_pending":' + $legacyMigrationPending.ToString().ToLowerInvariant() +
             ',"branch":"' + (FlJsonEscape $branch) + '"' +
             ',"state_branch":"' + (FlJsonEscape $stateBranch) + '"' +
             ',"state_matches_branch":' + $stateMatchesBranch.ToString().ToLowerInvariant() +
@@ -202,6 +206,7 @@ if ($gitRepoStr -eq 'false') {
     FlOut "  XX  not a git repository — run 'git init' (or cd into one), then 'fluencyloop init'"
 }
 FlOut ("  $(Mark $fluencyStr) .fluencyloop/ present")
+if ($legacyMigrationPending) { FlOut "  !!  $legacyImportedFeatures imported legacy feature(s) await semantic migration" }
 if ($feature) {
     $s = if ($stage) { " (stage: $stage)" } else { '' }
     FlOut "  ok  active feature: $feature$s"

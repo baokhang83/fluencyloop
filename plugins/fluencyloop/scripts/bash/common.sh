@@ -65,6 +65,29 @@ legacy_import_revision_path() {
     printf '%s/.legacy-import-revision' "$(store_dir)"
 }
 
+# Semantic reconstruction needs model judgment, unlike the deterministic Markdown importer. The
+# completed marker records that every imported feature was assessed once, so starting later work
+# does not repeatedly trigger a repository-wide migration.
+LEGACY_SEMANTIC_MIGRATION_REVISION=1
+legacy_semantic_migration_path() { printf '%s/.legacy-semantic-migration-revision' "$(store_dir)"; }
+
+legacy_imported_feature_count() {
+    local store count=0
+    while IFS= read -r store; do
+        grep -Eq '"type":"feature".*"imported_from":"' "$store" && count=$((count + 1))
+    done < <(find "$(store_dir)/features" -maxdepth 1 -type f -name '*.jsonl' -print 2>/dev/null)
+    printf '%s' "$count"
+}
+
+legacy_semantic_migration_pending() {
+    local count marker
+    count="$(legacy_imported_feature_count)"
+    [ "$count" -gt 0 ] || return 1
+    marker="$(legacy_semantic_migration_path)"
+    [ -f "$marker" ] && [ "$(tr -d '\r\n' < "$marker")" = "$LEGACY_SEMANTIC_MIGRATION_REVISION" ] && return 1
+    return 0
+}
+
 legacy_import_needs_revision() {
     local legacy="$1" revision feature_dir feature source store marker
     revision="$(legacy_import_revision_path)"

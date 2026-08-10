@@ -29,6 +29,9 @@ FLUENCY_DIR="$(fluency_dir)"
 FLUENCY_PRESENT=false
 [ -n "$FLUENCY_DIR" ] && [ -d "$FLUENCY_DIR" ] && FLUENCY_PRESENT=true
 [ "$FLUENCY_PRESENT" = true ] && maybe_import_legacy
+LEGACY_IMPORTED_FEATURES="$(legacy_imported_feature_count)"
+LEGACY_MIGRATION_PENDING=false
+legacy_semantic_migration_pending && LEGACY_MIGRATION_PENDING=true
 
 # --- active feature: from state.json, falling back to the branch ---
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
@@ -239,9 +242,11 @@ if [ -n "$STORE_ROOT" ] && [ -d "$STORE_ROOT" ]; then
 fi
 
 if $JSON_MODE; then
-    printf '{"git_repo":%s,"fluency":%s,"branch":"%s","state_branch":"%s","state_matches_branch":%s,"feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"node":%s,"constitution":"%s","store_errors":[%s]}\n' \
+    printf '{"git_repo":%s,"fluency":%s,"legacy_imported_features":%s,"legacy_migration_pending":%s,"branch":"%s","state_branch":"%s","state_matches_branch":%s,"feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"node":%s,"constitution":"%s","store_errors":[%s]}\n' \
         "$IN_GIT_REPO" \
         "$FLUENCY_PRESENT" \
+        "$LEGACY_IMPORTED_FEATURES" \
+        "$LEGACY_MIGRATION_PENDING" \
         "$(json_escape "$BRANCH")" \
         "$(json_escape "$STATE_BRANCH")" \
         "$STATE_MATCHES_BRANCH" \
@@ -264,6 +269,9 @@ if ! $IN_GIT_REPO; then
     echo "  XX  not a git repository — run 'git init' (or cd into one), then 'fluencyloop init'"
 fi
 echo "  $(mark "$FLUENCY_PRESENT") .fluencyloop/ present"
+if $LEGACY_MIGRATION_PENDING; then
+    echo "  !!  $LEGACY_IMPORTED_FEATURES imported legacy feature(s) await semantic migration"
+fi
 if [ -n "$FEATURE" ]; then
     echo "  ok  active feature: $FEATURE${STAGE:+ (stage: $STAGE)}"
 else
