@@ -2,6 +2,18 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.1
+
+### Fixed
+
+- Architectural records may now use a `realized_by` relation to name an ordinary code area such
+  as `AppComponent`; those targets no longer need duplicate knowledge-component records. Other
+  relation types retain dangling-endpoint validation in both runtimes.
+- Embedded product-overview and record diagrams now use a compact, deterministic diagram path.
+  It creates self-contained HTML only, so remote Google Fonts and other network resources cannot
+  be rejected by the local reader. When a manually authored companion is unsafe, the site explains
+  the requirement instead of leaving a broken iframe.
+
 ## 0.3.0
 
 ### Added
