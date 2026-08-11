@@ -152,6 +152,36 @@ PY
     [[ "$output" == *"Client checks cache before remote service"* ]]
 }
 
+@test "site renders a safe diagram companion below the product technical overview" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/distillations" "$TESTREPO/docs/fluencyloop/diagrams"
+    printf '%s\n' 'The client reads its local cache before it asks the remote service.' \
+        > "$TESTREPO/docs/fluencyloop/distillations/product.md"
+    cp "$REPO_ROOT/tests/fixtures/record-diagram.html" "$TESTREPO/docs/fluencyloop/diagrams/product-overview.html"
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"The client reads its local cache before it asks the remote service."* ]]
+    [[ "$output" == *'src="/overview/diagram"'* ]]
+    [[ "$output" == *"System diagram supporting the technical overview."* ]]
+
+    run python3 - "$SITE_URL/overview/diagram" <<'PY'
+import sys
+import urllib.request
+
+with urllib.request.urlopen(sys.argv[1]) as response:
+    print(response.status)
+    print(response.headers['Content-Security-Policy'])
+    print(response.read().decode('utf-8'))
+PY
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"200"* ]]
+    [[ "$output" == *"default-src 'none'"* ]]
+    [[ "$output" == *"Client checks cache before remote service"* ]]
+}
+
 @test "site tries the next loopback port when the default is busy" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo

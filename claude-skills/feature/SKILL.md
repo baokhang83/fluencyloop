@@ -466,6 +466,14 @@ diagram when prose or a table explains the subject better. Never add source that
 renderer; the bundled local site renders these forms offline and safely falls back to caption + prose
 when a diagram is invalid.
 
+When you refresh **`product.md`** and a system-level visual materially clarifies its Technical
+overview, load the bundled `diagram-design` skill. Use its selection guide to choose one diagram
+type, then write its self-contained HTML output to
+`docs/fluencyloop/diagrams/product-overview.html`. The local site embeds that file directly below
+the overview prose through a sandboxed route. Make it one restrained overview diagram, not a
+duplicate of every record diagram. The prose remains complete without it, and must explain the
+same product shape in words.
+
 **Do not distill decisions.** Their why was taught and captured contemporaneously by
 `fluencyloop decision`; re-synthesising it is both less trustworthy and unnecessary token spend.
 Keep every distillation person-neutral: describe the product and its constraints, never a
