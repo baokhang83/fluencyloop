@@ -34,6 +34,10 @@ If work was merged without the loop, use `/fluencyloop:backfill` in Claude Code 
 `$fluencyloop:backfill` in Codex to reconstruct its design and decisions. Reconstructed decisions
 are recorded as unverified by default; verification is optional and never blocks the backfill.
 
+FluencyLoop also bundles `diagram-design` for architectural explanations. It is available to both
+clients after the normal plugin update; FluencyLoop uses it only when a diagram makes a record
+clearer than prose alone.
+
 ### Moving from 0.2
 
 Install 0.3 normally, then continue working. On the first FluencyLoop command in a 0.2 project,

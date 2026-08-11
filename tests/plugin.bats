@@ -327,7 +327,21 @@ assert claude_entry["skills"] == [
     "./claude-skills/feature",
     "./claude-skills/review",
     "./claude-skills/backfill",
+    "./claude-skills/diagram-design",
 ]
+for vendored in [
+    root / "claude-skills" / "diagram-design",
+    dist / "skills" / "diagram-design",
+]:
+    assert (vendored / "SKILL.md").is_file()
+    assert "name: diagram-design" in read_text(vendored / "SKILL.md")
+    assert "MIT License" in read_text(vendored / "LICENSE")
+    assert "Third-party licenses" in read_text(vendored / "THIRD_PARTY_LICENSES.md")
+    assert (vendored / "references" / "type-architecture.md").is_file()
+    assert (vendored / "assets" / "template.html").is_file()
+notice = read_text(root / "THIRD_PARTY_NOTICES.md")
+assert "8827b277395988877ba997b714b43513f764b569" in notice
+assert "cathrynlavery/diagram-design" in notice
 assert not (root / "install.sh").exists()
 assert not (root / "install.ps1").exists()
 assert not (root / "skills").exists()
