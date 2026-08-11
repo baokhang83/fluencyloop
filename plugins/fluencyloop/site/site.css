@@ -570,6 +570,16 @@ code { font-family: var(--font-mono); font-size: 0.95em; }
 .diagram figcaption, .diagram-unavailable { color: var(--ink-muted); font-size: var(--text-xs); }
 .diagram figcaption { margin-top: var(--space-2); }
 
+.record-diagram {
+  margin: var(--space-4) 0 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-quiet);
+}
+.record-diagram iframe { display: block; width: 100%; min-height: 30rem; border: 0; background: var(--surface); }
+.record-diagram figcaption { padding: var(--space-2) var(--space-3); color: var(--ink-muted); font-size: var(--text-xs); }
+
 .diagram-unavailable, [role="alert"] {
   padding: var(--space-3);
   border-left: 2px solid var(--alert);
