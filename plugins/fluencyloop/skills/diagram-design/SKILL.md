@@ -26,17 +26,20 @@ Work in one bounded pass:
    order between distinct actors is the point. For an architectural record, apply the same rule to
    its ADR mechanism. Load only that one type reference.
 2. Use 4–7 nodes and 3–8 connectors. Show only the relationship that earns the diagram; a product
-   overview must not become a feature inventory. Default to **unlabelled arrows**: a small diagram
-   should express routine direction through layout and node subtitles, not cramped connector text.
-   Add an arrow label only when the relationship would otherwise be ambiguous; never abbreviate a
+   overview must not become a feature inventory. For an **architecture** diagram, default to
+   unlabelled arrows: a small diagram should express routine direction through layout and node
+   subtitles, not cramped connector text. This never overrides the selected type's grammar: label
+   every decision exit in a flowchart and every message in a sequence diagram. Never abbreviate a
    label merely to make it fit.
 3. Write directly to the requested path. For `product-overview.html`, keep `product.md` as prose;
    do not add a Mermaid duplicate of the HTML diagram. Use only inline SVG and CSS with system
    font stacks: no Google Fonts `<link>`, remote `src`/`href`, CSS `url(...)`, scripts, or iframes.
-4. Draw connectors before cards. A connector or its label must never run behind a non-endpoint card.
-   If a label is necessary, place it only in a clear lane: give its opaque background mask at least
-   8px of visible space from both the connector and every card. If no lane exists, omit the label or
-   change the layout; do not shrink, clip, or place text beneath a card.
+4. Draw connectors before cards. Use a straight connector only for aligned endpoints; otherwise use
+   a rounded orthogonal route. Never overlap connector paths or reuse an attach point for separate
+   connectors. A connector or its label must never run behind a non-endpoint card. If a label is
+   necessary, place it only in a clear lane: give its opaque background mask at least 8px of visible
+   space from both the connector and every card. If no lane exists, omit the label or change the
+   layout; do not shrink, clip, or place text beneath a card.
 5. Confirm the file is nonempty, then run `fluencyloop site --ensure --open --json` when available
    so the reader opens at its local URL. Inspect the rendered result before handing off: every label
    must be readable, with no text behind a card, connector overlap, or viewBox clipping. Do not
