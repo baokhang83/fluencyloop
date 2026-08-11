@@ -639,7 +639,9 @@ const PRODUCT_OVERVIEW_DIAGRAM_PATH = 'docs/fluencyloop/diagrams/product-overvie
 
 function safeDiagram(root, relativePath, directory) {
   const candidate = path.resolve(root, relativePath);
-  if (!candidate.startsWith(directory + path.sep) || !fs.existsSync(candidate)) return null;
+  if (!candidate.startsWith(directory + path.sep) || !fs.existsSync(candidate)) {
+    return { unavailable: 'Diagram file is unavailable.' };
+  }
   const content = fs.readFileSync(candidate, 'utf8');
   // Diagrams are project documentation, not an execution surface. Keep the route suitable for a
   // sandboxed iframe and reject active or remote-resource markup even when a manually authored
@@ -647,7 +649,9 @@ function safeDiagram(root, relativePath, directory) {
   if (/<\/?(?:script|iframe|object|embed)\b/i.test(content)
     || /\son[a-z]+\s*=/i.test(content)
     || /(?:src|href)\s*=\s*["'](?:https?:)?\/\//i.test(content)
-    || /url\(\s*["']?(?:https?:)?\/\//i.test(content)) return null;
+    || /url\(\s*["']?(?:https?:)?\/\//i.test(content)) {
+    return { unavailable: 'Diagram unavailable: embedded diagrams must be self-contained. Remove remote fonts, URLs, and executable content.' };
+  }
   return { path: candidate };
 }
 
@@ -655,14 +659,14 @@ function diagramCompanion(root, explanation) {
   if (!explanation || typeof explanation.diagram_path !== 'string' || !RECORD_DIAGRAM_PATH.test(explanation.diagram_path)) return null;
   const directory = path.resolve(root, 'docs', 'fluencyloop', 'diagrams', 'records');
   const companion = safeDiagram(root, explanation.diagram_path, directory);
-  if (!companion) return null;
+  if (!companion.path) return companion;
   return { ...companion, type: explanation.diagram_type || 'diagram', alt: explanation.diagram_alt || 'Diagram supporting the record explanation.' };
 }
 
 function productOverviewDiagram(root) {
   const directory = path.resolve(root, 'docs', 'fluencyloop', 'diagrams');
   const companion = safeDiagram(root, PRODUCT_OVERVIEW_DIAGRAM_PATH, directory);
-  if (!companion) return null;
+  if (!companion.path) return companion;
   return { ...companion, alt: 'System diagram supporting the technical overview.' };
 }
 
@@ -674,9 +678,9 @@ function recordExplanationMarkup(data, concept) {
       : emptyState('No architectural record explanation has been written yet.');
   }
   const companion = diagramCompanion(data.root, explanation);
-  const diagram = companion
+  const diagram = companion?.path
     ? `<figure class="record-diagram"><iframe src="${escapeHtml(`${conceptPath(concept)}/diagram`)}" title="${escapeHtml(companion.alt)}" sandbox loading="lazy" referrerpolicy="no-referrer"></iframe><figcaption>${escapeHtml(companion.alt)}</figcaption></figure>`
-    : '';
+    : companion?.unavailable ? `<aside class="diagram-unavailable" role="note"><strong>Diagram unavailable.</strong><p>${escapeHtml(companion.unavailable)}</p></aside>` : '';
   return `<div class="record-explanation">
     <h3>Context</h3><p>${escapeHtml(explanation.context)}</p>
     <h3>Decision</h3><p>${escapeHtml(explanation.decision)}</p>
@@ -950,9 +954,9 @@ function renderProduct(data) {
       ? 'No product overview has been distilled yet. Ask your assistant to "fluencyloop backfill" the imported history to synthesize one, or it will appear automatically once a feature materially changes the product shape.'
       : 'No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
   const overviewCompanion = navigation.product && productOverviewDiagram(data.root);
-  const overviewDiagram = overviewCompanion
+  const overviewDiagram = overviewCompanion?.path
     ? `<figure class="record-diagram overview-diagram"><iframe src="/overview/diagram" title="${escapeHtml(overviewCompanion.alt)}" sandbox loading="lazy" referrerpolicy="no-referrer"></iframe><figcaption>${escapeHtml(overviewCompanion.alt)}</figcaption></figure>`
-    : '';
+    : overviewCompanion?.unavailable ? `<aside class="diagram-unavailable" role="note"><strong>Diagram unavailable.</strong><p>${escapeHtml(overviewCompanion.unavailable)}</p></aside>` : '';
   const distillations = data.distillations.length
     ? `<ul class="path-list">${data.distillations.map((item) => `<li><code>${escapeHtml(item.path)}</code></li>`).join('')}</ul>`
     : emptyState('No distillations have been written yet.');
@@ -1131,7 +1135,7 @@ function createServer(root, managed = null) {
         page = renderProduct(data);
       } else if (segments.length === 2 && segments[0] === 'overview' && segments[1] === 'diagram') {
         const companion = data.navigation.product && productOverviewDiagram(data.root);
-        if (companion) {
+        if (companion?.path) {
           sendDiagram(response, request.method === 'HEAD' ? '' : fs.readFileSync(companion.path, 'utf8'));
           return;
         }
@@ -1140,7 +1144,7 @@ function createServer(root, managed = null) {
       } else if (segments.length === 3 && segments[0] === 'records' && segments[2] === 'diagram') {
         const concept = data.navigation.concepts.find((item) => item.slug === segments[1]);
         const companion = concept && diagramCompanion(data.root, concept.explanation);
-        if (companion) {
+        if (companion?.path) {
           sendDiagram(response, request.method === 'HEAD' ? '' : fs.readFileSync(companion.path, 'utf8'));
           return;
         }

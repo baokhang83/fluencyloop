@@ -182,6 +182,27 @@ PY
     [[ "$output" == *"Client checks cache before remote service"* ]]
 }
 
+@test "site explains why an embedded overview diagram with remote fonts is unavailable" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/distillations" "$TESTREPO/docs/fluencyloop/diagrams"
+    printf '%s\n' 'The product overview remains readable without its companion diagram.' \
+        > "$TESTREPO/docs/fluencyloop/distillations/product.md"
+    printf '%s\n' '<!doctype html><link href="https://fonts.googleapis.com/css2?family=Geist" rel="stylesheet">' \
+        > "$TESTREPO/docs/fluencyloop/diagrams/product-overview.html"
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'class="diagram-unavailable"'* ]]
+    [[ "$output" == *"embedded diagrams must be self-contained"* ]]
+    [[ "$output" == *"Remove remote fonts, URLs, and executable content."* ]]
+
+    run request /overview/diagram
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"404"* ]]
+}
+
 @test "site tries the next loopback port when the default is busy" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo
