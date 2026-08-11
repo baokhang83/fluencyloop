@@ -72,7 +72,10 @@ opening every historical feature separately:
    reading all imported feature directories one by one.
 3. Add only shared, evidence-backed architectural records and relations from the map with
    `fluencyloop concept --feature <representative-slug> --session 000-legacy-import`. Reuse records,
-   add useful filter tags, and do not invent one per feature.
+   add one to three familiar, filter-useful tags to **every** record, and do not invent one per
+   feature. The map lists existing records: append a replacement for each legacy record with
+   missing tags, keeping its name and complete fields and adding tags. This is append-only. Do not
+   mark the migration complete while `tagged_architectural_records` is zero.
 4. Run `fluencyloop import --semantic-status --json`; once it reports an architectural record, run
    `fluencyloop import --mark-semantic-complete` and then `fluencyloop check --json`. Continue to
    planning only when `legacy_migration_pending` is `false`.

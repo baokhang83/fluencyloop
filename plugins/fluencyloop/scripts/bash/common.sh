@@ -68,9 +68,10 @@ legacy_import_revision_path() {
 # Semantic reconstruction needs model judgment, unlike the deterministic Markdown importer. The
 # completed marker is only valid after every imported feature has an explicit assessment and the
 # migration has produced architectural records; otherwise later work must resume the migration.
-# Revision 4 reopens earlier semantic passes so they append tagged record replacements. The reader
-# resolves records by identity, so this is additive and does not erase their provenance.
-LEGACY_SEMANTIC_MIGRATION_REVISION=4
+# Revision 5 reopens earlier semantic passes that completed before tag coverage was required. The
+# reader resolves records by identity, so tagged record replacements are additive and retain their
+# original provenance.
+LEGACY_SEMANTIC_MIGRATION_REVISION=5
 legacy_semantic_migration_path() { printf '%s/.legacy-semantic-migration-revision' "$(store_dir)"; }
 
 legacy_imported_feature_count() {
@@ -103,6 +104,14 @@ legacy_architectural_record_count() {
     store="$(concepts_store_path)"
     [ -f "$store" ] || { printf '0'; return; }
     count="$(grep -c '"type":"concept"' "$store" || true)"
+    printf '%s' "${count:-0}"
+}
+
+legacy_tagged_architectural_record_count() {
+    local store count
+    store="$(concepts_store_path)"
+    [ -f "$store" ] || { printf '0'; return; }
+    count="$(grep -Ec '"type":"concept".*"tags":"[^"]+' "$store" || true)"
     printf '%s' "${count:-0}"
 }
 

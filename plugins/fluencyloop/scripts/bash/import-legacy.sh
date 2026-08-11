@@ -73,11 +73,13 @@ if $SEMANTIC_STATUS; then
     if $JSON; then
         printf '{"imported_features":'; json_array_from_lines < <(legacy_imported_feature_slugs)
         printf ',"unassessed_features":'; json_array_from_lines < <(legacy_semantic_unassessed_features)
-        printf ',"architectural_records":%s}\n' "$(legacy_architectural_record_count)"
+        printf ',"architectural_records":%s,"tagged_architectural_records":%s}\n' \
+            "$(legacy_architectural_record_count)" "$(legacy_tagged_architectural_record_count)"
     else
         echo "Imported legacy features: $(legacy_imported_feature_count)"
         echo "Assessed: $(legacy_semantic_assessment_count)"
         echo "Architectural records: $(legacy_architectural_record_count)"
+        echo "Tagged architectural records: $(legacy_tagged_architectural_record_count)"
         echo "Unassessed features:"
         legacy_semantic_unassessed_features
     fi
@@ -116,6 +118,21 @@ if $SEMANTIC_MAP; then
             esac
         done < "$store"
     done < <(find "$(store_dir)/features" -maxdepth 1 -type f -name '*.jsonl' -print 2>/dev/null | LC_ALL=C sort)
+    concept_store="$(concepts_store_path)"
+    if [ -f "$concept_store" ]; then
+        echo
+        echo "# Existing architectural records"
+        while IFS= read -r record; do
+            [ "$(json_record_field "$record" type)" = "concept" ] || continue
+            name="$(json_record_field "$record" name)"
+            tags="$(json_record_field "$record" tags)"
+            if [ -n "$tags" ]; then
+                printf '%s\n' "Record: $name — tags: $tags"
+            else
+                printf '%s\n' "Record: $name — tags: (missing)"
+            fi
+        done < "$concept_store"
+    fi
     exit 0
 fi
 
@@ -176,6 +193,11 @@ if $MARK_SEMANTIC_COMPLETE; then
     architectural_records="$(legacy_architectural_record_count)"
     [ "$architectural_records" -gt 0 ] || {
         echo "Error: semantic migration is incomplete: no evidence-backed architectural records were recorded." >&2
+        exit 1
+    }
+    tagged_architectural_records="$(legacy_tagged_architectural_record_count)"
+    [ "$tagged_architectural_records" -gt 0 ] || {
+        echo "Error: semantic migration is incomplete: no architectural records have tags for site filtering." >&2
         exit 1
     }
     mkdir -p "$(store_dir)"
