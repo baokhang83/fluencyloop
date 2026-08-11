@@ -126,6 +126,16 @@ Describe 'check.ps1' {
         $result.store_errors[0].message | Should -Be 'dangling relation endpoint: missing'
     }
 
+    It 'accepts a realization relation to an undocumented code area' {
+        $script:repo = Initialize-TestRepo
+        $store = "$script:repo/docs/fluencyloop/store/concepts.jsonl"
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $store) | Out-Null
+        [System.IO.File]::WriteAllText($store, "{`"schema_version`":`"1`",`"type`":`"concept`",`"ts`":`"2026-08-09`",`"feature`":`"global`",`"session`":`"none`",`"commit`":`"abc`",`"name`":`"standalone component routing`",`"problem`":`"keep page shells small`",`"how`":`"route each view through a focused component`",`"realized_by`":`"AppComponent`"}`n{`"schema_version`":`"1`",`"type`":`"relation`",`"ts`":`"2026-08-09`",`"feature`":`"global`",`"session`":`"none`",`"commit`":`"abc`",`"from`":`"standalone component routing`",`"to`":`"AppComponent`",`"kind`":`"realized_by`"}`n")
+
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 0
+        (Get-FlJson 'check.ps1' '--json').store_errors.Count | Should -Be 0
+    }
+
     It 'reports a feature directory without store records' {
         $script:repo = Initialize-TestRepo
         New-Item -ItemType Directory -Force -Path "$script:repo/docs/fluencyloop/features/001-empty" | Out-Null

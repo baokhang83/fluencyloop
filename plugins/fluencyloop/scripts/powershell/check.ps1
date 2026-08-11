@@ -140,6 +140,7 @@ function Test-StoreRecord([string]$Raw, [string]$File, [int]$Line) {
                 file = $File; line = $Line
                 from = Get-StoreStringField $record 'from'
                 to = Get-StoreStringField $record 'to'
+                kind = Get-StoreStringField $record 'kind'
             }
         }
     }
@@ -161,7 +162,10 @@ if ($storeRoot -and (Test-Path -LiteralPath $storeRoot -PathType Container)) {
         if (-not (Test-KnownIdentity $relation.from)) {
             Add-StoreError $relation.file $relation.line "dangling relation endpoint: $($relation.from)"
         }
-        if (-not (Test-KnownIdentity $relation.to)) {
+        # A realization relation intentionally points from a record to a code area. Code areas
+        # such as AppComponent need not also be knowledge-component records, so only its source
+        # must resolve in the store. Other relation kinds still require both endpoints.
+        if ($relation.kind -ne 'realized_by' -and -not (Test-KnownIdentity $relation.to)) {
             Add-StoreError $relation.file $relation.line "dangling relation endpoint: $($relation.to)"
         }
     }
