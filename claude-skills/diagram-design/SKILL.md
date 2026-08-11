@@ -28,7 +28,8 @@ Work in one bounded pass:
 2. Use 4–7 nodes and 3–8 connectors. Show only the relationship that earns the diagram; a product
    overview must not become a feature inventory.
 3. Write directly to the requested path. For `product-overview.html`, keep `product.md` as prose;
-   do not add a Mermaid duplicate of the HTML diagram.
+   do not add a Mermaid duplicate of the HTML diagram. Use only inline SVG and CSS with system
+   font stacks: no Google Fonts `<link>`, remote `src`/`href`, CSS `url(...)`, scripts, or iframes.
 4. Confirm the file is nonempty, then run `fluencyloop site --ensure --open --json` when available
    so the reader opens at its local URL. Do not block the feature if Node is unavailable; say that
    the prose is available and the diagram will appear when the optional site can run.

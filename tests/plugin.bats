@@ -188,6 +188,7 @@ for diagram_skill_text in [
     assert "Load only that one type reference" in diagram_skill_text
     assert "Use 4–7 nodes and 3–8 connectors" in diagram_skill_text
     assert "do not add a Mermaid duplicate" in diagram_skill_text
+    assert "no Google Fonts `<link>`, remote `src`/`href`" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),
