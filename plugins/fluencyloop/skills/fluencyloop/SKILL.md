@@ -100,7 +100,7 @@ model spends tokens only on the irreducible rationale. The split, per stage:
 
 | Stage | The scripts assemble (deterministic) | The model writes (irreducible) |
 |-------|--------------------------------------|--------------------------------|
-| **Declare / design** | feature branch, `design.md` stub, `state.json` (slug / branch / stage / base) | the design diagrams (the shapes), the constitution check |
+| **Declare / design** | feature branch, feature record, `state.json` (slug / branch / stage / base) | the taught design rationale, the constitution check |
 | **Build (per slice)** | `slice-context` (diff + metadata + `likely_decision`), the session skeleton, the **decision blocks** (`fluencyloop decision`), `calibration signal` / `compact`, `state.json` updates | the code, the taught **why**, knowledge-transfer prose, the decision field *values* |
 | **Review** | `assemble-pr-view` (sessions inlined, commit range, base), PR creation | the reviewer-facing distillation |
 | **Backfill** | feature + session scaffold, `state.json`, decision blocks, `check` drift | the reconstructed rationale (marked `unverified`) |

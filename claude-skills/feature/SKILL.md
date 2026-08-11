@@ -167,9 +167,8 @@ Check `~/.fluencyloop/preferences.md` (loaded in §0) for `feature-numbering`:
 - **A preference is already recorded** — honor it silently, and **do not re-ask**:
   - `ticket` — ask the developer for *this* feature's specific ticket/story id (e.g. `JIRA-1234`)
     and pass it as `--prefix "<id>"`.
-  - `pr` — declare with no `--prefix` (the sequential fallback numbers it for now); once the PR is
-    opened in §4, run `fluencyloop rename-feature-dir --json --pr <number>` to swap the dir to
-    carry the real PR number. The branch name never changes — only the docs dir.
+  - `pr` — declare with no `--prefix`; the store-backed slug remains stable after the PR opens.
+    Do not create or rename a feature directory.
   - `sequential` — declare with no `--prefix`; the built-in zero-padded counter handles it.
 - **No preference yet (this is the first feature)** — ask **once**, via the delivery rule in
   "Question delivery" above, in this order:
@@ -178,10 +177,9 @@ Check `~/.fluencyloop/preferences.md` (loaded in §0) for `feature-numbering`:
      specific id and pass `--prefix "<id>"`.
   2. If no, and only if you can open GitHub PRs here (`gh` installed and authed — same check as
      §4): *"Use the PR number as the numbering prefix instead?"* — note plainly that the PR number
-     isn't known until the PR exists, so the dir gets renamed afterward. **Yes, number by PR**
-     *(the dir gets renamed once the PR opens)* / **No, use sequential numbers**. On yes, record
-     `feature-numbering: pr` and proceed exactly as the `pr` branch above (declare with no
-     `--prefix` now; rename after the PR opens in §4).
+     is not known until the PR exists, so the store-backed slug remains unchanged. **Yes, number by
+     PR** / **No, use sequential numbers**. On yes, record `feature-numbering: pr` and proceed
+     exactly as the `pr` branch above (declare with no `--prefix` now).
   3. Otherwise (no ticket, no `gh`, or declined both): record `feature-numbering: sequential` and
      declare with no `--prefix`.
 
@@ -201,6 +199,14 @@ This creates the `feature/<slug>` branch (switching to it) and its store record.
 for `slug`, `branch`, `store`, `base_ref`, and `plan`.
 `store` must be a path under `docs/fluencyloop/`; if it is not, stop and surface the
 runtime/path mismatch rather than writing fallback files.
+
+**Keep live feature design store-first.** Explain and teach the design in the conversation, then
+record its durable rationale through the feature, session, knowledge, decision, and architectural
+record writers. Do **not** create or update `docs/fluencyloop/features/<slug>/`, `design.md`,
+session journals, or generated diagrams for a 0.3 feature. Those paths are read-only legacy input
+for the importer. Apart from an explicitly approved constitution revision, the only newly authored
+FluencyLoop Markdown is the bounded distillation set at hand-off under
+`docs/fluencyloop/distillations/`.
 
 **Separate means independent.** When another feature is active, the command reuses its recorded
 `base_ref`, so the new branch is based on the integration branch rather than on the other feature's
@@ -337,8 +343,7 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
 
      ```bash
      fluencyloop decision --title "chose X over Y" --where "<file/area>" --why "<the taught why>" \
-       --alternative "<rejected option> — rejected: <why>" [--constitution §N] \
-       [--design ../design.md#anchor] --trust unverified   # or: verified
+       --alternative "<rejected option> — rejected: <why>" [--constitution §N] --trust unverified
      ```
 
      `where` is a file/area, never a line number; `trust` is about the **decision**, never the
@@ -475,11 +480,8 @@ and call `gh pr create --body-file <path>` (and `gh pr edit --body-file <path>` 
 Never pass Markdown inline through `--body`: shell interpolation corrupts backticks, `$` expressions,
 and code examples before GitHub receives them. Remove the temporary file after GitHub accepts it.
 
-**If `feature-numbering: pr` is recorded** (§1), the moment a PR actually opens — whether you ran
-`gh pr create` here or the user opened it manually and told you the number — run
-`fluencyloop rename-feature-dir --json --pr <number>` to swap the feature's docs dir onto that
-number. The branch is untouched; only the dir (and `design.md`'s recorded path references) move.
-If no PR ever gets opened for this feature, leave the dir as the sequential name it started with.
+**If `feature-numbering: pr` is recorded** (§1), retain the store-backed feature slug created at
+declaration. Do not rename a feature directory after the PR opens: 0.3 does not create one.
 
 The hand-off is a **behavioral pattern that recurs every feature** — so decide it **once**, not
 once per feature. Check `~/.fluencyloop/preferences.md` (loaded in §0):

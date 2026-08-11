@@ -252,6 +252,21 @@ assert "feature-handoff: automatic" in codex_review_text
 assert "without a second" in codex_review_text
 assert 'gh pr create --base "<base_ref>"' in codex_review_text
 for path in [
+    dist / "skills" / "feature" / "SKILL.md",
+    root / "claude-skills" / "feature" / "SKILL.md",
+]:
+    text = read_text(path)
+    assert "Keep live feature design store-first." in text
+    assert "Do **not** create or update `docs/fluencyloop/features/<slug>/`, `design.md`," in text
+    assert "the only newly authored\nFluencyLoop Markdown" in text
+for path in [
+    dist / "skills" / "review" / "SKILL.md",
+    root / "claude-skills" / "review" / "SKILL.md",
+]:
+    text = read_text(path)
+    assert "from the feature declaration's `intent` field" in text
+    assert "do not\n  create or link a generated `design.md`" in text
+for path in [
     dist / "skills" / "plan" / "SKILL.md",
     root / "claude-skills" / "plan" / "SKILL.md",
 ]:
