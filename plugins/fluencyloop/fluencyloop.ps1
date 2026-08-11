@@ -41,7 +41,7 @@ Usage:
   fluencyloop import                     import legacy session markdown into the store
   fluencyloop review [--base <ref>]      assemble the PR view for the active feature
   fluencyloop check [--json]             doctor: loop state + un-journaled drift
-  fluencyloop site [--port <port>] [--ensure|--status|--stop] [--json]
+  fluencyloop site [--port <port>] [--ensure [--open]|--status|--stop] [--json]
                                          serve or manage the local 0.3 site (requires Node.js 18+)
   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
@@ -94,7 +94,7 @@ function RequireNodeForSite([bool]$Quiet = $false) {
 }
 
 function StartSite {
-    $automatic = $rest -contains '--ensure' -or $rest -contains '--status'
+    $automatic = $rest -contains '--ensure' -or $rest -contains '--status' -or $rest -contains '--open'
     $json = $rest -contains '--json'
     $nodeExe = RequireNodeForSite $automatic
     if (-not $nodeExe) {

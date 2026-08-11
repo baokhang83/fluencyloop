@@ -176,6 +176,29 @@ PY
     [ "$(git status --porcelain)" = "$before" ]
 }
 
+@test "managed site opens the ensured loopback reader on request" {
+    setup_initialized_repo
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    [ "$(uname -s)" = "Linux" ] || skip "browser-opener interception is Linux-specific"
+    export FLUENCYLOOP_HOME="$BATS_TEST_TMPDIR/managed-home-$RANDOM"
+    opener_dir="$BATS_TEST_TMPDIR/browser-opener-$RANDOM"
+    opened_url="$BATS_TEST_TMPDIR/opened-url-$RANDOM"
+    mkdir -p "$opener_dir"
+    printf '#!/usr/bin/env bash\nprintf %%s "$1" > "%s"\n' "$opened_url" > "$opener_dir/xdg-open"
+    chmod +x "$opener_dir/xdg-open"
+    MANAGED_SITE=true
+
+    run env PATH="$opener_dir:$PATH" bash "$DIST/fluencyloop" site --ensure --open --port 0 --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["browser_opened"],d'
+    expected_url="$(printf '%s' "$output" | json_field url)"
+    for attempt in $(seq 1 50); do
+        [ -f "$opened_url" ] && break
+        sleep 0.1
+    done
+    [ "$(cat "$opened_url")" = "$expected_url" ]
+}
+
 @test "managed site stays up for concurrent agent sessions, then idles after the last one ends" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo
