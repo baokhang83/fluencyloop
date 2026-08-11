@@ -170,8 +170,30 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "**every feature gets one** is exactly the failure this option replaces." in feature_skill_text
     assert "Diagram: The reader selects the last record" in feature_skill_text
     assert "caption + prose" in feature_skill_text
+    assert "### Product-overview diagram decision" in feature_skill_text
+    assert "before drafting the overview" in feature_skill_text
+    assert "Do not wait for the user to suggest a diagram" in feature_skill_text
+    assert "diagram fast path**. Give it" in feature_skill_text
+    assert "Do not ask the user to choose the style, type, or" in feature_skill_text
+    assert "Keep `product.md` prose-only" in feature_skill_text
+    assert "site --ensure --open --json" in feature_skill_text
     assert "**Do not distill decisions.**" in feature_skill_text
     assert "person-neutral" in feature_skill_text
+for diagram_skill_text in [
+    read_text(root / "claude-skills" / "diagram-design" / "SKILL.md"),
+    read_text(dist / "skills" / "diagram-design" / "SKILL.md"),
+]:
+    assert "## FluencyLoop embedded diagram fast path" in diagram_skill_text
+    assert "Do not load the full guide" in diagram_skill_text
+    assert "Load only that one type reference" in diagram_skill_text
+    assert "Use 4–7 nodes and 3–8 connectors" in diagram_skill_text
+    assert "do not add a Mermaid duplicate" in diagram_skill_text
+for full_guide_text in [
+    read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
+    read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),
+]:
+    assert "## 0. First-time setup — style guide gate" in full_guide_text
+    assert "Before generating your first diagram" in full_guide_text
 claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "**Migrate imported history before planning.**" in claude_plan_text
