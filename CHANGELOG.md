@@ -4,6 +4,19 @@ All notable changes to FluencyLoop are documented here.
 
 ## 0.3.0
 
+### Added
+
+- FluencyLoop now records feature, session, decision, knowledge, architectural-record, and
+  requirement data in an append-only JSONL store. The bundled local reader turns those records
+  into a tag-filterable project overview, architectural-record catalog, feature deltas, and
+  decision detail pages.
+- `fluencyloop site --ensure` manages a loopback-only local reader. Node.js 18+ is required only
+  for that reader; the core workflow remains usable without Node. Agent sessions start the reader
+  when available and announce its actual local URL.
+- The first 0.3 command in a 0.2 project imports legacy session history automatically. It writes
+  new store records only, leaves all existing Markdown untouched, and defaults reconstructed
+  evidence to unverified.
+
 ### Fixed
 
 - Plugin manifests now identify the 0.3 runtime. Claude Code can refresh its installed cache when
@@ -11,6 +24,8 @@ All notable changes to FluencyLoop are documented here.
 - Legacy semantic migration revision 5 reopens earlier untagged migrations. It reports tag
   coverage, requires at least one tagged architectural record before completion, and shows existing
   records so the agent can append tagged corrections without rewriting history.
+- Session numbering now derives from the feature store rather than the mutable state pointer, so a
+  reset state file or imported legacy session cannot make a later session restart at `001`.
 
 ## 0.2.27
 

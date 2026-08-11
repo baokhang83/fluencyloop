@@ -284,15 +284,18 @@ next_feature_number() {
     printf '%03d' "$((n + 1))"
 }
 
-# Next sequential session number within a feature (zero-padded), so sessions/ sorts in build
-# order instead of alphabetically by intent slug.
+# Next sequential session number within a feature (zero-padded), derived from its append-only
+# store rather than the mutable active-session pointer. Imported decisions retain their legacy
+# session slug in the common envelope even when pre-0.3 history has no native session record.
 next_session_number() {
-    local dir n
-    dir="$1"
-    n=0
-    if [ -d "$dir" ]; then
-        n="$(find "$dir" -mindepth 1 -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-    fi
+    local feature="$1" store record number n=0
+    store="$(feature_store_path "$feature")"
+    [ -f "$store" ] || { printf '001'; return; }
+    while IFS= read -r record; do
+        number="$(printf '%s' "$record" | sed -n 's/.*"session":"\([0-9][0-9]*\)-[^"]*".*/\1/p')"
+        [ -n "$number" ] || continue
+        [ "$((10#$number))" -gt "$n" ] && n="$((10#$number))"
+    done < "$store"
     printf '%03d' "$((n + 1))"
 }
 

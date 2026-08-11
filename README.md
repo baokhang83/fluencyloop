@@ -42,8 +42,10 @@ clearer than prose alone.
 
 Install 0.3 normally, then continue working. On the first FluencyLoop command in a 0.2 project,
 the plugin silently imports legacy session history into the append-only store. There is no separate
-migration command or trust-confirmation step to run. The original Markdown remains in place as a
-read-only compatibility fallback.
+migration command or trust-confirmation step to run. 0.3 stops creating per-feature design and
+session Markdown; it writes JSONL store records instead. The importer never modifies the original
+Markdown, which remains in place as a read-only compatibility fallback. Reconstructed history is
+unverified by default until a later review establishes its trust.
 
 ## What it gives you
 
@@ -64,11 +66,13 @@ engagement. That profile carries across projects and features, keeping explanati
 familiar ground and deeper where knowledge is still forming. It is never committed to a project;
 only person-neutral knowledge-transfer notes about the software enter the documentation.
 
-### Software documentation that follows the code
+### Project records that follow the code
 
-Plans, architecture concepts and relationships, feature sessions, and review summaries live beside the code under
-`docs/fluencyloop/`. They are created from the actual branch and its changes, so documentation is
-produced during delivery rather than reconstructed after context has been lost.
+Plans, feature sessions, decisions, knowledge, architectural records, and requirements live beside
+the code under `docs/fluencyloop/store/` as append-only JSONL. The local reader resolves their
+latest form and links the product overview, records, features, and decisions. Small, bounded
+Markdown distillations add product-level prose where it helps; the legacy feature Markdown remains
+read-only input for migration.
 
 ### Decision tracking with rationale
 
@@ -81,15 +85,21 @@ Reviewers get the decisions that shaped the feature instead of only a list of ch
 ```text
 docs/fluencyloop/
 ├── constitution.md
-├── plans/<initiative>/plan.md
-└── features/<feature>/
-    ├── design.md
-    └── sessions/*.md
+├── store/
+│   ├── concepts.jsonl
+│   └── features/<feature>.jsonl
+├── distillations/
+│   ├── product.md
+│   ├── features/<feature>.md
+│   └── concepts/<record>.md
+└── diagrams/
+    ├── product-overview.html
+    └── records/<record>.html
 ```
 
 `.fluencyloop/` contains project workflow state. The per-developer calibration profile lives in
-`~/.fluencyloop/`; it controls teaching depth and is never committed. Session documents describe
-the work, never the person.
+`~/.fluencyloop/`; it controls teaching depth and is never committed. Store records describe the
+work, never the person.
 
 ## Install
 
@@ -177,6 +187,19 @@ FluencyLoop quietly starts its local reader and reports the exact loopback URL a
 FluencyLoop interaction. It prefers `http://127.0.0.1:44444` and safely uses the next port when
 that one is busy. The reader stays available while one or more agent sessions are active in that
 project, then returns to its normal inactivity timeout after the final session ends.
+
+You can manage the reader directly too:
+
+```bash
+fluencyloop site --ensure    # start or reuse the project reader
+fluencyloop site --status    # print the current URL and lifecycle state
+fluencyloop site --stop      # stop this project's managed reader
+```
+
+The store-facing commands are `fluencyloop session`, `fluencyloop decision`,
+`fluencyloop knowledge`, `fluencyloop concept`, `fluencyloop record-explanation`, and
+`fluencyloop requirement`. The installed Claude Code and Codex skills select them as part of the
+normal plan, feature, backfill, and review workflows.
 
 ## More detail
 

@@ -40,12 +40,9 @@ if (-not $intent) {
     exit 1
 }
 
-# Session sequence persists in state now that there are no markdown filenames to count. A
-# pre-0.3 path is accepted too: basename + .md stripping makes the transition harmless.
-$previousSession = FlStateGet 'last_session'
-$previousSession = [System.IO.Path]::GetFileNameWithoutExtension($previousSession)
-if ($previousSession -match '^(\d{3})-') { $sessionNumber = '{0:d3}' -f (([int]$matches[1]) + 1) }
-else { $sessionNumber = '001' }
+# The append-only feature store is the durable session sequence. State only identifies the active
+# session and can legitimately move backwards when a branch is reset or rebased.
+$sessionNumber = Get-FlNextSessionNumber $featureSlug
 $sessionSlug = FlNumberedSlug $sessionNumber $intent
 
 # write_state replaces the whole file, so carry forward every field, not just the ones this

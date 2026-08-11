@@ -77,12 +77,16 @@ Describe 'new-feature.ps1 + new-session.ps1' {
         "$script:repo/docs/fluencyloop/features/001-add-caching/sessions/001-wire-the-lru-cache.md" | Should -Not -Exist
     }
 
-    It 'new sessions advance from state without markdown filenames' {
+    It 'new sessions advance from the highest store prefix after state resets' {
         $script:repo = Initialize-TestRepo
         Get-FlJson 'new-feature.ps1' '--json' 'add caching' | Out-Null
+        git add .fluencyloop/state.json 2>&1 | Out-Null; git commit -q -m 'feature state' 2>&1 | Out-Null
         & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-add-caching' 'first slice' | Out-Null
-        $j = Get-FlJson 'new-session.ps1' '--json' '--slug' '001-add-caching' 'second slice'
-        $j.session_slug | Should -Be '002-second-slice'
+        git checkout -- .fluencyloop/state.json 2>&1 | Out-Null
+        $store = "$script:repo/docs/fluencyloop/store/features/001-add-caching.jsonl"
+        [System.IO.File]::AppendAllText($store, '{"schema_version":"1","type":"decision","ts":"2026-08-11","feature":"001-add-caching","session":"004-imported-history","commit":"abc","title":"legacy choice","where":"cache","why":"preserve imported history"}' + "`n")
+        $j = Get-FlJson 'new-session.ps1' '--json' '--slug' '001-add-caching' 'next slice'
+        $j.session_slug | Should -Be '005-next-slice'
     }
 
     It 'new-session errors with no active feature' {
