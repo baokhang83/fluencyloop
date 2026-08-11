@@ -30,7 +30,8 @@
         "./claude-skills/plan",
         "./claude-skills/feature",
         "./claude-skills/review",
-        "./claude-skills/backfill"
+        "./claude-skills/backfill",
+        "./claude-skills/diagram-design"
       ],
       "tags": [
         "fluencyloop",
