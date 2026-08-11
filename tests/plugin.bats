@@ -85,6 +85,9 @@ for alias, source in {
     assert "## Generated prose — ASD-STE100" in source_text
     assert "Do not claim formal\nASD-STE100 compliance" in alias_text
     assert "Do not claim formal\nASD-STE100 compliance" in source_text
+    if alias == "feature":
+        assert "Apply this style to live decision-boundary teaching" in alias_text
+        assert "Apply this style to live decision-boundary teaching" in source_text
 router_text = read_text(dist / "skills" / "fluencyloop" / "SKILL.md")
 assert "## Local site — open once" in router_text
 assert "site --ensure --open --json" in router_text

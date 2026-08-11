@@ -34,6 +34,8 @@ Write generated user-facing technical prose in ASD-STE100 style: use short, dire
 active voice, one main action per sentence, and stable, unambiguous terms. Preserve product names,
 code identifiers, CLI commands, field names, and exact recorded values. Do not claim formal
 ASD-STE100 compliance: that requires checking the official controlled dictionary and rules.
+Apply this style to live decision-boundary teaching as well as generated Markdown and PR prose.
+It makes the required explanation clearer; it does not shorten, skip, or replace that explanation.
 
 ## Question delivery — preserve the pause
 
