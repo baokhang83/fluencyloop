@@ -50,9 +50,9 @@ assert "Test-Path -LiteralPath $hook -PathType Leaf" in handler["commandWindows"
 assert (dist / "hooks" / "refresh-marketplace.sh").is_file()
 assert (dist / "hooks" / "refresh-marketplace.ps1").is_file()
 assert "ensure_local_site" in read_text(dist / "hooks" / "refresh-marketplace.sh")
-assert "site --ensure --json" in read_text(dist / "hooks" / "refresh-marketplace.sh")
+assert "site --ensure --open --json" in read_text(dist / "hooks" / "refresh-marketplace.sh")
 assert "Ensure-LocalSite" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
-assert "site --ensure --json" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
+assert "site --ensure --open --json" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
 end_handler, = hooks["hooks"]["SessionEnd"][0]["hooks"]
 assert end_handler["type"] == "command"
 assert "--session-end" in end_handler["command"]
@@ -98,15 +98,15 @@ assert "state_matches_branch" in feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in feature_text
 assert "Resume preconditions after the answer." in feature_text
 assert "Immediately rerun `fluencyloop check --json`" in feature_text
-assert "complete the mandatory migration before calibration, preferences, ticket numbering" in feature_text
 assert "**Migrate imported history before normal feature work.**" in feature_text
 assert "legacy_migration_pending" in feature_text
-assert "ticket numbering" in feature_text
+assert "Claude fast path" in feature_text
+assert "fluencyloop import --assess-unconfirmed" in feature_text
+assert "fluencyloop import --semantic-map" in feature_text
 assert "fluencyloop import --mark-semantic-complete" in feature_text
 assert "fluencyloop import --semantic-status --json" in feature_text
-assert "This is required for every imported feature" in feature_text
-assert "Do not probe writer commands." in feature_text
-assert "every `--assess` follows its own read" in feature_text
+assert "Do not open 46" in feature_text
+assert "unconfirmed assessment" in feature_text
 assert "Separate means independent." in feature_text
 assert "Create PR bodies through a file." in feature_text
 assert "never exclude the\n  completed legacy migration" in feature_text
@@ -174,10 +174,11 @@ claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "**Migrate imported history before planning.**" in claude_plan_text
 assert "legacy_migration_pending" in claude_plan_text
+assert "fluencyloop import --assess-unconfirmed" in claude_plan_text
+assert "fluencyloop import --semantic-map" in claude_plan_text
 assert "fluencyloop import --mark-semantic-complete" in claude_plan_text
 assert "fluencyloop import --semantic-status --json" in claude_plan_text
-assert "Do not probe writer commands." in claude_plan_text
-assert "every `--assess` follows its own read" in claude_plan_text
+assert "without\nopening every historical feature separately" in claude_plan_text
 assert "**Migrate imported history before planning.**" in codex_plan_text
 assert "legacy_migration_pending" in codex_plan_text
 assert "fluencyloop import --mark-semantic-complete" in codex_plan_text
@@ -383,7 +384,7 @@ PY
     [ -z "$output" ]
     run cat "$calls"
     [ "$status" -eq 0 ]
-    [ "$output" = 'site --ensure --json' ]
+    [ "$output" = 'site --ensure --open --json' ]
 }
 
 @test "session hooks acquire and release a site lease from the host session id" {
@@ -403,7 +404,7 @@ PY
 
     run cat "$calls"
     [ "$status" -eq 0 ]
-    [ "$output" = $'site --session-start codex-session --json\nsite --session-end codex-session --json' ]
+    [ "$output" = $'site --session-start codex-session --json\nsite --ensure --open --json\nsite --session-end codex-session --json' ]
 }
 
 @test "startup hook does not ensure a site in a non-FluencyLoop repository" {

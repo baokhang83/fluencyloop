@@ -97,17 +97,32 @@ Describe 'import-legacy.ps1' {
         (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 1
         (Invoke-FlAll 'import-legacy.ps1' '--mark-semantic-complete') | Should -Match 'assessed 0 of 1 imported feature'
 
+        (Invoke-FlExit 'import-legacy.ps1' '--assess-unconfirmed') | Should -Be 0
+        (Invoke-FlAll 'import-legacy.ps1' '--assess-unconfirmed') | Should -Match 'Recorded 0 unconfirmed legacy assessment'
         $status = (& $script:PwshExe -NoProfile -File "$script:Bin/import-legacy.ps1" '--semantic-status' '--json') | ConvertFrom-Json
         $status.architectural_records | Should -Be 0
-        @($status.unassessed_features) | Should -Contain '001-add-caching'
+        @($status.unassessed_features) | Should -Not -Contain '001-add-caching'
+        $records = @([System.IO.File]::ReadAllLines($script:store) | ForEach-Object { $_ | ConvertFrom-Json })
+        $assessment = $records | Where-Object { $_.type -eq 'semantic_assessment' }
+        $assessment.trust | Should -Be 'unverified'
+        $assessment.summary | Should -Be 'Imported pre-0.3 history is unconfirmed pending independent review.'
 
         (Invoke-FlExit 'add-concept.ps1' '--name' 'bounded cache' '--problem' 'keep repeated reads fast without unbounded memory' '--how' 'reuse values through an LRU cache' '--realized-by' 'src/cache.js' '--feature' '001-add-caching' '--session' '000-legacy-import') | Should -Be 0
-        (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 1
-        (Invoke-FlExit 'import-legacy.ps1' '--assess' '001-add-caching' '--summary' 'The imported cache decisions establish bounded reuse for repeated reads.' '--record' 'bounded cache') | Should -Be 0
         (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 0
 
         $j = (& $script:PwshExe -NoProfile -File "$script:Bin/check.ps1" '--json') | ConvertFrom-Json
         $j.legacy_migration_pending | Should -BeFalse
+
+        [System.IO.File]::WriteAllText("$script:repo/docs/fluencyloop/store/.legacy-semantic-migration-revision", "3`n")
+        $j = (& $script:PwshExe -NoProfile -File "$script:Bin/check.ps1" '--json') | ConvertFrom-Json
+        $j.legacy_migration_pending | Should -BeTrue
+    }
+
+    It 'prints one compact map for shared architectural synthesis' {
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 0
+        (Invoke-FlAll 'import-legacy.ps1' '--semantic-map') | Should -Match '# Imported legacy record map'
+        (Invoke-FlAll 'import-legacy.ps1' '--semantic-map') | Should -Match '## 001-add-caching'
+        (Invoke-FlAll 'import-legacy.ps1' '--semantic-map') | Should -Match 'Decision: choose an LRU cache — src/cache.js'
     }
 
     It 'a normal command repairs a store imported before declaration records existed' {

@@ -3,7 +3,7 @@
 # Originals under docs/fluencyloop/features are read-only. Each imported record carries a stable
 # imported_from marker; re-runs recognise that exact raw marker without parsing JSON.
 #
-# Usage: import-legacy.sh [--auto|--semantic-status [--json]|--assess <feature> --summary <text> [--record <name> ...]|--mark-semantic-complete|--help]
+# Usage: import-legacy.sh [--auto|--semantic-status [--json]|--semantic-map|--assess-unconfirmed|--assess <feature> --summary <text> [--record <name> ...]|--mark-semantic-complete|--help]
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,7 +17,7 @@ export FLUENCYLOOP_IMPORTING=1
 AUTO=false; MARK_SEMANTIC_COMPLETE=false
 ASSESS_FEATURE=""; ASSESS_SUMMARY=""
 declare -a ASSESS_RECORDS=()
-SEMANTIC_STATUS=false; JSON=false
+SEMANTIC_STATUS=false; SEMANTIC_MAP=false; ASSESS_UNCONFIRMED=false; JSON=false
 HELP=false
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -27,6 +27,8 @@ while [ "$#" -gt 0 ]; do
         --summary) shift; ASSESS_SUMMARY="${1:-}" ;;
         --record) shift; ASSESS_RECORDS+=("${1:-}") ;;
         --semantic-status) SEMANTIC_STATUS=true ;;
+        --semantic-map) SEMANTIC_MAP=true ;;
+        --assess-unconfirmed) ASSESS_UNCONFIRMED=true ;;
         --json) JSON=true ;;
         --help|-h) HELP=true ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -38,11 +40,13 @@ if $HELP; then
     cat <<'EOF'
 Usage: fluencyloop import [--auto]
        fluencyloop import --semantic-status [--json]
+       fluencyloop import --semantic-map
+       fluencyloop import --assess-unconfirmed
        fluencyloop import --assess <feature> --summary <text> [--record <name> ...]
        fluencyloop import --mark-semantic-complete
 
-Import legacy Markdown records, inspect semantic-migration coverage, record one feature
-assessment, or mark a fully assessed migration complete.
+Import legacy Markdown records, print a compact record map, stamp all imported features as
+unconfirmed, record one reviewed assessment, or mark a fully assessed migration complete.
 EOF
     exit 0
 fi
@@ -62,7 +66,10 @@ json_array_from_lines() {
 if $SEMANTIC_STATUS; then
     $AUTO && { echo "Error: --auto cannot be combined with --semantic-status." >&2; exit 1; }
     $MARK_SEMANTIC_COMPLETE && { echo "Error: --semantic-status and --mark-semantic-complete cannot be combined." >&2; exit 1; }
-    [ -z "$ASSESS_FEATURE$ASSESS_SUMMARY" ] || { echo "Error: --semantic-status cannot be combined with --assess." >&2; exit 1; }
+    if [ -n "$ASSESS_FEATURE$ASSESS_SUMMARY" ] || $SEMANTIC_MAP || $ASSESS_UNCONFIRMED; then
+        echo "Error: --semantic-status cannot be combined with another migration action." >&2
+        exit 1
+    fi
     if $JSON; then
         printf '{"imported_features":'; json_array_from_lines < <(legacy_imported_feature_slugs)
         printf ',"unassessed_features":'; json_array_from_lines < <(legacy_semantic_unassessed_features)
@@ -74,6 +81,63 @@ if $SEMANTIC_STATUS; then
         echo "Unassessed features:"
         legacy_semantic_unassessed_features
     fi
+    exit 0
+fi
+
+json_record_field() {
+    local record="$1" field="$2" re
+    re="\"$field\":\"([^\"]*)\""
+    if [[ "$record" =~ $re ]]; then printf '%s' "${BASH_REMATCH[1]}"; fi
+}
+
+if $SEMANTIC_MAP; then
+    $AUTO && { echo "Error: --auto cannot be combined with --semantic-map." >&2; exit 1; }
+    $MARK_SEMANTIC_COMPLETE && { echo "Error: --semantic-map and --mark-semantic-complete cannot be combined." >&2; exit 1; }
+    if [ -n "$ASSESS_FEATURE$ASSESS_SUMMARY" ] || $ASSESS_UNCONFIRMED || $SEMANTIC_STATUS; then
+        echo "Error: --semantic-map cannot be combined with another migration action." >&2
+        exit 1
+    fi
+    echo "# Imported legacy record map"
+    while IFS= read -r store; do
+        feature="$(basename "$store" .jsonl)"
+        echo
+        printf '## %s\n' "$feature"
+        feature_record="$(grep '"type":"feature"' "$store" | tail -n 1 || true)"
+        intent="$(json_record_field "$feature_record" intent)"
+        [ -n "$intent" ] && printf '%s\n' "Intent: $intent"
+        while IFS= read -r record; do
+            type="$(json_record_field "$record" type)"
+            case "$type" in
+                decision)
+                    printf '%s\n' "Decision: $(json_record_field "$record" title) — $(json_record_field "$record" where)"
+                    ;;
+                component) printf '%s\n' "Component: $(json_record_field "$record" name)" ;;
+                condition) printf '%s\n' "Condition: $(json_record_field "$record" subject)" ;;
+            esac
+        done < "$store"
+    done < <(find "$(store_dir)/features" -maxdepth 1 -type f -name '*.jsonl' -print 2>/dev/null | LC_ALL=C sort)
+    exit 0
+fi
+
+if $ASSESS_UNCONFIRMED; then
+    $AUTO && { echo "Error: --auto cannot be combined with --assess-unconfirmed." >&2; exit 1; }
+    $MARK_SEMANTIC_COMPLETE && { echo "Error: --assess-unconfirmed and --mark-semantic-complete cannot be combined." >&2; exit 1; }
+    if [ -n "$ASSESS_FEATURE$ASSESS_SUMMARY" ] || $SEMANTIC_STATUS; then
+        echo "Error: --assess-unconfirmed cannot be combined with another migration action." >&2
+        exit 1
+    fi
+    assessed=0
+    while IFS= read -r feature; do
+        store="$(feature_store_path "$feature")"
+        if grep -Eq '"type":"semantic_assessment".*"semantic_migration_revision":"'"$LEGACY_SEMANTIC_MIGRATION_REVISION"'"' "$store"; then
+            continue
+        fi
+        store_append_record "$store" semantic_assessment "$feature" 000-legacy-import \
+            summary "Imported pre-0.3 history is unconfirmed pending independent review." \
+            trust unverified semantic_migration_revision "$LEGACY_SEMANTIC_MIGRATION_REVISION"
+        assessed=$((assessed + 1))
+    done < <(legacy_imported_feature_slugs)
+    echo "Recorded $assessed unconfirmed legacy assessment(s)."
     exit 0
 fi
 

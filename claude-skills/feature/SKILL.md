@@ -72,39 +72,28 @@ guess a repair.
 If they select the saved feature, switch to its recorded branch; if they select the checkout branch
 or say the saved feature is done or abandoned, retain the checkout branch. Do not hand-edit state.
 Immediately rerun `fluencyloop check --json`. Do not ask about the mismatch again when it remains
-expected on the retained checkout. Instead, process `legacy_migration_pending` from that result and
-complete the mandatory migration before calibration, preferences, ticket numbering, or feature
-declaration. `fluencyloop feature` writes the replacement state when normal feature work resumes.
+expected on the retained checkout. Then process `legacy_migration_pending` from that result before
+normal feature work. `fluencyloop feature` writes the replacement state when normal feature work
+resumes.
 
 **Migrate imported history before normal feature work.** Parse `legacy_migration_pending` next.
-When it is `true`, do not inspect the active feature, calibration, preferences, ticket numbering,
-or the new intent yet—and do not ask the developer anything. This is an automatic, repository-wide
-migration, not a new feature.
+When it is `true`, do not ask the developer anything or inspect each historical feature. This is an
+automatic repository migration, not the new feature. Build its architectural record map up front,
+but use the Claude fast path:
 
-**Do not probe writer commands.** During this migration, `fluencyloop import --semantic-status --json`
-is the only discovery command. Do **not** run bare `fluencyloop import`, `fluencyloop import --help`,
-or bare `fluencyloop concept`; the automatic importer already ran, and writers require complete
-evidence-backed arguments. Do not inspect preferences, calibration, the active feature, or Git status
-until the migration completes.
-
-1. Run `fluencyloop import --semantic-status --json` and work through **every**
-   `unassessed_features` entry in its stable order. For each one, read its imported store records
-   and the matching `docs/fluencyloop/features/<slug>/` history—not just the feature title. Never
-   create or switch historical feature branches.
-2. In that same per-feature pass, add the evidence-backed architectural records and relations that it establishes or
-   changes, using `fluencyloop concept --feature <slug> --session 000-legacy-import`. Do not invent
-   one record per feature and do not repeat the already-imported decision/knowledge records. A
-   feature with no product-level architectural effect is valid, but its assessment must say why.
-3. Immediately record that same evidence pass with
-   `fluencyloop import --assess <slug> --summary "<evidence-based outcome>" --record "<record name>"`
-   (repeat `--record` for every architectural record it contributed; omit it only for a genuinely
-   local feature). This is required for every imported feature; it is the completion coverage, not
-   a substitute for the architectural records themselves. Do not collect 46 summaries and issue
-   them later as one detached batch: every `--assess` follows its own read → record pass.
-4. Run `fluencyloop import --semantic-status --json` again. Only when its
-   `unassessed_features` array is empty **and** `architectural_records` is non-zero may you run
-   `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`. Continue
-   to normal feature flow only when `legacy_migration_pending` is `false`.
+1. Run `fluencyloop import --assess-unconfirmed`. It writes one unconfirmed assessment for every
+   imported feature. Do not claim independent verification from legacy Markdown.
+2. Run `fluencyloop import --semantic-map` once. It is the compact, repository-wide evidence map:
+   feature intents, decision titles and areas, components, and hard-won conditions. Do not open 46
+   feature directories or issue one read/write loop per feature unless the map exposes a genuine
+   ambiguity.
+3. From that single map, append only the shared, product-level architectural records and their
+   relations with `fluencyloop concept --feature <representative-slug> --session 000-legacy-import`.
+   Reuse a record across related features. Do not invent one record per feature. Apply tags that
+   make the records useful as site filters.
+4. Run `fluencyloop import --semantic-status --json`. If it reports at least one architectural
+   record, run `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`.
+   Continue only when `legacy_migration_pending` is `false`.
 
 The resulting `docs/fluencyloop/store/` files are project records, not disposable local cache.
 Keep them in the worktree and include them in the next feature handoff; never describe imported
