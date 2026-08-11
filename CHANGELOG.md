@@ -2,14 +2,6 @@
 
 All notable changes to FluencyLoop are documented here.
 
-## 0.3.1
-
-### Fixed
-
-- `fluencyloop check` now accepts a `realized_by` relation from an architectural record to an
-  ordinary code area, such as Angular's `AppComponent`. Those code areas do not need duplicate
-  knowledge-component records. Other relation kinds still reject dangling endpoints.
-
 ## 0.3.0
 
 ### Added
