@@ -15,6 +15,7 @@
 #   fluencyloop decision --where … --why … [--feature … --session …] append a decision record
 #   fluencyloop knowledge --component … [--feature … --session …] batch knowledge records
 #   fluencyloop concept --name … [--feature … --session …] capture a concept or relation
+#   fluencyloop record-explanation …       explain an architectural record for site readers
 #   fluencyloop requirement --gap …        capture a planning requirement or open question
 #   fluencyloop principle --number §N …    capture a constitution principle
 #   fluencyloop import [--semantic-status --json]
@@ -130,6 +131,7 @@ case "$cmd" in
     decision) exec bash "$BIN/add-decision.sh" "$@" ;;
     knowledge) exec bash "$BIN/add-knowledge.sh" "$@" ;;
     concept)  exec bash "$BIN/add-concept.sh" "$@" ;;
+    record-explanation) exec bash "$BIN/add-record-explanation.sh" "$@" ;;
     requirement) exec bash "$BIN/add-requirement.sh" "$@" ;;
     principle) exec bash "$BIN/add-principle.sh" "$@" ;;
     import)   exec bash "$BIN/import-legacy.sh" "$@" ;;

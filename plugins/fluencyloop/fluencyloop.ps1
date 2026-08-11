@@ -36,6 +36,7 @@ Usage:
   fluencyloop decision --where .. --why .. [--feature .. --session ..] append a decision record
   fluencyloop knowledge --component .. [--feature .. --session ..] batch knowledge records
   fluencyloop concept --name .. [--feature .. --session ..] capture a concept or relation
+  fluencyloop record-explanation ..       explain an architectural record for site readers
   fluencyloop requirement --gap ..        capture a planning requirement or open question
   fluencyloop principle --number §N ..    capture a constitution principle
   fluencyloop import                     import legacy session markdown into the store
@@ -122,6 +123,7 @@ switch -Regex ($cmd) {
     '^decision$'      { Run 'add-decision.ps1' }
     '^knowledge$'     { Run 'add-knowledge.ps1' }
     '^concept$'       { Run 'add-concept.ps1' }
+    '^record-explanation$' { Run 'add-record-explanation.ps1' }
     '^requirement$'   { Run 'add-requirement.ps1' }
     '^principle$'     { Run 'add-principle.ps1' }
     '^import$'        { Run 'import-legacy.ps1' }
