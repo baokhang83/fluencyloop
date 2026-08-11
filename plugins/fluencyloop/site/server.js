@@ -636,6 +636,19 @@ function conceptPath(concept) {
 
 const RECORD_DIAGRAM_PATH = /^docs\/fluencyloop\/diagrams\/records\/[A-Za-z0-9][A-Za-z0-9._-]*\.html$/;
 const PRODUCT_OVERVIEW_DIAGRAM_PATH = 'docs/fluencyloop/diagrams/product-overview.html';
+const LEGACY_DARK_DIAGRAM_TOKENS = `<style id="fluencyloop-embedded-dark-theme">
+:root[data-fluencyloop-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: #151a21;
+  --color-paper-2: #1b212a;
+  --color-ink: #e8edf3;
+  --color-muted: #9aa6b4;
+  --color-soft: #6d7a89;
+  --color-rule: #38434f;
+  --color-accent: #5fd0bd;
+  --color-accent-tint: #173c39;
+}
+</style>`;
 
 function safeDiagram(root, relativePath, directory) {
   const candidate = path.resolve(root, relativePath);
@@ -653,6 +666,20 @@ function safeDiagram(root, relativePath, directory) {
     return { unavailable: 'Diagram unavailable: embedded diagrams must be self-contained. Remove remote fonts, URLs, and executable content.' };
   }
   return { path: candidate };
+}
+
+function themedDiagramMarkup(content, theme) {
+  const selectedTheme = theme === 'dark' ? 'dark' : 'light';
+  // The reader controls the presentation preference, while the diagram remains a static,
+  // sandboxed document. A generated diagram opts in by using CSS variables under this attribute.
+  // Remove an existing value rather than allowing project content to override the reader.
+  const withLegacyDarkTokens = selectedTheme === 'dark'
+    ? content.replace(/<\/head\s*>/i, `${LEGACY_DARK_DIAGRAM_TOKENS}</head>`)
+    : content;
+  return withLegacyDarkTokens.replace(/<html\b([^>]*)>/i, (_match, attributes) => {
+    const withoutTheme = attributes.replace(/\sdata-fluencyloop-theme\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+    return `<html${withoutTheme} data-fluencyloop-theme="${selectedTheme}">`;
+  });
 }
 
 function diagramCompanion(root, explanation) {
@@ -1105,6 +1132,7 @@ function createServer(root, managed = null) {
     try {
       const requestUrl = new URL(request.url, 'http://127.0.0.1');
       const pathname = requestUrl.pathname;
+      const diagramTheme = requestUrl.searchParams.get('theme') === 'dark' ? 'dark' : 'light';
       if (pathname === '/health') {
         const health = { status: 'ok' };
         if (managed) health.site_id = managed.id;
@@ -1136,7 +1164,7 @@ function createServer(root, managed = null) {
       } else if (segments.length === 2 && segments[0] === 'overview' && segments[1] === 'diagram') {
         const companion = data.navigation.product && productOverviewDiagram(data.root);
         if (companion?.path) {
-          sendDiagram(response, request.method === 'HEAD' ? '' : fs.readFileSync(companion.path, 'utf8'));
+          sendDiagram(response, request.method === 'HEAD' ? '' : themedDiagramMarkup(fs.readFileSync(companion.path, 'utf8'), diagramTheme));
           return;
         }
       } else if (segments.length === 1 && segments[0] === 'records') {
@@ -1145,7 +1173,7 @@ function createServer(root, managed = null) {
         const concept = data.navigation.concepts.find((item) => item.slug === segments[1]);
         const companion = concept && diagramCompanion(data.root, concept.explanation);
         if (companion?.path) {
-          sendDiagram(response, request.method === 'HEAD' ? '' : fs.readFileSync(companion.path, 'utf8'));
+          sendDiagram(response, request.method === 'HEAD' ? '' : themedDiagramMarkup(fs.readFileSync(companion.path, 'utf8'), diagramTheme));
           return;
         }
       } else if (segments.length === 2 && segments[0] === 'records') {

@@ -210,6 +210,16 @@ function installCatalogFilters() {
   });
 }
 
+function syncEmbeddedDiagramThemes(theme) {
+  document.querySelectorAll('.record-diagram iframe').forEach((frame) => {
+    const source = frame.getAttribute('src');
+    if (!source) return;
+    const url = new URL(source, window.location.href);
+    url.searchParams.set('theme', theme);
+    if (frame.src !== url.href) frame.src = url.href;
+  });
+}
+
 // Keep personal presentation preferences in the browser, never in the project store.
 (() => {
   const root = document.documentElement;
@@ -224,23 +234,25 @@ function installCatalogFilters() {
     button.setAttribute('aria-pressed', String(isDark));
   };
 
+  let theme;
   try {
     const saved = localStorage.getItem(storageKey);
-    if (saved === 'light' || saved === 'dark') {
-      root.dataset.theme = saved;
-      updateButton(saved);
-    } else {
-      updateButton(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    }
+    theme = saved === 'light' || saved === 'dark'
+      ? saved
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   } catch (_) {
-    updateButton(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
+  root.dataset.theme = theme;
+  updateButton(theme);
+  syncEmbeddedDiagramThemes(theme);
 
   button?.addEventListener('click', () => {
     const current = root.dataset.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     const next = current === 'dark' ? 'light' : 'dark';
     root.dataset.theme = next;
     updateButton(next);
+    syncEmbeddedDiagramThemes(next);
     try { localStorage.setItem(storageKey, next); } catch (_) { /* presentation still changes */ }
   });
 

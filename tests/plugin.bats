@@ -189,6 +189,10 @@ for diagram_skill_text in [
     assert "Use 4–7 nodes and 3–8 connectors" in diagram_skill_text
     assert "do not add a Mermaid duplicate" in diagram_skill_text
     assert "no Google Fonts `<link>`, remote `src`/`href`" in diagram_skill_text
+    assert "Keep the existing light palette as the default" in diagram_skill_text
+    assert "--diagram-canvas" in diagram_skill_text
+    assert ':root[data-fluencyloop-theme="dark"]' in diagram_skill_text
+    assert "do not use JavaScript or a system-preference media query" in diagram_skill_text
     assert "For an **architecture** diagram, default to\n   unlabelled arrows" in diagram_skill_text
     assert "label\n   every decision exit in a flowchart and every message in a sequence diagram" in diagram_skill_text
     assert "Never abbreviate a\n   label merely to make it fit" in diagram_skill_text

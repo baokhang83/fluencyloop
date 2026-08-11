@@ -149,7 +149,20 @@ PY
     [ "$status" -eq 0 ]
     [[ "$output" == *"200"* ]]
     [[ "$output" == *"default-src 'none'"* ]]
+    [[ "$output" == *'data-fluencyloop-theme="light"'* ]]
     [[ "$output" == *"Client checks cache before remote service"* ]]
+
+    run python3 - "$SITE_URL/records/read-through-cache/diagram?theme=dark" <<'PY'
+import sys
+import urllib.request
+
+with urllib.request.urlopen(sys.argv[1]) as response:
+    print(response.read().decode('utf-8'))
+PY
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'data-fluencyloop-theme="dark"'* ]]
+    [[ "$output" == *'id="fluencyloop-embedded-dark-theme"'* ]]
+    [[ "$output" == *'--color-paper: #151a21;'* ]]
 }
 
 @test "site renders a safe diagram companion below the product technical overview" {
@@ -179,6 +192,7 @@ PY
     [ "$status" -eq 0 ]
     [[ "$output" == *"200"* ]]
     [[ "$output" == *"default-src 'none'"* ]]
+    [[ "$output" == *'data-fluencyloop-theme="light"'* ]]
     [[ "$output" == *"Client checks cache before remote service"* ]]
 }
 
@@ -546,6 +560,11 @@ PY
     # The reader ships no bundled typeface: it sets type in the system UI font, so no @font-face
     # or font asset should be served at all.
     [[ "$output" != *"@font-face"* ]]
+
+    run request /assets/site.js
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"syncEmbeddedDiagramThemes"* ]]
+    [[ "$output" == *"url.searchParams.set('theme', theme)"* ]]
 
     run python3 - "$SITE_URL/assets/fonts/dm-sans.woff2" <<'PY'
 import sys

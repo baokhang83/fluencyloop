@@ -34,6 +34,10 @@ Work in one bounded pass:
 3. Write directly to the requested path. For `product-overview.html`, keep `product.md` as prose;
    do not add a Mermaid duplicate of the HTML diagram. Use only inline SVG and CSS with system
    font stacks: no Google Fonts `<link>`, remote `src`/`href`, CSS `url(...)`, scripts, or iframes.
+   Keep the existing light palette as the default. Use `--diagram-canvas`, `--diagram-surface`,
+   `--diagram-ink`, `--diagram-muted`, `--diagram-rule`, and `--diagram-accent` throughout, then
+   add a restrained `:root[data-fluencyloop-theme="dark"]` variable set. The reader supplies that
+   attribute; do not use JavaScript or a system-preference media query.
 4. Draw connectors before cards. Use a straight connector only for aligned endpoints; otherwise use
    a rounded orthogonal route. Never overlap connector paths or reuse an attach point for separate
    connectors. A connector or its label must never run behind a non-endpoint card. If a label is
