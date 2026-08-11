@@ -111,7 +111,7 @@ PY
     run bash "$BIN/import-legacy.sh" --semantic-status --json
     [ "$status" -eq 0 ]
     [ "$(echo "$output" | json_field architectural_records)" = "0" ]
-    [[ "$output" != *'"001-add-caching"'* ]]
+    printf '%s' "$output" | python3 -c 'import json,sys;assert json.load(sys.stdin)["unassessed_features"] == []'
 
     python3 - "$STORE" <<'PY'
 import json, sys
