@@ -2,6 +2,17 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.2
+
+### Fixed
+
+- Embedded diagrams now default to unlabelled arrows for compact architecture views, preventing
+  connector text from being hidden by cards. Labels remain mandatory for flowchart decision exits
+  and sequence-diagram messages.
+- The embedded-diagram path now preserves the shared routing rules: non-aligned connectors use
+  rounded orthogonal routes, connector paths and attachment points remain distinct, and the local
+  reader must be visually checked for occluded text or clipping before handoff.
+
 ## 0.3.1
 
 ### Fixed
