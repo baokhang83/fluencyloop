@@ -189,6 +189,11 @@ for diagram_skill_text in [
     assert "Use 4–7 nodes and 3–8 connectors" in diagram_skill_text
     assert "do not add a Mermaid duplicate" in diagram_skill_text
     assert "no Google Fonts `<link>`, remote `src`/`href`" in diagram_skill_text
+    assert "Default to **unlabelled arrows**" in diagram_skill_text
+    assert "never abbreviate a\n   label merely to make it fit" in diagram_skill_text
+    assert "must never run behind a non-endpoint card" in diagram_skill_text
+    assert "8px of visible space from both the connector and every card" in diagram_skill_text
+    assert "no text behind a card, connector overlap, or viewBox clipping" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),

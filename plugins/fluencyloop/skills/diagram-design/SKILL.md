@@ -26,13 +26,22 @@ Work in one bounded pass:
    order between distinct actors is the point. For an architectural record, apply the same rule to
    its ADR mechanism. Load only that one type reference.
 2. Use 4–7 nodes and 3–8 connectors. Show only the relationship that earns the diagram; a product
-   overview must not become a feature inventory.
+   overview must not become a feature inventory. Default to **unlabelled arrows**: a small diagram
+   should express routine direction through layout and node subtitles, not cramped connector text.
+   Add an arrow label only when the relationship would otherwise be ambiguous; never abbreviate a
+   label merely to make it fit.
 3. Write directly to the requested path. For `product-overview.html`, keep `product.md` as prose;
    do not add a Mermaid duplicate of the HTML diagram. Use only inline SVG and CSS with system
    font stacks: no Google Fonts `<link>`, remote `src`/`href`, CSS `url(...)`, scripts, or iframes.
-4. Confirm the file is nonempty, then run `fluencyloop site --ensure --open --json` when available
-   so the reader opens at its local URL. Do not block the feature if Node is unavailable; say that
-   the prose is available and the diagram will appear when the optional site can run.
+4. Draw connectors before cards. A connector or its label must never run behind a non-endpoint card.
+   If a label is necessary, place it only in a clear lane: give its opaque background mask at least
+   8px of visible space from both the connector and every card. If no lane exists, omit the label or
+   change the layout; do not shrink, clip, or place text beneath a card.
+5. Confirm the file is nonempty, then run `fluencyloop site --ensure --open --json` when available
+   so the reader opens at its local URL. Inspect the rendered result before handing off: every label
+   must be readable, with no text behind a card, connector overlap, or viewBox clipping. Do not
+   block the feature if Node is unavailable; say that the prose is available and the diagram will
+   appear when the optional site can run.
 
 ## General diagrams
 
