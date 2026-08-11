@@ -31,13 +31,27 @@ read_hook_session_id() {
 }
 SESSION_ID="$(read_hook_session_id)"
 
+# Codex's PLUGIN_ROOT already points at this bundle (plugins/fluencyloop/), so the launcher sits
+# right beside this hook. Claude's CLAUDE_PLUGIN_ROOT points at the repository root instead — the
+# marketplace entry that supplies Claude uses `"source": "."`, so the whole checkout is the plugin
+# root and the launcher is nested under plugins/fluencyloop/. Try both rather than assuming one.
+resolve_launcher() {
+    local dir="$1" candidate
+    for candidate in "$dir/fluencyloop" "$dir/plugins/fluencyloop/fluencyloop"; do
+        if [ -x "$candidate" ]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
 # A SessionStart lease keeps the reader alive even when no browser has requested it recently.
 # SessionEnd removes only its own lease: two agents can use the same initialized project without
 # either closing the other agent’s reader.
 ensure_local_site() {
     local root launcher
-    launcher="$PLUGIN_DIR/fluencyloop"
-    [ -x "$launcher" ] || return 0
+    launcher="$(resolve_launcher "$PLUGIN_DIR")" || return 0
     root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
     [ -n "$root" ] && [ -d "$root/.fluencyloop" ] || return 0
     if [ -n "$SESSION_ID" ]; then
@@ -54,8 +68,7 @@ ensure_local_site() {
 release_local_site() {
     local root launcher
     [ -n "$SESSION_ID" ] || return 0
-    launcher="$PLUGIN_DIR/fluencyloop"
-    [ -x "$launcher" ] || return 0
+    launcher="$(resolve_launcher "$PLUGIN_DIR")" || return 0
     root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
     [ -n "$root" ] && [ -d "$root/.fluencyloop" ] || return 0
     (cd "$root" && "$launcher" site --session-end "$SESSION_ID" --json >/dev/null 2>&1) || true

@@ -403,6 +403,24 @@ PY
     [ "$output" = 'site --ensure --open --json' ]
 }
 
+@test "startup hook ensures a site when CLAUDE_PLUGIN_ROOT is the flattened repo root" {
+    # Claude's marketplace entry uses "source": ".", so CLAUDE_PLUGIN_ROOT is the repo root, not
+    # plugins/fluencyloop/ — the launcher is nested one level deeper than Codex's PLUGIN_ROOT sees it.
+    local plugin_root="$BATS_TEST_TMPDIR/flattened-root"
+    local calls="$BATS_TEST_TMPDIR/site-calls"
+    mkdir -p "$plugin_root/plugins/fluencyloop"
+    printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" >> "$SITE_CALLS"\n' > "$plugin_root/plugins/fluencyloop/fluencyloop"
+    chmod +x "$plugin_root/plugins/fluencyloop/fluencyloop"
+    setup_initialized_repo
+
+    run env -u PLUGIN_ROOT CLAUDE_PLUGIN_ROOT="$plugin_root" SITE_CALLS="$calls" bash "$DIST/hooks/refresh-marketplace.sh"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+    run cat "$calls"
+    [ "$status" -eq 0 ]
+    [ "$output" = 'site --ensure --open --json' ]
+}
+
 @test "session hooks acquire and release a site lease from the host session id" {
     local plugin_root="$BATS_TEST_TMPDIR/local-plugin"
     local calls="$BATS_TEST_TMPDIR/site-calls"

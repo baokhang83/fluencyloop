@@ -36,12 +36,24 @@ try {
     $sessionId = $null
 }
 
+# Codex's PLUGIN_ROOT already points at this bundle (plugins/fluencyloop/), so the launcher sits
+# right beside this hook. Claude's CLAUDE_PLUGIN_ROOT points at the repository root instead — the
+# marketplace entry that supplies Claude uses `"source": "."`, so the whole checkout is the plugin
+# root and the launcher is nested under plugins/fluencyloop/. Try both rather than assuming one.
+function Resolve-Launcher {
+    param([string]$Dir)
+    foreach ($candidate in @((Join-Path $Dir 'fluencyloop.ps1'), (Join-Path $Dir 'plugins/fluencyloop/fluencyloop.ps1'))) {
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+    }
+    return $null
+}
+
 # A SessionStart lease keeps the reader alive even when no browser has requested it recently.
 # SessionEnd removes only its own lease: two agents can use the same initialized project without
 # either closing the other agent’s reader.
 function Ensure-LocalSite {
-    $launcher = Join-Path $pluginDir 'fluencyloop.ps1'
-    if (-not (Test-Path -LiteralPath $launcher -PathType Leaf)) { return }
+    $launcher = Resolve-Launcher $pluginDir
+    if (-not $launcher) { return }
     $root = (& git rev-parse --show-toplevel 2>$null | Select-Object -First 1)
     $gitExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
     if ($gitExitCode -ne 0 -or -not $root) { return }
@@ -62,8 +74,8 @@ function Ensure-LocalSite {
 
 function Release-LocalSite {
     if (-not $sessionId) { return }
-    $launcher = Join-Path $pluginDir 'fluencyloop.ps1'
-    if (-not (Test-Path -LiteralPath $launcher -PathType Leaf)) { return }
+    $launcher = Resolve-Launcher $pluginDir
+    if (-not $launcher) { return }
     $root = (& git rev-parse --show-toplevel 2>$null | Select-Object -First 1)
     $gitExitCode = if (Test-Path Variable:LASTEXITCODE) { $LASTEXITCODE } else { 0 }
     if ($gitExitCode -ne 0 -or -not $root) { return }
