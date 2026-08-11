@@ -75,15 +75,23 @@ for alias, source in {
     assert "## Bundled CLI (Codex)" in source_text
     assert "~/.local/bin/fluencyloop" in source_text
     assert "Invoke `fluencyloop …` directly" in source_text
-    assert "## Local site — announce once" in alias_text
-    assert "site --status --json" in alias_text
+    assert "## Local site — open once" in alias_text
+    assert "site --ensure --open --json" in alias_text
     assert "FluencyLoop site: <url>" in alias_text
-    assert "## Local site — announce once" in source_text
-    assert "site --status --json" in source_text
+    assert "## Local site — open once" in source_text
+    assert "site --ensure --open --json" in source_text
     assert "FluencyLoop site: <url>" in source_text
+    assert "## Generated prose — ASD-STE100" in alias_text
+    assert "## Generated prose — ASD-STE100" in source_text
+    assert "Do not claim formal\nASD-STE100 compliance" in alias_text
+    assert "Do not claim formal\nASD-STE100 compliance" in source_text
+    if alias == "feature":
+        assert "Apply this style to live decision-boundary teaching" in alias_text
+        assert "Apply this style to live decision-boundary teaching" in source_text
 router_text = read_text(dist / "skills" / "fluencyloop" / "SKILL.md")
-assert "## Local site — announce once" in router_text
-assert "Fast Path above remains exempt" in router_text
+assert "## Local site — open once" in router_text
+assert "site --ensure --open --json" in router_text
+assert "Fast Path above\nremains exempt" in router_text
 feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in feature_text
 assert "state_matches_branch" in feature_text

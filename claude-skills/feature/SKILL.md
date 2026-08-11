@@ -20,13 +20,22 @@ command.
 Do not hand-scaffold `.fluencyloop/`, `.claude/skills/`, designs, sessions, state, or helper
 scripts. The bundled CLI creates the deterministic files and returns their paths.
 
-## Local site — announce once
+## Local site — open once
 
 Before the first user-visible response, invoke
-`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" site --status --json`. If it reports `running: true` and
-no earlier assistant message in this session starts with `FluencyLoop site:`, say
-`FluencyLoop site: <url>` once, using its returned URL. Do not mention an unavailable site, repeat the
-announcement, or open a browser.
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" site --ensure --open --json`. If it reports `running: true`
+and no earlier assistant message in this session starts with `FluencyLoop site:`, say
+`FluencyLoop site: <url> (opened in browser).` once, using its returned URL. Do not mention an
+unavailable site or repeat the announcement. The CLI opens the browser safely for the loopback URL.
+
+## Generated prose — ASD-STE100
+
+Write generated user-facing technical prose in ASD-STE100 style: use short, direct sentences,
+active voice, one main action per sentence, and stable, unambiguous terms. Preserve product names,
+code identifiers, CLI commands, field names, and exact recorded values. Do not claim formal
+ASD-STE100 compliance: that requires checking the official controlled dictionary and rules.
+Apply this style to live decision-boundary teaching as well as generated Markdown and PR prose.
+It makes the required explanation clearer; it does not shorten, skip, or replace that explanation.
 
 ## Question delivery — preserve the pause
 

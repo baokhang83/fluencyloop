@@ -54,13 +54,13 @@ const IDENTITY_FIELDS = {
 
 function usage(message) {
   if (message) process.stderr.write(`Error: ${message}\n`);
-  process.stderr.write('Usage: fluencyloop site [--port <0-65535>] [--ensure|--status|--stop] [--json]\n');
+  process.stderr.write('Usage: fluencyloop site [--port <0-65535>] [--ensure [--open]|--status|--stop] [--json]\n');
   process.exitCode = 1;
 }
 
 function parseArgs(argv) {
   const options = {
-    root: '', port: DEFAULT_PORT, portSpecified: false, ensure: false, status: false, stop: false, json: false,
+    root: '', port: DEFAULT_PORT, portSpecified: false, ensure: false, status: false, stop: false, open: false, json: false,
     sessionStart: '', sessionEnd: '',
     managedState: '', managedId: '', managedStartup: '', managedSession: '',
   };
@@ -88,6 +88,7 @@ function parseArgs(argv) {
         if (options.port > 65535) throw new Error('--port must be an integer from 0 to 65535');
       }
     } else if (arg === '--ensure') options.ensure = true;
+    else if (arg === '--open') options.open = true;
     else if (arg === '--status') options.status = true;
     else if (arg === '--stop') options.stop = true;
     else if (arg === '--json') options.json = true;
@@ -99,6 +100,7 @@ function parseArgs(argv) {
   if ([options.ensure, options.status, options.stop, options.sessionStart, options.sessionEnd].filter(Boolean).length > 1) {
     throw new Error('choose only one lifecycle action');
   }
+  if (options.open && !options.ensure) throw new Error('--open requires --ensure');
   return options;
 }
 
@@ -378,6 +380,28 @@ function printManagedResult(result, json) {
   }
   if (result.running) process.stdout.write('FluencyLoop site: ' + result.url + '\n');
   else process.stdout.write('FluencyLoop site is not running.\n');
+}
+
+// Open only a loopback URL that this process just ensured. The platform opener receives the URL
+// as a literal argument, never as a shell fragment, so project data cannot become a command.
+function openLocalBrowser(url) {
+  let command;
+  let args;
+  if (process.platform === 'darwin') {
+    command = 'open'; args = [url];
+  } else if (process.platform === 'win32') {
+    command = 'cmd.exe'; args = ['/c', 'start', '', url];
+  } else {
+    command = 'xdg-open'; args = [url];
+  }
+  try {
+    const opener = childProcess.spawn(command, args, { detached: true, stdio: 'ignore' });
+    opener.once('error', () => {});
+    opener.unref();
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 function filesUnder(directory, extension) {
@@ -1169,6 +1193,9 @@ if (options) {
           ? releaseManagedSession(root, paths, options.sessionEnd)
           : start(root, options.port, managedConfiguration(options));
   operation.then((result) => {
+    if (options.open && result.running && result.url) {
+      result.browser_opened = openLocalBrowser(result.url);
+    }
     if (manager) printManagedResult(result, options.json);
   }).catch((error) => {
     process.stderr.write('Could not start FluencyLoop site: ' + error.message + '\n');

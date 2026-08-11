@@ -24,12 +24,19 @@ If that command reports `command not found` because hooks have not run yet, invo
 dispatcher from the loaded skill path as a silent fallback. On native Windows, invoke the adjacent
 `fluencyloop.ps1` with `pwsh`.
 
-## Local site — announce once
+## Local site — open once
 
-Before the first user-visible response, run `fluencyloop site --status --json`. If it reports
+Before the first user-visible response, run `fluencyloop site --ensure --open --json`. If it reports
 `running: true` and no earlier assistant message in this session starts with `FluencyLoop site:`, say
-`FluencyLoop site: <url>` once, using its returned URL. Do not mention an unavailable site, repeat
-the announcement, or open a browser.
+`FluencyLoop site: <url> (opened in browser).` once, using its returned URL. Do not mention an
+unavailable site or repeat the announcement. The CLI opens the browser safely for the loopback URL.
+
+## Generated prose — ASD-STE100
+
+Write generated user-facing technical prose in ASD-STE100 style: use short, direct sentences,
+active voice, one main action per sentence, and stable, unambiguous terms. Preserve product names,
+code identifiers, CLI commands, field names, and exact recorded values. Do not claim formal
+ASD-STE100 compliance: that requires checking the official controlled dictionary and rules.
 
 ## Question delivery — preserve the pause
 
