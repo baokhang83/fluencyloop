@@ -46,14 +46,14 @@ fluencyloop review --json                    # paths, commit range, session list
 fluencyloop review --base "<base_ref>"       # scope the diff to the recorded base
 ```
 
-The `--json` form gives `feature`, `range`, `commits`, and the session files. The plain
-form inlines every session's decisions under the feature title.
+The `--json` form gives `feature`, `range`, `commits`, and session declarations from the feature
+store. The plain form inlines every session's decisions under the feature title.
 
 ## 2. Render the reviewer view
 
 Produce a concise, reviewer-facing summary:
 
-- **One-line feature intent** (from `design.md`'s `# Design:` title).
+- **One-line feature intent** (from the feature declaration's `intent` field in the store).
 - **Decisions that matter**, grouped by session — each as *chose X over Y because Z*, with
   its `where:` code anchor. Lead with the decisions carrying `trust: ⚠` — those are where a
   reviewer should look hardest.
@@ -62,7 +62,8 @@ Produce a concise, reviewer-facing summary:
   truth:` naming another file, e.g. `.specify/memory/constitution.md`), read *that* for the
   real principles. **Flag** any decision that appears to conflict, or any principle-relevant
   decision that was never checked. Flag as a surfaced note — never a blocker.
-- **Design pointer:** link the feature's `design.md` so the reviewer can see the shape.
+- **Design shape:** summarize the relevant session, decision, and architectural records; do not
+  create or link a generated `design.md`.
 - **Un-journaled drift:** run `fluencyloop check --json` and read `unjournaled_commits`. If it's > 0, warn that N commit(s) landed since the
   last journaled session — the reviewer is looking at code the journal doesn't explain, so nudge
   the author to journal it or run backfill. Surface it as a note; never block.
