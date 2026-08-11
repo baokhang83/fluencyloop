@@ -118,6 +118,40 @@ PY
     [ "$status" -eq 0 ]
 }
 
+@test "record detail renders its structured explanation and safe diagram companion" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    store="$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+    mkdir -p "$(dirname "$store")" "$TESTREPO/docs/fluencyloop/diagrams/records"
+    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-11","feature":"cache","session":"001","commit":"abc","name":"read through cache","problem":"avoid repeated remote reads","how":"read local state before the remote service","realized_by":"CacheClient"}' >> "$store"
+    printf '%s\n' '{"schema_version":"1","type":"record_explanation","ts":"2026-08-11","feature":"cache","session":"001","commit":"abc","record":"read through cache","context":"Repeated remote reads add latency.","decision":"Read the cache before the remote service.","mechanism":"The client fetches only after a cache miss.","consequences":"Reads are fast, with bounded staleness.","diagram_path":"docs/fluencyloop/diagrams/records/read-through-cache.html","diagram_type":"architecture","diagram_alt":"A client checks a cache before the remote service."}' >> "$store"
+    cp "$REPO_ROOT/tests/fixtures/record-diagram.html" "$TESTREPO/docs/fluencyloop/diagrams/records/read-through-cache.html"
+    start_site --port 0
+
+    run request /records/read-through-cache
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Repeated remote reads add latency."* ]]
+    [[ "$output" == *"Read the cache before the remote service."* ]]
+    [[ "$output" == *"The client fetches only after a cache miss."* ]]
+    [[ "$output" == *"Reads are fast, with bounded staleness."* ]]
+    [[ "$output" == *'src="/records/read-through-cache/diagram"'* ]]
+    [[ "$output" == *"A client checks a cache before the remote service."* ]]
+
+    run python3 - "$SITE_URL/records/read-through-cache/diagram" <<'PY'
+import sys
+import urllib.request
+
+with urllib.request.urlopen(sys.argv[1]) as response:
+    print(response.status)
+    print(response.headers['Content-Security-Policy'])
+    print(response.read().decode('utf-8'))
+PY
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"200"* ]]
+    [[ "$output" == *"default-src 'none'"* ]]
+    [[ "$output" == *"Client checks cache before remote service"* ]]
+}
+
 @test "site tries the next loopback port when the default is busy" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo

@@ -38,8 +38,12 @@ Describe 'fluencyloop site' {
         ), [System.Text.UTF8Encoding]::new($false))
         [System.IO.File]::WriteAllLines((Join-Path $storeDir 'concepts.jsonl'), @(
             '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","name":"PowerShell concept","problem":"verify the Windows entry point","how":"serve the same local routes","realized_by":"fluencyloop.ps1","tags":"native dispatch"}',
-            '{"schema_version":"1","type":"relation","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","from":"PowerShell concept","to":"ps-navigation","kind":"realized_by"}'
+            '{"schema_version":"1","type":"relation","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","from":"PowerShell concept","to":"ps-navigation","kind":"realized_by"}',
+            '{"schema_version":"1","type":"record_explanation","ts":"2026-08-09","feature":"ps-navigation","session":"001","commit":"abc","record":"PowerShell concept","context":"The Windows entry point must serve the same project reader.","decision":"Use the bundled Node reader behind the PowerShell dispatcher.","mechanism":"The dispatcher forwards site arguments to the shared server.","consequences":"The route set stays consistent across client shells.","diagram_path":"docs/fluencyloop/diagrams/records/powershell-concept.html","diagram_type":"architecture","diagram_alt":"The PowerShell dispatcher invokes the shared local reader."}'
         ), [System.Text.UTF8Encoding]::new($false))
+        $diagramDir = Join-Path $script:repo 'docs/fluencyloop/diagrams/records'
+        New-Item -ItemType Directory -Force -Path $diagramDir | Out-Null
+        Copy-Item -LiteralPath "$PSScriptRoot/../fixtures/record-diagram.html" -Destination (Join-Path $diagramDir 'powershell-concept.html')
         [System.IO.File]::WriteAllLines((Join-Path $distillationDir 'product.md'), @(
             'The prose explains the reader before the diagram supports it.',
             '```mermaid',
@@ -112,6 +116,13 @@ Describe 'fluencyloop site' {
         $conceptPage.Content | Should -Match 'PowerShell concept'
         $conceptPage.Content | Should -Match 'href="/features/ps-navigation"'
         $conceptPage.Content | Should -Match 'class="tag tone-0" data-tag="native-dispatch"'
+        $conceptPage.Content | Should -Match 'The Windows entry point must serve the same project reader.'
+        $conceptPage.Content | Should -Match 'src="/records/powershell-concept/diagram"'
+
+        $diagramPage = Invoke-WebRequest -Uri "$url/records/powershell-concept/diagram" -UseBasicParsing
+        $diagramPage.StatusCode | Should -Be 200
+        $diagramPage.Headers['Content-Security-Policy'] | Should -Match "default-src 'none'"
+        $diagramPage.Content | Should -Match 'Client checks cache before remote service'
 
         $featurePage = Invoke-WebRequest -Uri "$url/features/ps-navigation" -UseBasicParsing
         $featurePage.StatusCode | Should -Be 200

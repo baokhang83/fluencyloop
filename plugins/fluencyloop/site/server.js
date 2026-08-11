@@ -47,6 +47,7 @@ const IDENTITY_FIELDS = {
   condition: ['feature', 'session', 'subject'],
   concept: ['name'],
   relation: ['from', 'to', 'kind'],
+  record_explanation: ['record'],
   principle: ['number'],
   requirement: ['feature', 'gap'],
   open_question: ['feature', 'gap'],
@@ -492,6 +493,9 @@ function readSiteData(root) {
     distillations: readDistillations(path.join(docs, 'distillations')),
     calibration: readCalibration(),
   };
+  // Keep the project root available to page renderers without exposing an absolute local path in
+  // the public site-data endpoint.
+  Object.defineProperty(data, 'root', { value: root, enumerable: false });
   data.navigation = buildNavigation(data);
   return data;
 }
@@ -566,6 +570,7 @@ function buildNavigation(data) {
   const tagByName = new Map(tagIndex.map((tag) => [tag.name, tag]));
   const tagsOf = (concept) => parseTags(concept).map((name) => tagByName.get(name)).filter(Boolean);
   const conceptByName = new Map(concepts.map((concept) => [concept.name, concept]));
+  const explanationByRecord = new Map(byType(records, 'record_explanation').map((record) => [record.record, record]));
   const features = new Map();
   const addFeature = (slug) => {
     if (!slug || slug === 'global') return;
@@ -612,6 +617,7 @@ function buildNavigation(data) {
       ...concept,
       slug: slugFor(concept.name),
       tags: tagsOf(concept),
+      explanation: explanationByRecord.get(concept.name) || null,
       distillation: distillations.get(`concepts/${slugFor(concept.name)}.md`) || null,
       relations: relations.filter((relation) => relation.from === concept.name || relation.to === concept.name),
       features: featureList.filter((feature) => feature.concepts.some((item) => item.name === concept.name)),
@@ -626,6 +632,44 @@ function buildNavigation(data) {
 
 function conceptPath(concept) {
   return `/records/${encodeURIComponent(concept.slug || slugFor(concept.name))}`;
+}
+
+const DIAGRAM_PATH = /^docs\/fluencyloop\/diagrams\/records\/[A-Za-z0-9][A-Za-z0-9._-]*\.html$/;
+
+function diagramCompanion(root, explanation) {
+  if (!explanation || typeof explanation.diagram_path !== 'string' || !DIAGRAM_PATH.test(explanation.diagram_path)) return null;
+  const directory = path.resolve(root, 'docs', 'fluencyloop', 'diagrams', 'records');
+  const candidate = path.resolve(root, explanation.diagram_path);
+  if (!candidate.startsWith(directory + path.sep) || !fs.existsSync(candidate)) return null;
+  const content = fs.readFileSync(candidate, 'utf8');
+  // Diagrams are project documentation, not an execution surface. Keep the route suitable for a
+  // sandboxed iframe and reject active or remote-resource markup even when a manually authored
+  // artifact slipped past the writer.
+  if (/<\/?(?:script|iframe|object|embed)\b/i.test(content)
+    || /\son[a-z]+\s*=/i.test(content)
+    || /(?:src|href)\s*=\s*["'](?:https?:)?\/\//i.test(content)
+    || /url\(\s*["']?(?:https?:)?\/\//i.test(content)) return null;
+  return { path: candidate, type: explanation.diagram_type || 'diagram', alt: explanation.diagram_alt || 'Diagram supporting the record explanation.' };
+}
+
+function recordExplanationMarkup(data, concept) {
+  const explanation = concept.explanation;
+  if (!explanation) {
+    return concept.distillation
+      ? markdown(concept.distillation.content)
+      : emptyState('No architectural record explanation has been written yet.');
+  }
+  const companion = diagramCompanion(data.root, explanation);
+  const diagram = companion
+    ? `<figure class="record-diagram"><iframe src="${escapeHtml(`${conceptPath(concept)}/diagram`)}" title="${escapeHtml(companion.alt)}" sandbox loading="lazy" referrerpolicy="no-referrer"></iframe><figcaption>${escapeHtml(companion.alt)}</figcaption></figure>`
+    : '';
+  return `<div class="record-explanation">
+    <h3>Context</h3><p>${escapeHtml(explanation.context)}</p>
+    <h3>Decision</h3><p>${escapeHtml(explanation.decision)}</p>
+    <h3>How it works</h3><p>${escapeHtml(explanation.mechanism)}</p>
+    <h3>Consequences</h3><p>${escapeHtml(explanation.consequences)}</p>
+    ${diagram}
+  </div>`;
 }
 
 function featurePath(feature) {
@@ -935,9 +979,7 @@ function renderConcept(data, concept) {
     newestFirst(concept.features.map((feature) => featureItem(data.navigation.features.find((item) => item.slug === feature.slug) || feature))),
     'No feature is currently linked to this concept.',
   );
-  const explanation = concept.distillation
-    ? markdown(concept.distillation.content)
-    : emptyState('No architectural record explanation has been distilled yet.');
+  const explanation = recordExplanationMarkup(data, concept);
   return layout(data, concept.name, `
     <header class="record-header">
       <p class="eyebrow">Architectural record</p>
@@ -1017,6 +1059,16 @@ function send(response, status, contentType, body) {
   response.end(body);
 }
 
+function sendDiagram(response, body) {
+  response.writeHead(200, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-store',
+    // The artifact is documentation rendered in an iframe, never an application surface.
+    'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:",
+  });
+  response.end(body);
+}
+
 function redirect(response, location) {
   response.writeHead(308, { Location: location, 'Cache-Control': 'no-store' });
   response.end();
@@ -1061,6 +1113,13 @@ function createServer(root, managed = null) {
         page = renderProduct(data);
       } else if (segments.length === 1 && segments[0] === 'records') {
         page = renderConceptList(data);
+      } else if (segments.length === 3 && segments[0] === 'records' && segments[2] === 'diagram') {
+        const concept = data.navigation.concepts.find((item) => item.slug === segments[1]);
+        const companion = concept && diagramCompanion(data.root, concept.explanation);
+        if (companion) {
+          sendDiagram(response, request.method === 'HEAD' ? '' : fs.readFileSync(companion.path, 'utf8'));
+          return;
+        }
       } else if (segments.length === 2 && segments[0] === 'records') {
         const concept = data.navigation.concepts.find((item) => item.slug === segments[1]);
         if (concept) page = renderConcept(data, concept);
