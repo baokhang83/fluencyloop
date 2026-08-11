@@ -466,13 +466,26 @@ diagram when prose or a table explains the subject better. Never add source that
 renderer; the bundled local site renders these forms offline and safely falls back to caption + prose
 when a diagram is invalid.
 
-When you refresh **`product.md`** and a system-level visual materially clarifies its Technical
-overview, load the bundled `diagram-design` skill. Use its selection guide to choose one diagram
-type, then write its self-contained HTML output to
-`docs/fluencyloop/diagrams/product-overview.html`. The local site embeds that file directly below
-the overview prose through a sandboxed route. Make it one restrained overview diagram, not a
-duplicate of every record diagram. The prose remains complete without it, and must explain the
-same product shape in words.
+### Product-overview diagram decision
+
+Whenever you refresh **`product.md`**, make the diagram decision **before drafting the overview**.
+Do not wait for the user to suggest a diagram, and do not reopen the choice only after being asked.
+Choose the visual yourself from the implemented product shape:
+
+- Create `docs/fluencyloop/diagrams/product-overview.html` when the overview has three or more
+  named system elements **and** a reader must follow a direction, mediation/ownership boundary,
+  split or merge, or return path to understand it. This is a material clarity case, not decoration.
+  For example, a service flowing through an application shell to list and detail components, with
+  selection returning through the shell, earns a small flow or architecture diagram.
+- Otherwise omit the diagram. A short hierarchy, list, or simple before/after statement remains
+  prose or a table; never manufacture a visual merely because `product.md` exists.
+
+When it qualifies, load the bundled `diagram-design` skill and follow its selection guide before
+writing the self-contained HTML output. The local site embeds that file directly below the overview
+prose through a sandboxed route. Make it one restrained system overview, not a duplicate of every
+record diagram. The prose remains complete without it and explains the same product shape in words.
+Only the diagram skill's first-project style-guide gate may require a user response; diagram
+suitability itself is an editorial decision for you to make.
 
 **Do not distill decisions.** Their why was taught and captured contemporaneously by
 `fluencyloop decision`; re-synthesising it is both less trustworthy and unnecessary token spend.

@@ -164,6 +164,11 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "**no overview rewrite**" in feature_skill_text
     assert "when this feature newly establishes a concept" in feature_skill_text
     assert "### Optional explanatory diagrams" in feature_skill_text
+    assert "### Product-overview diagram decision" in feature_skill_text
+    assert "before drafting the overview" in feature_skill_text
+    assert "Do not wait for the user to suggest a diagram" in feature_skill_text
+    assert "three or more\n  named system elements" in feature_skill_text
+    assert "suitability itself is an editorial decision" in feature_skill_text
     assert "docs/fluencyloop/diagrams/product-overview.html" in feature_skill_text
     assert "sandboxed route" in feature_skill_text
     assert "Prose always carries the explanation." in feature_skill_text
