@@ -108,6 +108,9 @@ Describe 'import-legacy.ps1' {
         $assessment.summary | Should -Be 'Imported pre-0.3 history is unconfirmed pending independent review.'
 
         (Invoke-FlExit 'add-concept.ps1' '--name' 'bounded cache' '--problem' 'keep repeated reads fast without unbounded memory' '--how' 'reuse values through an LRU cache' '--realized-by' 'src/cache.js' '--feature' '001-add-caching' '--session' '000-legacy-import') | Should -Be 0
+        (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 1
+        (Invoke-FlAll 'import-legacy.ps1' '--mark-semantic-complete') | Should -Match 'no architectural records have tags for site filtering'
+        (Invoke-FlExit 'add-concept.ps1' '--name' 'bounded cache' '--problem' 'keep repeated reads fast without unbounded memory' '--how' 'reuse values through an LRU cache' '--realized-by' 'src/cache.js' '--tag' 'cache' '--tag' 'bounded memory' '--feature' '001-add-caching' '--session' '000-legacy-import') | Should -Be 0
         (Invoke-FlExit 'import-legacy.ps1' '--mark-semantic-complete') | Should -Be 0
 
         $j = (& $script:PwshExe -NoProfile -File "$script:Bin/check.ps1" '--json') | ConvertFrom-Json
@@ -120,9 +123,12 @@ Describe 'import-legacy.ps1' {
 
     It 'prints one compact map for shared architectural synthesis' {
         (Invoke-FlExit 'check.ps1' '--json') | Should -Be 0
+        (Invoke-FlExit 'add-concept.ps1' '--name' 'bounded cache' '--problem' 'keep repeated reads fast without unbounded memory' '--how' 'reuse values through an LRU cache' '--realized-by' 'src/cache.js' '--feature' '001-add-caching' '--session' '000-legacy-import') | Should -Be 0
         (Invoke-FlAll 'import-legacy.ps1' '--semantic-map') | Should -Match '# Imported legacy record map'
         (Invoke-FlAll 'import-legacy.ps1' '--semantic-map') | Should -Match '## 001-add-caching'
         (Invoke-FlAll 'import-legacy.ps1' '--semantic-map') | Should -Match 'Decision: choose an LRU cache — src/cache.js'
+        (Invoke-FlAll 'import-legacy.ps1' '--semantic-map') | Should -Match '# Existing architectural records'
+        (Invoke-FlAll 'import-legacy.ps1' '--semantic-map') | Should -Match 'Record: bounded cache — tags: \(missing\)'
     }
 
     It 'a normal command repairs a store imported before declaration records existed' {

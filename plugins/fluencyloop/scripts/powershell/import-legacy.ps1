@@ -43,11 +43,12 @@ if ($semanticStatus) {
     $imported = @(Get-FlLegacyImportedFeatureSlug)
     $unassessed = @(Get-FlLegacySemanticUnassessedFeature)
     $architecturalRecords = Get-FlLegacyArchitecturalRecordCount
-    if ($json) { [pscustomobject]@{ imported_features = $imported; unassessed_features = $unassessed; architectural_records = $architecturalRecords } | ConvertTo-Json -Compress }
+    if ($json) { [pscustomobject]@{ imported_features = $imported; unassessed_features = $unassessed; architectural_records = $architecturalRecords; tagged_architectural_records = (Get-FlLegacyTaggedArchitecturalRecordCount) } | ConvertTo-Json -Compress }
     else {
         FlOut "Imported legacy features: $($imported.Count)"
         FlOut "Assessed: $(Get-FlLegacySemanticAssessmentCount)"
         FlOut "Architectural records: $architecturalRecords"
+        FlOut "Tagged architectural records: $(Get-FlLegacyTaggedArchitecturalRecordCount)"
         FlOut 'Unassessed features:'
         $unassessed | ForEach-Object { FlOut $_ }
     }
@@ -70,6 +71,15 @@ if ($semanticMap) {
                 'component' { FlOut "Component: $($record.name)" }
                 'condition' { FlOut "Condition: $($record.subject)" }
             }
+        }
+    }
+    $conceptStore = FlConceptsStorePath
+    if (Test-Path -LiteralPath $conceptStore -PathType Leaf) {
+        FlOut ''
+        FlOut '# Existing architectural records'
+        foreach ($record in @([System.IO.File]::ReadAllLines($conceptStore) | ForEach-Object { $_ | ConvertFrom-Json } | Where-Object { $_.type -eq 'concept' })) {
+            $tags = if ($record.PSObject.Properties.Name -contains 'tags' -and $record.tags) { $record.tags } else { '(missing)' }
+            FlOut "Record: $($record.name) — tags: $tags"
         }
     }
     exit 0
@@ -118,6 +128,7 @@ if ($markSemanticComplete) {
     if ($missing.Count -gt 0) { [Console]::Error.WriteLine("Error: semantic migration is incomplete: assessed $assessed of $count imported feature(s). Missing: $($missing -join ',')."); exit 1 }
     $architecturalRecords = Get-FlLegacyArchitecturalRecordCount
     if ($architecturalRecords -eq 0) { [Console]::Error.WriteLine('Error: semantic migration is incomplete: no evidence-backed architectural records were recorded.'); exit 1 }
+    if ((Get-FlLegacyTaggedArchitecturalRecordCount) -eq 0) { [Console]::Error.WriteLine('Error: semantic migration is incomplete: no architectural records have tags for site filtering.'); exit 1 }
     $store = FlStoreDir
     if (-not (Test-Path -LiteralPath $store -PathType Container)) { New-Item -ItemType Directory -Force -Path $store | Out-Null }
     [System.IO.File]::WriteAllText((Get-FlLegacySemanticMigrationPath), $script:FlLegacySemanticMigrationRevision + [Environment]::NewLine, (New-Object System.Text.UTF8Encoding($false)))

@@ -48,9 +48,10 @@ function FlRequireFluency {
 # It gives already-migrated repositories one automatic, idempotent repair pass without running the
 # full legacy scan on every normal command thereafter.
 $script:FlLegacyImportRevision = '2'
-# Revision 4 reopens earlier semantic passes so they append tagged record replacements. The reader
-# resolves records by identity, so this is additive and does not erase their provenance.
-$script:FlLegacySemanticMigrationRevision = '4'
+# Revision 5 reopens earlier semantic passes that completed before tag coverage was required. The
+# reader resolves records by identity, so tagged record replacements are additive and retain their
+# original provenance.
+$script:FlLegacySemanticMigrationRevision = '5'
 
 function Get-FlLegacyImportRevisionPath { "$(FlStoreDir)/.legacy-import-revision" }
 function Get-FlLegacySemanticMigrationPath { "$(FlStoreDir)/.legacy-semantic-migration-revision" }
@@ -85,6 +86,11 @@ function Get-FlLegacyArchitecturalRecordCount {
     $store = FlConceptsStorePath
     if (-not (Test-Path -LiteralPath $store -PathType Leaf)) { return 0 }
     return @([System.IO.File]::ReadAllLines($store) | Where-Object { $_ -match '"type":"concept"' }).Count
+}
+function Get-FlLegacyTaggedArchitecturalRecordCount {
+    $store = FlConceptsStorePath
+    if (-not (Test-Path -LiteralPath $store -PathType Leaf)) { return 0 }
+    return @([System.IO.File]::ReadAllLines($store) | Where-Object { $_ -match '"type":"concept".*"tags":"[^\"]+' }).Count
 }
 function Get-FlLegacySemanticUnassessedFeature {
     $missing = @()

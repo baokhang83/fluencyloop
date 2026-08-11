@@ -128,8 +128,23 @@ PY
         --realized-by "src/cache.js" \
         --feature 001-add-caching --session 000-legacy-import >/dev/null
     run bash "$BIN/import-legacy.sh" --mark-semantic-complete
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"no architectural records have tags for site filtering"* ]]
+
+    bash "$BIN/add-concept.sh" \
+        --name "bounded cache" \
+        --problem "keep repeated reads fast without unbounded memory" \
+        --how "reuse values through an LRU cache" \
+        --realized-by "src/cache.js" \
+        --tag "cache" --tag "bounded memory" \
+        --feature 001-add-caching --session 000-legacy-import >/dev/null
+    run bash "$BIN/import-legacy.sh" --mark-semantic-complete
     [ "$status" -eq 0 ]
     [[ "$output" == *"1 assessment(s), and 1 architectural record(s)"* ]]
+
+    run bash "$BIN/import-legacy.sh" --semantic-status --json
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | json_field tagged_architectural_records)" = "1" ]
 
     run bash "$BIN/check.sh" --json
     [ "$status" -eq 0 ]
@@ -143,11 +158,19 @@ PY
 
 @test "prints one compact map for shared architectural synthesis" {
     bash "$BIN/check.sh" --json >/dev/null
+    bash "$BIN/add-concept.sh" \
+        --name "bounded cache" \
+        --problem "keep repeated reads fast without unbounded memory" \
+        --how "reuse values through an LRU cache" \
+        --realized-by "src/cache.js" \
+        --feature 001-add-caching --session 000-legacy-import >/dev/null
     run bash "$BIN/import-legacy.sh" --semantic-map
     [ "$status" -eq 0 ]
     [[ "$output" == *"# Imported legacy record map"* ]]
     [[ "$output" == *"## 001-add-caching"* ]]
     [[ "$output" == *"Decision: choose an LRU cache — src/cache.js"* ]]
+    [[ "$output" == *"# Existing architectural records"* ]]
+    [[ "$output" == *"Record: bounded cache — tags: (missing)"* ]]
 }
 
 @test "a normal command repairs a store imported before declaration records existed" {

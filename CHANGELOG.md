@@ -2,6 +2,16 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.0
+
+### Fixed
+
+- Plugin manifests now identify the 0.3 runtime. Claude Code can refresh its installed cache when
+  the development branch advances instead of retaining the old 0.2.27 package.
+- Legacy semantic migration revision 5 reopens earlier untagged migrations. It reports tag
+  coverage, requires at least one tagged architectural record before completion, and shows existing
+  records so the agent can append tagged corrections without rewriting history.
+
 ## 0.2.27
 
 ### Fixed

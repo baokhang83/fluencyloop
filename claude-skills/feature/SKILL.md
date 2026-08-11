@@ -89,8 +89,11 @@ but use the Claude fast path:
    ambiguity.
 3. From that single map, append only the shared, product-level architectural records and their
    relations with `fluencyloop concept --feature <representative-slug> --session 000-legacy-import`.
-   Reuse a record across related features. Do not invent one record per feature. Apply tags that
-   make the records useful as site filters.
+   Reuse a record across related features. Do not invent one record per feature. Apply one to three
+   familiar, filter-useful `--tag` values to **every** record. The map lists existing records too:
+   for each legacy record whose tags are missing, append a replacement with the same name and its
+   complete problem/how/realized-by fields plus tags. This is an append-only correction; never edit
+   prior lines. Do not mark the migration complete while `tagged_architectural_records` is zero.
 4. Run `fluencyloop import --semantic-status --json`. If it reports at least one architectural
    record, run `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`.
    Continue only when `legacy_migration_pending` is `false`.
