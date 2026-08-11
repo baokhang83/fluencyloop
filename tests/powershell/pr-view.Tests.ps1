@@ -22,11 +22,12 @@ Describe 'assemble-pr-view.ps1' {
         (Get-FlJson 'assemble-pr-view.ps1' '--json').base | Should -Be 'main'
     }
 
-    It 'points readers to the store instead of parsing it in PowerShell' {
+    It 'reads session declarations from the store' {
         & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-add-search' 'index the docs' | Out-Null
         $j = Get-FlJson 'assemble-pr-view.ps1' '--json'
         $j.store | Should -Match '001-add-search\.jsonl$'
-        $j.sessions | Should -BeNullOrEmpty
+        $j.session_count | Should -Be 1
+        @($j.sessions)[0].slug | Should -Be '001-index-the-docs'
     }
 
     It 'markdown form renders a title and range' {

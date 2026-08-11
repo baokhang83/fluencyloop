@@ -48,12 +48,25 @@ if [ -n "$BASE" ] && git rev-parse --verify --quiet "$BASE" >/dev/null; then
     COMMIT_COUNT="$(git rev-list --count "$RANGE" 2>/dev/null || echo 0)"
 fi
 
+# Session declarations are append-only store records in 0.3. Preserve their complete JSON lines
+# rather than reconstructing fields in shell; that keeps the reviewer view faithful to the writer.
+SESSION_LINES=""
+if [ -f "$STORE" ]; then
+    SESSION_LINES="$(grep '"type":"session"' "$STORE" || true)"
+fi
+if [ -n "$SESSION_LINES" ]; then
+    SESSION_COUNT="$(printf '%s\n' "$SESSION_LINES" | wc -l | tr -d ' ')"
+    SESSIONS_JSON="$(printf '%s\n' "$SESSION_LINES" | awk 'BEGIN { first=1 } { printf "%s%s", first ? "" : ",", $0; first=0 }')"
+else
+    SESSION_COUNT=0
+    SESSIONS_JSON=""
+fi
+
 if $JSON_MODE; then
-    # The model/site reads the store; this script intentionally does not parse JSONL.
-    printf '{"feature":"%s","store":"%s","base":"%s","range":"%s","commits":%s,"session_count":0,"sessions":[]}\n' \
+    printf '{"feature":"%s","store":"%s","base":"%s","range":"%s","commits":%s,"session_count":%s,"sessions":[%s]}\n' \
         "$(json_escape "$FEATURE_SLUG")" "$(json_escape "$STORE")" \
         "$(json_escape "$BASE")" "$(json_escape "$RANGE")" \
-        "$COMMIT_COUNT"
+        "$COMMIT_COUNT" "$SESSION_COUNT" "$SESSIONS_JSON"
     exit 0
 fi
 

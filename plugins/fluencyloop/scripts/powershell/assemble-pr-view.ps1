@@ -42,12 +42,22 @@ if ($base) {
     }
 }
 
+$sessions = @()
+if (Test-Path -LiteralPath $store -PathType Leaf) {
+    foreach ($line in @([System.IO.File]::ReadAllLines($store))) {
+        if (-not $line) { continue }
+        try {
+            $record = $line | ConvertFrom-Json
+            if ($record.type -eq 'session') { $sessions += $record }
+        } catch { continue }
+    }
+}
+
 if ($jsonMode) {
-    # The model/site reads the store; this script intentionally does not parse JSONL.
-    $json = '{"feature":"' + (FlJsonEscape $featureSlug) + '","store":"' + (FlJsonEscape $store) +
-            '","base":"' + (FlJsonEscape $base) + '","range":"' + (FlJsonEscape $range) +
-            '","commits":' + $commitCount + ',"session_count":0,"sessions":[]}'
-    FlOut $json
+    [pscustomobject]@{
+        feature = $featureSlug; store = $store; base = $base; range = $range
+        commits = $commitCount; session_count = $sessions.Count; sessions = @($sessions)
+    } | ConvertTo-Json -Compress -Depth 4
     exit 0
 }
 
