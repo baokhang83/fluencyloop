@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.3
+
+### Added
+
+- Embedded diagrams now follow the local reader's light or dark theme without weakening their
+  sandbox. Existing diagrams that use FluencyLoop's earlier `--color-*` tokens receive a dark
+  compatibility palette; new diagrams define their own paired light and dark tokens.
+
 ## 0.3.2
 
 ### Fixed
