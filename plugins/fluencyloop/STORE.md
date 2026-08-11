@@ -176,6 +176,9 @@ Connects two concepts, components, or features. `kind` states the directed relat
 | `to` | Target identity or name. | A5 |
 | `kind` | Relationship from `from` to `to`. | A5 |
 
+For `realized_by`, `to` may be a code area (for example, `AppComponent`) without a matching
+`component` record. Other relation kinds must point to known concepts, components, or features.
+
 ```json
 {"schema_version":"1","type":"relation","ts":"2026-08-08","feature":"a2-store-schema","session":"001-schema-contract","commit":"7f8ff2e","from":"supersede on read","to":"store reader","kind":"realized_by"}
 ```

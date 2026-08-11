@@ -148,6 +148,17 @@ store_errors() {
     [[ "$output" == *'dangling relation endpoint: missing'* ]]
 }
 
+@test "check: accepts a realization relation to an undocumented code area" {
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store"
+    store_record '{"schema_version":"1","type":"concept","ts":"2026-08-09","feature":"global","session":"none","commit":"abc","name":"standalone component routing","problem":"keep page shells small","how":"route each view through a focused component","realized_by":"AppComponent"}'
+    store_record '{"schema_version":"1","type":"relation","ts":"2026-08-09","feature":"global","session":"none","commit":"abc","from":"standalone component routing","to":"AppComponent","kind":"realized_by"}'
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | store_errors)" = "[]" ]
+}
+
 @test "check: reports a feature directory without store records" {
     setup_initialized_repo
     mkdir -p "$TESTREPO/docs/fluencyloop/features/001-empty"

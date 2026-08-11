@@ -104,6 +104,7 @@ RELATION_FILES=()
 RELATION_LINES=()
 RELATION_FROMS=()
 RELATION_TOS=()
+RELATION_KINDS=()
 
 store_error() {
     local file="$1" line="$2" message="$3"
@@ -189,10 +190,13 @@ validate_store_record() {
             local from="$STORE_FIELD_VALUE"
             store_field "$record" to
             local to="$STORE_FIELD_VALUE"
+            store_field "$record" kind
+            local kind="$STORE_FIELD_VALUE"
             RELATION_FILES+=("$file")
             RELATION_LINES+=("$line")
             RELATION_FROMS+=("$from")
             RELATION_TOS+=("$to")
+            RELATION_KINDS+=("$kind")
             ;;
     esac
 }
@@ -223,7 +227,10 @@ if [ -n "$STORE_ROOT" ] && [ -d "$STORE_ROOT" ]; then
             store_error "${RELATION_FILES[relation_index]}" "${RELATION_LINES[relation_index]}" \
                 "dangling relation endpoint: ${RELATION_FROMS[relation_index]}"
         fi
-        if ! known_identity "${RELATION_TOS[relation_index]}"; then
+        # A realization relation intentionally points from a record to a code area. Code areas
+        # such as AppComponent need not also be knowledge-component records, so only its source
+        # must resolve in the store. Other relation kinds still require both endpoints.
+        if [ "${RELATION_KINDS[relation_index]}" != realized_by ] && ! known_identity "${RELATION_TOS[relation_index]}"; then
             store_error "${RELATION_FILES[relation_index]}" "${RELATION_LINES[relation_index]}" \
                 "dangling relation endpoint: ${RELATION_TOS[relation_index]}"
         fi
