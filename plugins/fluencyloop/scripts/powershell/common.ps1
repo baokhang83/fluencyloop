@@ -265,14 +265,20 @@ function FlNextFeatureNumber {
     return ('{0:d3}' -f ($n + 1))
 }
 
-# Next sequential session number within a feature (zero-padded), so sessions/ sorts in build
-# order instead of alphabetically by intent slug.
-function FlNextSessionNumber([string]$dir) {
-    $n = 0
-    if (Test-Path -LiteralPath $dir -PathType Container) {
-        $n = @(Get-ChildItem -LiteralPath $dir -Filter '*.md' -File -ErrorAction SilentlyContinue).Count
+# Next sequential session number within a feature (zero-padded), derived from its append-only
+# store rather than the mutable active-session pointer. Imported records retain their legacy
+# session slug in the common envelope even when no native session record exists.
+function Get-FlNextSessionNumber([string]$feature) {
+    $store = FlFeatureStorePath $feature
+    $highest = 0
+    if (-not (Test-Path -LiteralPath $store -PathType Leaf)) { return '001' }
+    foreach ($line in [System.IO.File]::ReadAllLines($store)) {
+        if ($line -match '"session":"(\d+)-[^\"]*"') {
+            $number = [int]$matches[1]
+            if ($number -gt $highest) { $highest = $number }
+        }
     }
-    return ('{0:d3}' -f ($n + 1))
+    return ('{0:d3}' -f ($highest + 1))
 }
 
 function FlCurrentFeatureSlug {

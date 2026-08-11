@@ -81,12 +81,16 @@ PY
     [ ! -e "$TESTREPO/docs/fluencyloop/features/001-add-caching/sessions/001-wire-the-lru-cache.md" ]
 }
 
-@test "new sessions advance from state without markdown filenames" {
+@test "new sessions advance from the highest store prefix after state resets" {
     bash "$BIN/new-feature.sh" "add caching" >/dev/null
+    git add .fluencyloop/state.json && git commit -q -m "feature state"
     bash "$BIN/new-session.sh" --slug 001-add-caching "first slice" >/dev/null
-    run bash "$BIN/new-session.sh" --json --slug 001-add-caching "second slice"
+    git checkout -- .fluencyloop/state.json
+    STORE="$TESTREPO/docs/fluencyloop/store/features/001-add-caching.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"decision","ts":"2026-08-11","feature":"001-add-caching","session":"004-imported-history","commit":"abc","title":"legacy choice","where":"cache","why":"preserve imported history"}' >> "$STORE"
+    run bash "$BIN/new-session.sh" --json --slug 001-add-caching "next slice"
     [ "$status" -eq 0 ]
-    [ "$(echo "$output" | json_field session_slug)" = "002-second-slice" ]
+    [ "$(echo "$output" | json_field session_slug)" = "005-next-slice" ]
 }
 
 @test "new-session errors with no active feature" {

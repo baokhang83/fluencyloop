@@ -44,17 +44,9 @@ if [ -z "$INTENT" ]; then
     exit 1
 fi
 
-# Session sequence persists in state now that there are no markdown filenames to count. A
-# pre-0.3 path is accepted too: basename + .md stripping makes the transition harmless.
-PREVIOUS_SESSION="$(state_get last_session)"
-PREVIOUS_SESSION="${PREVIOUS_SESSION##*/}"
-PREVIOUS_SESSION="${PREVIOUS_SESSION%.md}"
-PREVIOUS_NUMBER="$(printf '%s' "$PREVIOUS_SESSION" | sed -n 's/^\([0-9][0-9][0-9]\)-.*/\1/p')"
-if [ -n "$PREVIOUS_NUMBER" ]; then
-    SESSION_NUMBER="$(printf '%03d' "$((10#$PREVIOUS_NUMBER + 1))")"
-else
-    SESSION_NUMBER="001"
-fi
+# The append-only feature store is the durable session sequence. State only identifies the active
+# session and can legitimately move backwards when a branch is reset or rebased.
+SESSION_NUMBER="$(next_session_number "$FEATURE_SLUG")"
 SESSION_SLUG="$(numbered_slug "$SESSION_NUMBER" "$INTENT")"
 
 # Update loop state: opening a session moves the feature to the build stage and records its slug.
