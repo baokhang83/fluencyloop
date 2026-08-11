@@ -51,9 +51,12 @@ function Ensure-LocalSite {
     $hostExe = (Get-Process -Id $PID).Path
     if ($sessionId) {
         & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --session-start $sessionId --json *> $null
+        # Skills can announce the address, but opening the browser is an interaction guarantee.
+        # Do it here once per agent session so a model cannot accidentally skip the site step.
+        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --open --json *> $null
     } else {
         # Retain compatibility with hosts that do not pass a hook payload.
-        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --json *> $null
+        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --open --json *> $null
     }
 }
 

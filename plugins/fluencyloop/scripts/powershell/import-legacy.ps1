@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 $env:FLUENCYLOOP_IMPORTING = '1'
 
-$auto = $false; $markSemanticComplete = $false; $assessFeature = ''; $assessSummary = ''; $assessRecords = @(); $semanticStatus = $false; $json = $false; $help = $false
+$auto = $false; $markSemanticComplete = $false; $assessFeature = ''; $assessSummary = ''; $assessRecords = @(); $semanticStatus = $false; $semanticMap = $false; $assessUnconfirmed = $false; $json = $false; $help = $false
 for ($i = 0; $i -lt $args.Count; $i++) {
     $arg = $args[$i]
     if ($arg -eq '--auto') { $auto = $true }
@@ -16,6 +16,8 @@ for ($i = 0; $i -lt $args.Count; $i++) {
     elseif ($arg -eq '--summary') { $i++; if ($i -ge $args.Count) { [Console]::Error.WriteLine('Error: --summary requires text.'); exit 1 }; $assessSummary = $args[$i] }
     elseif ($arg -eq '--record') { $i++; if ($i -ge $args.Count) { [Console]::Error.WriteLine('Error: --record requires a record name.'); exit 1 }; $assessRecords += $args[$i] }
     elseif ($arg -eq '--semantic-status') { $semanticStatus = $true }
+    elseif ($arg -eq '--semantic-map') { $semanticMap = $true }
+    elseif ($arg -eq '--assess-unconfirmed') { $assessUnconfirmed = $true }
     elseif ($arg -eq '--json') { $json = $true }
     elseif ($arg -eq '--help' -or $arg -eq '-h') { $help = $true }
     else { [Console]::Error.WriteLine("Unknown option: $arg"); exit 1 }
@@ -24,10 +26,12 @@ for ($i = 0; $i -lt $args.Count; $i++) {
 if ($help) {
     FlOut 'Usage: fluencyloop import [--auto]'
     FlOut '       fluencyloop import --semantic-status [--json]'
+    FlOut '       fluencyloop import --semantic-map'
+    FlOut '       fluencyloop import --assess-unconfirmed'
     FlOut '       fluencyloop import --assess <feature> --summary <text> [--record <name> ...]'
     FlOut '       fluencyloop import --mark-semantic-complete'
     FlOut ''
-    FlOut 'Import legacy Markdown records, inspect semantic-migration coverage, record one feature assessment, or mark a fully assessed migration complete.'
+    FlOut 'Import legacy Markdown records, print a compact record map, stamp all imported features as unconfirmed, record one reviewed assessment, or mark a fully assessed migration complete.'
     exit 0
 }
 FlRequireFluency
@@ -35,7 +39,7 @@ FlRequireFluency
 if ($semanticStatus) {
     if ($auto) { [Console]::Error.WriteLine('Error: --auto cannot be combined with --semantic-status.'); exit 1 }
     if ($markSemanticComplete) { [Console]::Error.WriteLine('Error: --semantic-status and --mark-semantic-complete cannot be combined.'); exit 1 }
-    if ($assessFeature -or $assessSummary) { [Console]::Error.WriteLine('Error: --semantic-status cannot be combined with --assess.'); exit 1 }
+    if ($assessFeature -or $assessSummary -or $semanticMap -or $assessUnconfirmed) { [Console]::Error.WriteLine('Error: --semantic-status cannot be combined with another migration action.'); exit 1 }
     $imported = @(Get-FlLegacyImportedFeatureSlug)
     $unassessed = @(Get-FlLegacySemanticUnassessedFeature)
     $architecturalRecords = Get-FlLegacyArchitecturalRecordCount
@@ -47,6 +51,43 @@ if ($semanticStatus) {
         FlOut 'Unassessed features:'
         $unassessed | ForEach-Object { FlOut $_ }
     }
+    exit 0
+}
+
+if ($semanticMap) {
+    if ($auto -or $markSemanticComplete -or $assessFeature -or $assessSummary -or $assessUnconfirmed -or $semanticStatus) { [Console]::Error.WriteLine('Error: --semantic-map cannot be combined with another migration action.'); exit 1 }
+    FlOut '# Imported legacy record map'
+    foreach ($feature in @(Get-FlLegacyImportedFeatureSlug)) {
+        $store = FlFeatureStorePath $feature
+        FlOut ''
+        FlOut "## $feature"
+        $records = @([System.IO.File]::ReadAllLines($store) | ForEach-Object { $_ | ConvertFrom-Json })
+        $featureRecord = @($records | Where-Object { $_.type -eq 'feature' } | Select-Object -Last 1)[0]
+        if ($featureRecord.intent) { FlOut "Intent: $($featureRecord.intent)" }
+        foreach ($record in $records) {
+            switch ($record.type) {
+                'decision' { FlOut "Decision: $($record.title) — $($record.where)" }
+                'component' { FlOut "Component: $($record.name)" }
+                'condition' { FlOut "Condition: $($record.subject)" }
+            }
+        }
+    }
+    exit 0
+}
+
+if ($assessUnconfirmed) {
+    if ($auto -or $markSemanticComplete -or $assessFeature -or $assessSummary -or $semanticStatus) { [Console]::Error.WriteLine('Error: --assess-unconfirmed cannot be combined with another migration action.'); exit 1 }
+    $recorded = 0
+    foreach ($feature in @(Get-FlLegacyImportedFeatureSlug)) {
+        $store = FlFeatureStorePath $feature
+        $assessmentPattern = '"type":"semantic_assessment".*"semantic_migration_revision":"' + $script:FlLegacySemanticMigrationRevision + '"'
+        if (Select-String -LiteralPath $store -Pattern $assessmentPattern -Quiet) { continue }
+        FlStoreAppendRecord $store 'semantic_assessment' $feature '000-legacy-import' @(
+            'summary', 'Imported pre-0.3 history is unconfirmed pending independent review.',
+            'trust', 'unverified', 'semantic_migration_revision', $script:FlLegacySemanticMigrationRevision)
+        $recorded++
+    }
+    FlOut "Recorded $recorded unconfirmed legacy assessment(s)."
     exit 0
 }
 

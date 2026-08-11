@@ -104,10 +104,22 @@ PY
     [ "$status" -ne 0 ]
     [[ "$output" == *"assessed 0 of 1 imported feature"* ]]
 
+    run bash "$BIN/import-legacy.sh" --assess-unconfirmed
+    [ "$status" -eq 0 ]
+    [ "$output" = "Recorded 1 unconfirmed legacy assessment(s)." ]
+
     run bash "$BIN/import-legacy.sh" --semantic-status --json
     [ "$status" -eq 0 ]
     [ "$(echo "$output" | json_field architectural_records)" = "0" ]
-    [[ "$output" == *'"001-add-caching"'* ]]
+    printf '%s' "$output" | python3 -c 'import json,sys;assert json.load(sys.stdin)["unassessed_features"] == []'
+
+    python3 - "$STORE" <<'PY'
+import json, sys
+records = [json.loads(line) for line in open(sys.argv[1], encoding='utf-8')]
+assessment = next(record for record in records if record['type'] == 'semantic_assessment')
+assert assessment['trust'] == 'unverified', assessment
+assert assessment['summary'] == 'Imported pre-0.3 history is unconfirmed pending independent review.', assessment
+PY
 
     bash "$BIN/add-concept.sh" \
         --name "bounded cache" \
@@ -116,22 +128,26 @@ PY
         --realized-by "src/cache.js" \
         --feature 001-add-caching --session 000-legacy-import >/dev/null
     run bash "$BIN/import-legacy.sh" --mark-semantic-complete
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"assessed 0 of 1 imported feature"* ]]
-
-    run bash "$BIN/import-legacy.sh" --assess 001-add-caching \
-        --summary "The imported cache decisions establish bounded reuse for repeated reads." \
-        --record "bounded cache"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Recorded semantic migration assessment"* ]]
-
-    run bash "$BIN/import-legacy.sh" --mark-semantic-complete
     [ "$status" -eq 0 ]
     [[ "$output" == *"1 assessment(s), and 1 architectural record(s)"* ]]
 
     run bash "$BIN/check.sh" --json
     [ "$status" -eq 0 ]
     [ "$(echo "$output" | json_field legacy_migration_pending)" = "False" ] || [ "$(echo "$output" | json_field legacy_migration_pending)" = "false" ]
+
+    printf '3\n' > "$TESTREPO/docs/fluencyloop/store/.legacy-semantic-migration-revision"
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | json_field legacy_migration_pending)" = "True" ] || [ "$(echo "$output" | json_field legacy_migration_pending)" = "true" ]
+}
+
+@test "prints one compact map for shared architectural synthesis" {
+    bash "$BIN/check.sh" --json >/dev/null
+    run bash "$BIN/import-legacy.sh" --semantic-map
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"# Imported legacy record map"* ]]
+    [[ "$output" == *"## 001-add-caching"* ]]
+    [[ "$output" == *"Decision: choose an LRU cache — src/cache.js"* ]]
 }
 
 @test "a normal command repairs a store imported before declaration records existed" {

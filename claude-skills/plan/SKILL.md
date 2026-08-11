@@ -63,32 +63,19 @@ continuing. Only stop if `init` itself fails. Do not hand-create `.fluencyloop`,
 **Migrate imported history before planning.** Parse `legacy_migration_pending` from the bundled
 `fluencyloop check --json` before reading the constitution, calibration, requirements, or the
 initiative intent. When it is `true`, do not ask the developer anything or scaffold a plan. This
-is an automatic, repository-wide migration:
+is an automatic, repository-wide migration. Build its architectural record map up front without
+opening every historical feature separately:
 
-**Do not probe writer commands.** During this migration, `fluencyloop import --semantic-status --json`
-is the only discovery command. Do **not** run bare `fluencyloop import`, `fluencyloop import --help`,
-or bare `fluencyloop concept`; the automatic importer already ran, and writers require complete
-evidence-backed arguments. Do not inspect the constitution, calibration, requirements, or Git status
-until the migration completes.
-
-1. Run `fluencyloop import --semantic-status --json` and work through **every**
-   `unassessed_features` entry in its stable order. For each one, read its imported store records
-   and the matching `docs/fluencyloop/features/<slug>/` history—not just the feature title. Never
-   create or switch historical feature branches.
-2. In that same per-feature pass, add the evidence-backed architectural records and relations that it establishes or
-   changes, using `fluencyloop concept --feature <slug> --session 000-legacy-import`. Do not invent
-   one record per feature and do not repeat the already-imported decision/knowledge records. A
-   feature with no product-level architectural effect is valid, but its assessment must say why.
-3. Immediately record that same evidence pass with
-   `fluencyloop import --assess <slug> --summary "<evidence-based outcome>" --record "<record name>"`
-   (repeat `--record` for every architectural record it contributed; omit it only for a genuinely
-   local feature). This is required for every imported feature; it is the completion coverage, not
-   a substitute for the architectural records themselves. Do not collect 46 summaries and issue
-   them later as one detached batch: every `--assess` follows its own read → record pass.
-4. Run `fluencyloop import --semantic-status --json` again. Only when its
-   `unassessed_features` array is empty **and** `architectural_records` is non-zero may you run
-   `fluencyloop import --mark-semantic-complete`, then rerun `fluencyloop check --json`. Continue
-   to planning only when `legacy_migration_pending` is `false`.
+1. Run `fluencyloop import --assess-unconfirmed`. This records one unconfirmed assessment for each
+   imported feature; legacy Markdown is not independent verification.
+2. Run `fluencyloop import --semantic-map` once. Review that compact repository map rather than
+   reading all imported feature directories one by one.
+3. Add only shared, evidence-backed architectural records and relations from the map with
+   `fluencyloop concept --feature <representative-slug> --session 000-legacy-import`. Reuse records,
+   add useful filter tags, and do not invent one per feature.
+4. Run `fluencyloop import --semantic-status --json`; once it reports an architectural record, run
+   `fluencyloop import --mark-semantic-complete` and then `fluencyloop check --json`. Continue to
+   planning only when `legacy_migration_pending` is `false`.
 
 **Read the constitution up front** — `docs/fluencyloop/constitution.md`, and **if it's a pointer**
 (a `Source of truth:` line naming another file, e.g. `.specify/memory/constitution.md`), read
