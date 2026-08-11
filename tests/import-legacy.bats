@@ -140,7 +140,7 @@ PY
         --feature 001-add-caching --session 000-legacy-import >/dev/null
     run bash "$BIN/import-legacy.sh" --mark-semantic-complete
     [ "$status" -eq 0 ]
-    [[ "$output" == *"1 assessment(s), and 1 architectural record(s)"* ]]
+    [[ "$output" == *"1 assessment(s), and 2 architectural record(s)"* ]]
 
     run bash "$BIN/import-legacy.sh" --semantic-status --json
     [ "$status" -eq 0 ]
