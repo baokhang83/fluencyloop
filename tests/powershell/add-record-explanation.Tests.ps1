@@ -1,5 +1,16 @@
 # add-record-explanation.ps1 — mirrors tests/add-record-explanation.bats.
 
+function Add-RequiredExplanation {
+    param([string[]]$Extra = @())
+    & $script:PwshExe -NoProfile -File "$script:Bin/add-record-explanation.ps1" `
+        '--record' 'read through cache' `
+        '--context' 'Repeated remote reads add latency.' `
+        '--decision' 'Read the cache before the remote service.' `
+        '--mechanism' 'The client checks the local value and fetches only after a miss.' `
+        '--consequences' 'Repeated reads are fast, while callers must accept bounded staleness.' `
+        @Extra
+}
+
 Describe 'add-record-explanation.ps1' {
     BeforeAll { . "$PSScriptRoot/_helper.ps1" }
     AfterEach {
@@ -12,17 +23,6 @@ Describe 'add-record-explanation.ps1' {
         & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'explain the cache' | Out-Null
         & $script:PwshExe -NoProfile -File "$script:Bin/new-session.ps1" '--slug' '001-explain-cache' 'write record explanation' | Out-Null
         $script:store = "$script:repo/docs/fluencyloop/store/concepts.jsonl"
-    }
-
-    function Add-RequiredExplanation {
-        param([string[]]$Extra = @())
-        & $script:PwshExe -NoProfile -File "$script:Bin/add-record-explanation.ps1" `
-            '--record' 'read through cache' `
-            '--context' 'Repeated remote reads add latency.' `
-            '--decision' 'Read the cache before the remote service.' `
-            '--mechanism' 'The client checks the local value and fetches only after a miss.' `
-            '--consequences' 'Repeated reads are fast, while callers must accept bounded staleness.' `
-            @Extra
     }
 
     It 'appends a schema-complete architectural record explanation' {

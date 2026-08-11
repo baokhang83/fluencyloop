@@ -15,7 +15,7 @@ text = path.read_text(encoding="utf-8")
 examples = [json.loads(block) for block in re.findall(r"```json\n(.*?)\n```", text, re.DOTALL)]
 expected = {
     "feature", "session", "decision", "component", "condition",
-    "concept", "relation", "principle", "requirement", "open_question",
+    "concept", "relation", "record_explanation", "principle", "requirement", "open_question",
 }
 
 assert len(examples) == len(expected), f"expected {len(expected)} examples, got {len(examples)}"
