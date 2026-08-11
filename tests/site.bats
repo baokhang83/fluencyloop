@@ -148,7 +148,7 @@ with urllib.request.urlopen(sys.argv[1]) as response:
 PY
     [ "$status" -eq 0 ]
     [[ "$output" == *"200"* ]]
-    [[ "$output" == *"Content-Security-Policy"* ]]
+    [[ "$output" == *"default-src 'none'"* ]]
     [[ "$output" == *"Client checks cache before remote service"* ]]
 }
 
