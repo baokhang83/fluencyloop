@@ -6,7 +6,7 @@ Describe 'store schema documentation' {
         $text = [System.IO.File]::ReadAllText($store)
         $matches = [regex]::Matches($text, '(?s)```json\r?\n(.*?)\r?\n```')
         $examples = @($matches | ForEach-Object { $_.Groups[1].Value | ConvertFrom-Json })
-        $expected = @('feature', 'session', 'decision', 'component', 'condition', 'concept', 'relation', 'principle', 'requirement', 'open_question')
+        $expected = @('feature', 'session', 'decision', 'component', 'condition', 'concept', 'relation', 'record_explanation', 'principle', 'requirement', 'open_question')
 
         $examples.Count | Should -Be $expected.Count
         (($examples.type | Sort-Object) -join ',') | Should -Be (($expected | Sort-Object) -join ',')

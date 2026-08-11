@@ -27,6 +27,7 @@ The identity always includes `type`, even where the table lists only the remaini
 | `condition` | `feature`, `session`, `subject` | A4 |
 | `concept` | `name` | A5 |
 | `relation` | `from`, `to`, `kind` | A5 |
+| `record_explanation` | `record` | Architectural-record explanation writer |
 | `principle` | `number` | C1 |
 | `requirement` | `feature`, `gap` | B2 |
 | `open_question` | `feature`, `gap` | B2 |
@@ -177,6 +178,31 @@ Connects two concepts, components, or features. `kind` states the directed relat
 
 ```json
 {"schema_version":"1","type":"relation","ts":"2026-08-08","feature":"a2-store-schema","session":"001-schema-contract","commit":"7f8ff2e","from":"supersede on read","to":"store reader","kind":"realized_by"}
+```
+
+### `record_explanation`
+
+Explains an architectural record in reader-facing ADR terms. The record lives in the global stream
+because it supersedes by the architectural record's stable `record` name, while `feature` and
+`session` retain the work that last explained it. An explanation is required whenever a feature
+creates or materially refines an architectural record.
+
+| payload field | meaning | writer |
+|---|---|---|
+| `record` | Exact architectural-record name being explained. | Architectural-record explanation writer |
+| `context` | The situation and problem that made the decision necessary. | Architectural-record explanation writer |
+| `decision` | The design choice the record establishes. | Architectural-record explanation writer |
+| `mechanism` | How the choice works in this project. | Architectural-record explanation writer |
+| `consequences` | Important benefits, trade-offs, or operating constraints. | Architectural-record explanation writer |
+| `diagram_path` | Project-relative self-contained HTML/SVG companion under `docs/fluencyloop/diagrams/records/`. Optional. | Architectural-record explanation writer |
+| `diagram_type` | Diagram grammar selected because it clarifies the record. Required with `diagram_path`. | Architectural-record explanation writer |
+| `diagram_alt` | Concise text alternative for the companion. Required with `diagram_path`. | Architectural-record explanation writer |
+
+Do not add a diagram merely to decorate the record. If prose explains the decision more clearly,
+omit all three diagram fields. A diagram companion contains no remote assets or executable script.
+
+```json
+{"schema_version":"1","type":"record_explanation","ts":"2026-08-11","feature":"record-explanations","session":"001-store-contract","commit":"7f8ff2e","record":"supersede on read","context":"The store cannot rewrite a historical JSONL line after it is shared.","decision":"Treat the last matching line as the current record.","mechanism":"Readers scan the append-only stream in file order and retain the final identity match.","consequences":"Corrections remain auditable and mergeable; every reader must apply the same identity rule."}
 ```
 
 ### `principle`
