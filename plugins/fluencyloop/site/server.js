@@ -634,12 +634,11 @@ function conceptPath(concept) {
   return `/records/${encodeURIComponent(concept.slug || slugFor(concept.name))}`;
 }
 
-const DIAGRAM_PATH = /^docs\/fluencyloop\/diagrams\/records\/[A-Za-z0-9][A-Za-z0-9._-]*\.html$/;
+const RECORD_DIAGRAM_PATH = /^docs\/fluencyloop\/diagrams\/records\/[A-Za-z0-9][A-Za-z0-9._-]*\.html$/;
+const PRODUCT_OVERVIEW_DIAGRAM_PATH = 'docs/fluencyloop/diagrams/product-overview.html';
 
-function diagramCompanion(root, explanation) {
-  if (!explanation || typeof explanation.diagram_path !== 'string' || !DIAGRAM_PATH.test(explanation.diagram_path)) return null;
-  const directory = path.resolve(root, 'docs', 'fluencyloop', 'diagrams', 'records');
-  const candidate = path.resolve(root, explanation.diagram_path);
+function safeDiagram(root, relativePath, directory) {
+  const candidate = path.resolve(root, relativePath);
   if (!candidate.startsWith(directory + path.sep) || !fs.existsSync(candidate)) return null;
   const content = fs.readFileSync(candidate, 'utf8');
   // Diagrams are project documentation, not an execution surface. Keep the route suitable for a
@@ -649,7 +648,22 @@ function diagramCompanion(root, explanation) {
     || /\son[a-z]+\s*=/i.test(content)
     || /(?:src|href)\s*=\s*["'](?:https?:)?\/\//i.test(content)
     || /url\(\s*["']?(?:https?:)?\/\//i.test(content)) return null;
-  return { path: candidate, type: explanation.diagram_type || 'diagram', alt: explanation.diagram_alt || 'Diagram supporting the record explanation.' };
+  return { path: candidate };
+}
+
+function diagramCompanion(root, explanation) {
+  if (!explanation || typeof explanation.diagram_path !== 'string' || !RECORD_DIAGRAM_PATH.test(explanation.diagram_path)) return null;
+  const directory = path.resolve(root, 'docs', 'fluencyloop', 'diagrams', 'records');
+  const companion = safeDiagram(root, explanation.diagram_path, directory);
+  if (!companion) return null;
+  return { ...companion, type: explanation.diagram_type || 'diagram', alt: explanation.diagram_alt || 'Diagram supporting the record explanation.' };
+}
+
+function productOverviewDiagram(root) {
+  const directory = path.resolve(root, 'docs', 'fluencyloop', 'diagrams');
+  const companion = safeDiagram(root, PRODUCT_OVERVIEW_DIAGRAM_PATH, directory);
+  if (!companion) return null;
+  return { ...companion, alt: 'System diagram supporting the technical overview.' };
 }
 
 function recordExplanationMarkup(data, concept) {
@@ -935,12 +949,16 @@ function renderProduct(data) {
     : emptyState(navigation.hasCapturedHistoryWithoutConcepts
       ? 'No product overview has been distilled yet. Ask your assistant to "fluencyloop backfill" the imported history to synthesize one, or it will appear automatically once a feature materially changes the product shape.'
       : 'No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
+  const overviewCompanion = navigation.product && productOverviewDiagram(data.root);
+  const overviewDiagram = overviewCompanion
+    ? `<figure class="record-diagram overview-diagram"><iframe src="/overview/diagram" title="${escapeHtml(overviewCompanion.alt)}" sandbox loading="lazy" referrerpolicy="no-referrer"></iframe><figcaption>${escapeHtml(overviewCompanion.alt)}</figcaption></figure>`
+    : '';
   const distillations = data.distillations.length
     ? `<ul class="path-list">${data.distillations.map((item) => `<li><code>${escapeHtml(item.path)}</code></li>`).join('')}</ul>`
     : emptyState('No distillations have been written yet.');
   return layout(data, 'Product overview', `
     <header class="record-header"><p class="eyebrow">Product overview</p><h1>${escapeHtml(data.project)}</h1></header>
-    <section><h2>Technical overview</h2>${overview}</section>
+    <section><h2>Technical overview</h2>${overview}${overviewDiagram}</section>
     <section><h2>Architectural records</h2>${concepts}</section>
     <section><h2>Features as deltas</h2>${features}</section>
     <section><h2>Initiative constraints</h2>${renderConstraints(navigation.requirements, navigation.openQuestions)}</section>
@@ -1111,6 +1129,12 @@ function createServer(root, managed = null) {
       let page = null;
       if (segments.length === 0) {
         page = renderProduct(data);
+      } else if (segments.length === 2 && segments[0] === 'overview' && segments[1] === 'diagram') {
+        const companion = data.navigation.product && productOverviewDiagram(data.root);
+        if (companion) {
+          sendDiagram(response, request.method === 'HEAD' ? '' : fs.readFileSync(companion.path, 'utf8'));
+          return;
+        }
       } else if (segments.length === 1 && segments[0] === 'records') {
         page = renderConceptList(data);
       } else if (segments.length === 3 && segments[0] === 'records' && segments[2] === 'diagram') {

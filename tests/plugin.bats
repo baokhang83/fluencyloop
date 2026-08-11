@@ -164,6 +164,8 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "**no overview rewrite**" in feature_skill_text
     assert "when this feature newly establishes a concept" in feature_skill_text
     assert "### Optional explanatory diagrams" in feature_skill_text
+    assert "docs/fluencyloop/diagrams/product-overview.html" in feature_skill_text
+    assert "sandboxed route" in feature_skill_text
     assert "Prose always carries the explanation." in feature_skill_text
     assert "**every feature gets one** is exactly the failure this option replaces." in feature_skill_text
     assert "Diagram: The reader selects the last record" in feature_skill_text

@@ -579,6 +579,7 @@ code { font-family: var(--font-mono); font-size: 0.95em; }
 }
 .record-diagram iframe { display: block; width: 100%; min-height: 30rem; border: 0; background: var(--surface); }
 .record-diagram figcaption { padding: var(--space-2) var(--space-3); color: var(--ink-muted); font-size: var(--text-xs); }
+.overview-diagram iframe { min-height: 34rem; }
 
 .diagram-unavailable, [role="alert"] {
   padding: var(--space-3);
