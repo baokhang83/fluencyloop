@@ -96,6 +96,9 @@ feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in feature_text
 assert "state_matches_branch" in feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in feature_text
+assert "Resume preconditions after the answer." in feature_text
+assert "Immediately rerun `fluencyloop check --json`" in feature_text
+assert "complete the mandatory migration before calibration, preferences, ticket numbering" in feature_text
 assert "**Migrate imported history before normal feature work.**" in feature_text
 assert "legacy_migration_pending" in feature_text
 assert "ticket numbering" in feature_text
@@ -114,6 +117,9 @@ codex_feature_text = read_text(dist / "skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in codex_feature_text
 assert "state_matches_branch" in codex_feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in codex_feature_text
+assert "Resume preconditions after the answer." in codex_feature_text
+assert "Immediately rerun `fluencyloop check --json`" in codex_feature_text
+assert "complete the mandatory migration before calibration, preferences, ticket numbering" in codex_feature_text
 assert "**Migrate imported history before normal feature work.**" in codex_feature_text
 assert "legacy_migration_pending" in codex_feature_text
 assert "ticket numbering" in codex_feature_text

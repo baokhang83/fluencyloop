@@ -69,6 +69,14 @@ calibration, feature declaration, session, or writer command. If it is `false`, 
 state the checkout branch and `state_branch`, and ask the developer which existing feature context
 to preserve. Do not create a new feature, switch branches, or overwrite state to guess a repair.
 
+**Resume preconditions after the answer.** The developer's answer settles the split for this run.
+If they select the saved feature, switch to its recorded branch; if they select the checkout branch
+or say the saved feature is done or abandoned, retain the checkout branch. Do not hand-edit state.
+Immediately rerun `fluencyloop check --json`. Do not ask about the mismatch again when it remains
+expected on the retained checkout. Instead, process `legacy_migration_pending` from that result and
+complete the mandatory migration before calibration, preferences, ticket numbering, or feature
+declaration. `fluencyloop feature` writes the replacement state when normal feature work resumes.
+
 **Migrate imported history before normal feature work.** Parse `legacy_migration_pending` next.
 When it is `true`, do not inspect the active feature, calibration, preferences, ticket numbering,
 or the new intent yet—and do not ask the developer anything. This is an automatic, repository-wide
