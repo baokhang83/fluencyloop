@@ -311,6 +311,9 @@ for path in [
     assert "Keep live feature design store-first." in text
     assert "Do **not** create or update `docs/fluencyloop/features/<slug>/`, `design.md`," in text
     assert "the only newly authored\nFluencyLoop Markdown" in text
+    assert "Tags are mandatory for every new architectural record." in text
+    assert "never append an untagged record" in text
+    assert "it is not an architectural record yet" in text
 for path in [
     dist / "skills" / "review" / "SKILL.md",
     root / "claude-skills" / "review" / "SKILL.md",
