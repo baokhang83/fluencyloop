@@ -79,7 +79,7 @@ PY
     [[ "$output" == *"200"* ]]
     [[ "$output" == *"text/html"* ]]
     [[ "$output" == *"live reader"* ]]
-    [[ "$output" == *"live-reader.md"* ]]
+    [[ "$output" != *"live-reader.md"* ]]
 
     run request /api/site-data
     [ "$status" -eq 0 ]
@@ -393,6 +393,38 @@ PY
     [ "$status" -eq 0 ]
     [[ "$output" == *"standalone reader"* ]]
     [[ "$output" == *"This architectural record has no recorded relationships yet."* ]]
+}
+
+@test "site renders stored constitution principles and only populated initiative constraints" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    store="$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+    mkdir -p "$(dirname "$store")" "$TESTREPO/docs/fluencyloop/distillations"
+    printf '%s\n' '{"schema_version":"1","type":"principle","ts":"2026-08-12","feature":"global","session":"none","commit":"abc","number":"§2","title":"Explicit empty selection","rule":"Render a deliberate empty state when no item is selected.","why":"The detail panel must not imply stale data belongs to the current selection."}' >> "$store"
+    printf '%s\n' '{"schema_version":"1","type":"principle","ts":"2026-08-12","feature":"global","session":"none","commit":"abc","number":"§1","title":"Shared selection state","rule":"Keep the selected item in one application-level signal.","why":"Sibling views must agree about the current selection."}' >> "$store"
+    printf '%s\n' '# Product overview' 'The product is readable.' > "$TESTREPO/docs/fluencyloop/distillations/product.md"
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Constitution"* ]]
+    [[ "$output" == *"§1"* ]]
+    [[ "$output" == *"Shared selection state"* ]]
+    [[ "$output" == *"Sibling views must agree about the current selection."* ]]
+    [[ "$output" == *"§2"* ]]
+    [[ "${output%%§2*}" == *"§1"* ]]
+    [[ "$output" != *"Initiative constraints"* ]]
+    [[ "$output" != *"Available distillations"* ]]
+    [[ "$output" != *"product.md"* ]]
+
+    printf '%s\n' '{"schema_version":"1","type":"requirement","ts":"2026-08-12","feature":"global","session":"none","commit":"abc","gap":"The site must remain local.","answer":"Bind the server to loopback only.","consequence":"Remote clients cannot reach project data."}' >> "$store"
+    printf '%s\n' '{"schema_version":"1","type":"open_question","ts":"2026-08-12","feature":"global","session":"none","commit":"abc","gap":"How should a shared site be authenticated?","why_it_matters":"Authentication changes the trust boundary."}' >> "$store"
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Initiative constraints"* ]]
+    [[ "$output" == *"Bind the server to loopback only."* ]]
+    [[ "$output" == *"How should a shared site be authenticated?"* ]]
 }
 
 @test "site points a migrated project with decisions but no concepts at backfill, not at authoring cold" {

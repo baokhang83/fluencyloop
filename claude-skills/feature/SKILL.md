@@ -250,7 +250,18 @@ prevents). Show them, confirm, and write them into `## Principles` numbered `§1
 will cite these numbers). Don't author cold or pad to a count — only what the work evidences; and
 if a real constitution already lives elsewhere (a `Source of truth:` pointer / SpecKit's
 `.specify/memory/constitution.md`), amend that in place rather than forking one. After birth it
-grows by harvest (§3).
+grows by harvest (§3). **Store parity is required:** immediately after the confirmed Markdown
+write, append one matching `fluencyloop principle` record for every `§N` — same number, title,
+non-negotiable rule, and why — so the live site can render the constitution:
+
+```bash
+fluencyloop principle --number "§N" --title "<title>" --rule "<non-negotiable>" --why "<why>"
+```
+
+Before citing an existing `§N`, check that the global store has the matching principle record.
+If it is absent or the text has changed, append the corrected record with the same `§N`; the
+append-only reader resolves the latest version. Never create a placeholder principle just to
+populate the site.
 
 Do not over-invest here: the design is a shape to build against, not a spec to ratify.
 
@@ -411,7 +422,8 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    **Leave as a one-off** — rather than a plain-text question they might skim past. Don't wait to
    be asked. On **promote**, append it to `docs/fluencyloop/constitution.md` under `## Principles`
    as the next `§N` (short title + the non-negotiable + the why), and cite that `§N` in the
-   decision's `constitution:` field. On **leave**, it stays a one-off — not a principle.
+   decision's `constitution:` field. Immediately append one matching `fluencyloop principle` record
+   with that number, title, rule, and why. On **leave**, it stays a one-off — not a principle.
    This is how the constitution *grows*: harvested from real decisions, never a cold authoring pass.
 
 Repeat per slice until the feature is built. The journal accretes as a byproduct — the

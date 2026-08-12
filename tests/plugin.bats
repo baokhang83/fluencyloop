@@ -311,6 +311,9 @@ for path in [
     assert "Keep live feature design store-first." in text
     assert "Do **not** create or update `docs/fluencyloop/features/<slug>/`, `design.md`," in text
     assert "the only newly authored\nFluencyLoop Markdown" in text
+    assert "append one matching `fluencyloop principle` record" in text
+    assert "Before citing an existing `§N`" in text
+    assert "Never create a placeholder principle" in text
 for path in [
     dist / "skills" / "review" / "SKILL.md",
     root / "claude-skills" / "review" / "SKILL.md",
