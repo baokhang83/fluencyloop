@@ -19,36 +19,33 @@ Do not load the full guide, ask the user to choose a palette, tour templates, or
 alternatives. FluencyLoop owns the surrounding reader design. Produce one restrained,
 self-contained embedded HTML file with inline SVG and CSS.
 
-Work in one bounded pass:
+Use the native diagram renderer, not the general diagram workflow:
 
-1. Choose the type without asking: use **architecture** for component ownership or system shape,
-   **flowchart** for a directed interaction or decision path, and **sequence** only when message
-   order between distinct actors is the point. For an architectural record, apply the same rule to
-   its ADR mechanism. Load only that one type reference.
-2. Use 4–7 nodes and 3–8 connectors. Show only the relationship that earns the diagram; a product
-   overview must not become a feature inventory. For an **architecture** diagram, default to
-   unlabelled arrows: a small diagram should express routine direction through layout and node
-   subtitles, not cramped connector text. This never overrides the selected type's grammar: label
-   every decision exit in a flowchart and every message in a sequence diagram. Never abbreviate a
-   label merely to make it fit.
-3. Write directly to the requested path. For `product-overview.html`, keep `product.md` as prose;
-   do not add a Mermaid duplicate of the HTML diagram. Use only inline SVG and CSS with system
-   font stacks: no Google Fonts `<link>`, remote `src`/`href`, CSS `url(...)`, scripts, or iframes.
-   Keep the existing light palette as the default. Use `--diagram-canvas`, `--diagram-surface`,
-   `--diagram-ink`, `--diagram-muted`, `--diagram-rule`, and `--diagram-accent` throughout, then
-   add a restrained `:root[data-fluencyloop-theme="dark"]` variable set. The reader supplies that
-   attribute; do not use JavaScript or a system-preference media query.
-4. Draw connectors before cards. Use a straight connector only for aligned endpoints; otherwise use
-   a rounded orthogonal route. Never overlap connector paths or reuse an attach point for separate
-   connectors. A connector or its label must never run behind a non-endpoint card. If a label is
-   necessary, place it only in a clear lane: give its opaque background mask at least 8px of visible
-   space from both the connector and every card. If no lane exists, omit the label or change the
-   layout; do not shrink, clip, or place text beneath a card.
-5. Confirm the file is nonempty, then run `fluencyloop site --ensure --open-once --json` when
-   available so the reader can show it without opening a duplicate tab. Inspect the rendered result before handing off: every label
-   must be readable, with no text behind a card, connector overlap, or viewBox clipping. Do not
-   block the feature if Node is unavailable; say that the prose is available and the diagram will
-   appear when the optional site can run.
+1. Choose one supported layout without asking: `linear` for a 2–6 step path, `hub` for a shared
+   service/boundary with 2–7 participants, or `layered` for independent adjacent-layer mappings.
+   It supports 2–8 nodes and at most 10 edges. A fan-out or merge uses `hub`, never `layered`.
+2. Run exactly one `fluencyloop diagram` command. Give each node its short id, label, and detail as
+   separate fields, then give the directed edges. For example:
+
+   ```bash
+   fluencyloop diagram --output docs/fluencyloop/diagrams/product-overview.html --layout hub \
+     --title "Dog selection" --hub selection \
+     --node list --label "Dog list" --detail "Chooses a dog" \
+     --node selection --label "Selection service" --detail "Owns selected dog" \
+     --node detail --label "Dog detail" --detail "Reads selected dog" \
+     --edge list selection --edge selection detail
+   ```
+
+   Keep labels at 28 characters or fewer and details at 42 or fewer. The renderer owns canvas
+   height, card positions, routes, attachment points, arrows, dark theme, and no-scroll geometry.
+   Never edit its generated HTML.
+3. If the renderer rejects a graph, omit the diagram. Do not load a type reference, inspect CSS,
+   search the project for styling, browse templates, or escalate to custom SVG during a
+   FluencyLoop feature; prose remains the complete explanation.
+4. Do not run Playwright, browser automation, screenshots, theme checks, or iterative visual
+   inspection. The renderer validates its topology before writing. Confirm only that the file is
+   nonempty, then use `fluencyloop site --ensure --open-once --json` when available. Node remains
+   optional.
 
 ## General diagrams
 

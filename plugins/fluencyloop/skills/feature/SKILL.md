@@ -61,6 +61,11 @@ Run `fluencyloop check --json`. If `git_repo` or `fluency` is false, run `fluenc
 without asking the developer. It initialises Git in the current project directory when needed,
 then creates FluencyLoop's state. Only stop if `init` itself fails.
 
+**Report real entry points after a fresh init.** Say that a larger initiative starts with
+`fluencyloop plan "<intent>"` or `/fluencyloop:plan`; one buildable unit starts with
+`fluencyloop feature "<intent>"` or `/fluencyloop:feature`. Never recommend the retired prose
+names `fluencyloop-plan`, `fluencyloop-feature`, `fluencyloop-review`, or `fluencyloop-backfill`.
+
 For that `fluencyloop init --json` command in Codex, request sandbox elevation before its first
 execution. It may create or update Codex-protected `.git` metadata; do not first attempt it in the
 standard sandbox.
@@ -410,9 +415,9 @@ visible; the journal is its durable byproduct.
 
    ```bash
    fluencyloop knowledge \
-     --component "<name>|<role>|<conditions>" \
-     --component "<name>|<role>|<conditions>|follow-up" \
-     --gotcha "<subject>|<why it is this way or what breaks otherwise>"
+     --component "<name>" --role "<role>" --conditions "<conditions>" \
+     --component "<name>" --role "<role>" --conditions "<conditions>" --status follow-up \
+     --gotcha "<subject>" --why "<why it is this way or what breaks otherwise>"
    ```
 
    **Knowledge transfer** is still irreducible: make it **rich, not a token list**. Capture the
@@ -421,11 +426,10 @@ visible; the journal is its durable byproduct.
    `documented`; use `follow-up` only when appropriate. Separate it from decisions: a role you
    explained is knowledge transfer even if no fork was chosen. **About the work, never the
    person** — no competence, prior knowledge, or "who learned what" (committed files, GDPR); the
-   per-developer picture lives only in the calibration profile. Compose and validate every value
-   before the one batched call: each `--component` has exactly three or four **nonempty**
-   pipe-separated fields and each `--gotcha` has exactly two **nonempty** fields. Omit a field
-   instead of emitting `||`. Escape a literal `|` as `\|` and a literal backslash as `\\`. Do not
-   run incomplete, bare, or trial `fluencyloop knowledge` commands to discover this syntax.
+   per-developer picture lives only in the calibration profile. Use the explicit-field form above:
+   quote each value normally; it accepts pipes and Windows paths unchanged. The old compact
+   pipe-delimited form remains only for compatibility. Compose the complete batch before one call;
+   do not run incomplete, bare, or trial `fluencyloop knowledge` commands to discover syntax.
    - **Decisions** *(the script formats them — you supply only the field values)* — for each, run
      `fluencyloop decision` so the block is assembled deterministically; never hand-write the
      bullet schema:
@@ -538,7 +542,10 @@ Write and commit at most these Markdown distillations under
    concepts and behavior, never as a file list.
 2. **Product overview** — refresh `product.md` only when this feature materially changes the
    product's problem, shape, or major flow. A feature that changes nothing at that altitude gets
-   **no overview rewrite**.
+   **no overview rewrite**. Keep it self-contained: do not add a `Related concepts` / `Related
+   records` section or Markdown links to record files. The reader's Records navigation already
+   provides that traversal; raw file references add no explanation and can appear as literal
+   Markdown in its deliberately small prose renderer.
 3. **Concept explanation** — when this feature newly establishes a concept, create
    `concepts/<concept-slug>.md`; revise an existing explanation only when a feature decision contradicts
    it. Do not create a concept explanation merely because the feature touched a concept.
@@ -578,15 +585,15 @@ Choose the visual yourself from the implemented product shape:
 - Otherwise omit the diagram. A short hierarchy, list, or simple before/after statement remains
   prose or a table; never manufacture a visual merely because `product.md` exists.
 
-When it qualifies, load the bundled `diagram-design` skill and invoke its **FluencyLoop embedded
-diagram fast path**. Give it the exact output path and the one relationship to clarify; choose the
-type and write the file in one bounded pass. Do not ask the user to choose the style, type, or
-whether to proceed. The local site embeds that file directly below the overview prose through a
-sandboxed route. Make it one restrained system overview, not a duplicate of every record diagram.
-Keep `product.md` prose-only: do not add a Mermaid copy of the companion HTML. Confirm the file is
-nonempty, then use `fluencyloop site --ensure --open-once --json` when Node is available. It makes
-the result available without opening a duplicate tab. The prose remains complete without the diagram
-and explains the same product shape in words.
+When it qualifies, load the bundled `diagram-design` skill and use its **FluencyLoop native
+renderer**. Give it the output path, a bounded graph (2–8 concise nodes and at most 10 edges), and
+the matching linear, hub, or layered layout. Do not search the codebase for styling, read
+templates, invoke Playwright, take screenshots, inspect themes, or iterate on the diagram. The
+renderer owns geometry, routes, attachment points, dark theme, and no-scroll document height;
+never edit its HTML. If it rejects the graph, omit the overview diagram rather than escalating to
+general diagram design. The local site embeds its output through a sandboxed route. Keep `product.md` prose-only.
+Confirm the file is nonempty, then use
+`fluencyloop site --ensure --open-once --json` when Node is available.
 
 **Do not distill decisions.** Their why was taught and captured contemporaneously by
 `fluencyloop decision`; re-synthesising it is both less trustworthy and unnecessary token spend.

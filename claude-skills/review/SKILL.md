@@ -3,7 +3,7 @@ name: review
 description: 'FluencyLoop Stage 4. Assemble the reviewer-facing PR view from a feature''s sessions — a feature is a branch, so it assembles itself from git. Use when preparing a PR description, reviewing a FluencyLoop feature, or when the user says "fluencyloop review", "assemble the PR view", or "summarise this feature for review".'
 ---
 
-# fluencyloop-review — Stage 4, assemble the PR view
+# /fluencyloop:review — Stage 4, assemble the PR view
 
 A **feature is a branch**, so the review view assembles itself: no manual linking. You turn
 the feature's sessions into a summary a reviewer can read to get fluent fast.
@@ -112,4 +112,4 @@ explicitly asked.
 - **Surface, don't gate.** Flag unverified trust and constitution conflicts; never block.
 - **Truthful assembly.** Summarise what the sessions actually say; if a decision has no
   journaled `why`, say it's undocumented rather than inventing one — or suggest
-  **fluencyloop-backfill**.
+  **`/fluencyloop:backfill`**.

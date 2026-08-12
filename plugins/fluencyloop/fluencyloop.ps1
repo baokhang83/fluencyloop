@@ -44,6 +44,8 @@ Usage:
   fluencyloop check [--json]             doctor: loop state + un-journaled drift
   fluencyloop site [--port <port>] [--ensure [--open|--open-once]|--status|--stop] [--json]
                                          serve or manage the local 0.3 site (requires Node.js 18+)
+  fluencyloop diagram --output <path> --layout <linear|hub|layered> --node <id> --label <text> --detail <text> [--edge <from> <to> ...]
+                                         render a bounded, self-contained site diagram (requires Node.js 18+)
   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
   fluencyloop index                      regenerate docs/fluencyloop/README.md
@@ -115,6 +117,13 @@ function StartSite {
     exit $LASTEXITCODE
 }
 
+function RenderDiagram {
+    $nodeExe = RequireNodeForSite $false
+    if (-not $nodeExe) { exit 1 }
+    & $nodeExe (Join-Path $SELF 'site/diagram-renderer.js') @rest
+    exit $LASTEXITCODE
+}
+
 switch -Regex ($cmd) {
     '^init$'          { Run 'init.ps1' }
     '^plan$'          { Run 'new-plan.ps1' }
@@ -130,6 +139,7 @@ switch -Regex ($cmd) {
     '^review$'        { Run 'assemble-pr-view.ps1' }
     '^check$'         { Run 'check.ps1' }
     '^site$'          { StartSite }
+    '^diagram$'       { RenderDiagram }
     '^slice-context$' { Run 'slice-context.ps1' }
     '^calibration$'   { Run 'calibration.ps1' }
     '^index$'         { Run 'index.ps1' }

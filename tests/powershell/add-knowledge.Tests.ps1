@@ -38,6 +38,18 @@ Describe 'add-knowledge.ps1' {
         }
     }
 
+    It 'accepts explicit fields without a pipe escape grammar' {
+        $before = @([System.IO.File]::ReadAllLines($script:store)).Count
+        (Invoke-FlExit 'add-knowledge.ps1' '--component' 'C:\work\app.config.ts' '--role' 'holds app providers | startup config' '--conditions' 'loaded before bootstrap' `
+            '--component' 'Dog list' '--role' 'renders choices' '--conditions' 'uses the current selection' '--status' 'follow-up' `
+            '--gotcha' 'selection | routing' '--why' 'a normal Windows path C:\work must stay literal') | Should -Be 0
+        $records = @([System.IO.File]::ReadAllLines($script:store) | Select-Object -Last 3 | ForEach-Object { $_ | ConvertFrom-Json })
+        $records[0].name | Should -Be 'C:\work\app.config.ts'
+        $records[0].role | Should -Be 'holds app providers | startup config'
+        $records[1].status | Should -Be 'follow-up'
+        $records[2].subject | Should -Be 'selection | routing'
+    }
+
     It 'escaped pipes and backslashes round-trip through both record kinds' {
         (Invoke-FlExit 'add-knowledge.ps1' '--component' 'cache\|fallback|uses \\ local state|after a miss' `
             '--gotcha' 'read\|write|keeps \\ ordering') | Should -Be 0

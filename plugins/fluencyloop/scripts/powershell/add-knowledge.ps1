@@ -1,15 +1,50 @@
 # add-knowledge.ps1 — PowerShell port of add-knowledge.sh. Appends one session's component
-# inventory and hard-won conditions as a validated batch.
+# inventory and hard-won conditions as a validated batch. Its primary explicit-field form needs no
+# pipe escaping; the historical compact pipe form remains supported for compatibility.
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 
-$components = @(); $gotchas = @(); $hasInput = $false; $featureOverride = ''; $sessionOverride = ''; $targetOverride = $false
+$components = @(); $gotchas = @(); $structuredComponents = @(); $structuredGotchas = @()
+$hasInput = $false; $featureOverride = ''; $sessionOverride = ''; $targetOverride = $false
+$activeComponent = -1; $activeGotcha = -1
 for ($i = 0; $i -lt $args.Count; $i++) {
     switch ($args[$i]) {
-        '--component' { $i++; $components += [string]$args[$i]; $hasInput = $true }
-        '--gotcha'    { $i++; $gotchas += [string]$args[$i]; $hasInput = $true }
+        '--component' {
+            $i++; $value = [string]$args[$i]; $hasInput = $true
+            if ($value.Contains('|') -and ($i + 1 -ge $args.Count -or $args[$i + 1] -ne '--role')) { $components += $value; $activeComponent = -1 }
+            else {
+                $structuredComponents += [pscustomobject]@{ name = $value; role = ''; conditions = ''; status = 'documented' }
+                $activeComponent = $structuredComponents.Count - 1
+            }
+            $activeGotcha = -1
+        }
+        '--role' {
+            $i++; if ($activeComponent -lt 0) { throw 'Error: --role must follow an explicit --component.' }
+            $structuredComponents[$activeComponent].role = [string]$args[$i]
+        }
+        '--conditions' {
+            $i++; if ($activeComponent -lt 0) { throw 'Error: --conditions must follow an explicit --component.' }
+            $structuredComponents[$activeComponent].conditions = [string]$args[$i]
+        }
+        '--status' {
+            $i++; if ($activeComponent -lt 0) { throw 'Error: --status must follow an explicit --component.' }
+            $structuredComponents[$activeComponent].status = [string]$args[$i]
+        }
+        '--gotcha' {
+            $i++; $value = [string]$args[$i]; $hasInput = $true
+            if ($value.Contains('|') -and ($i + 1 -ge $args.Count -or $args[$i + 1] -ne '--why')) { $gotchas += $value; $activeGotcha = -1 }
+            else {
+                $structuredGotchas += [pscustomobject]@{ subject = $value; why = '' }
+                $activeGotcha = $structuredGotchas.Count - 1
+            }
+            $activeComponent = -1
+        }
+        '--why' {
+            $i++; if ($activeGotcha -lt 0) { throw 'Error: --why must follow an explicit --gotcha.' }
+            $structuredGotchas[$activeGotcha].why = [string]$args[$i]
+        }
         '--feature'   { $i++; $featureOverride = [string]$args[$i]; $targetOverride = $true }
         '--session'   { $i++; $sessionOverride = [string]$args[$i]; $targetOverride = $true }
         default        { [Console]::Error.WriteLine("Unknown option: $($args[$i])"); exit 1 }
@@ -18,19 +53,16 @@ for ($i = 0; $i -lt $args.Count; $i++) {
 
 FlRequireFluency
 
-# Split a pipe-delimited argument. A literal pipe is \| and a literal backslash is \\; accepting
-# other escapes would silently alter prose. Returning values instead of printing them preserves
-# whitespace and newlines inside a field.
+# Split a legacy pipe-delimited argument. A literal pipe is \|; other backslashes remain literal
+# so ordinary prose and Windows paths do not need a special escape vocabulary.
 function Split-FlKnowledgeField([string]$value, [int]$minFields, [int]$maxFields, [string]$flag) {
     $fields = [System.Collections.Generic.List[string]]::new()
     $field = [System.Text.StringBuilder]::new()
     $escaped = $false
     foreach ($character in $value.ToCharArray()) {
         if ($escaped) {
-            if ($character -ne [char]124 -and $character -ne [char]92) {
-                throw "Error: $flag only permits \| and \\ escapes."
-            }
-            [void]$field.Append($character)
+            if ($character -eq [char]124 -or $character -eq [char]92) { [void]$field.Append($character) }
+            else { [void]$field.Append([char]92); [void]$field.Append($character) }
             $escaped = $false
             continue
         }
@@ -43,7 +75,7 @@ function Split-FlKnowledgeField([string]$value, [int]$minFields, [int]$maxFields
             [void]$field.Append($character)
         }
     }
-    if ($escaped) { throw "Error: $flag cannot end with an escape." }
+    if ($escaped) { [void]$field.Append([char]92) }
     $fields.Add($field.ToString())
     if ($fields.Count -lt $minFields -or $fields.Count -gt $maxFields) {
         throw "Error: $flag needs $minFields-$maxFields pipe-separated fields; escape literal pipes as \|."
@@ -90,7 +122,20 @@ foreach ($component in $components) {
         exit 1
     }
 }
+foreach ($component in $structuredComponents) {
+    if (-not $component.name -or -not $component.role -or -not $component.conditions) {
+        throw 'Error: an explicit --component requires nonempty --role and --conditions fields.'
+    }
+    if ($component.status -notin @('documented', 'follow-up')) {
+        throw 'Error: --status must be documented or follow-up.'
+    }
+}
 foreach ($gotcha in $gotchas) { $null = @(Split-FlKnowledgeField $gotcha 2 2 '--gotcha') }
+foreach ($gotcha in $structuredGotchas) {
+    if (-not $gotcha.subject -or -not $gotcha.why) {
+        throw 'Error: an explicit --gotcha requires a nonempty --why field.'
+    }
+}
 
 $store = FlFeatureStorePath $feature
 $written = 0
@@ -101,9 +146,18 @@ foreach ($component in $components) {
         'name', $parts[0], 'role', $parts[1], 'conditions', $parts[2], 'status', $status)
     $written++
 }
+foreach ($component in $structuredComponents) {
+    FlStoreAppendRecord $store 'component' $feature $session @(
+        'name', $component.name, 'role', $component.role, 'conditions', $component.conditions, 'status', $component.status)
+    $written++
+}
 foreach ($gotcha in $gotchas) {
     $parts = @(Split-FlKnowledgeField $gotcha 2 2 '--gotcha')
     FlStoreAppendRecord $store 'condition' $feature $session @('subject', $parts[0], 'why', $parts[1])
+    $written++
+}
+foreach ($gotcha in $structuredGotchas) {
+    FlStoreAppendRecord $store 'condition' $feature $session @('subject', $gotcha.subject, 'why', $gotcha.why)
     $written++
 }
 

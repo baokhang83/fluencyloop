@@ -1,15 +1,15 @@
 ---
 name: plan
-description: 'FluencyLoop planning stage. Plan a large chunk of work before building it: design and document the overall architecture, break it into task items, sequence them into a roadmap with a critical path, and (optionally) open GitHub issues under a milestone. Produces a committed plan.md that the per-feature loop then builds from — one fluencyloop-feature per task item. Use when the work is too big for a single feature/branch, or when the user says "fluencyloop plan", "plan this", "design the architecture for", "break this down", or "make a roadmap".'
+description: 'FluencyLoop planning stage. Plan a large chunk of work before building it: design and document the overall architecture, break it into task items, sequence them into a roadmap with a critical path, and (optionally) open GitHub issues under a milestone. Produces a committed plan.md that the per-feature loop then builds from — one /fluencyloop:feature per task item. Use when the work is too big for a single feature/branch, or when the user says "fluencyloop plan", "plan this", "design the architecture for", "break this down", or "make a roadmap".'
 ---
 
-# fluencyloop-plan — map a big chunk before you build it
+# /fluencyloop:plan — map a big chunk before you build it
 
-Sits **upstream of `fluencyloop-feature`**. A *feature* is one branch; a **plan** is an
+Sits **upstream of `/fluencyloop:feature`**. A *feature* is one branch; a **plan** is an
 *initiative* that will spawn several features. You will: (1) frame the chunk, (2) analyse
 requirements and surface material gaps, (3) design and show the overall architecture, (4) break
 it into task items, (5) sequence them into a roadmap with a critical path, (6) offer to open
-GitHub tickets under a milestone, (7) hand each task off to `fluencyloop-feature`. The plan is a
+GitHub tickets under a milestone, (7) hand each task off to `/fluencyloop:feature`. The plan is a
 **map you build against, not a spec to ratify** —
 do not over-invest. Keep the developer the architect.
 
@@ -90,10 +90,10 @@ stub**, this plan is where the constitution is born — see §5.
 `dimension → level` map, level ∈ {`fluent`, `familiar`, `learning`, `new`}; per-developer, global,
 never committed) — to set the depth you explain architectural choices at. Missing is fine.
 Planning is also teaching: the same "teach the why, ask whether it is understood, don't lecture"
-posture from `fluencyloop-feature` applies to the architecture decisions here. Apply the
+posture from `/fluencyloop:feature` applies to the architecture decisions here. Apply the
 self-report-only rule above to every architecture explanation.
 
-Is this actually a plan? If the work fits one branch, skip straight to `fluencyloop-feature` —
+Is this actually a plan? If the work fits one branch, skip straight to `/fluencyloop:feature` —
 don't manufacture an initiative. Plans are for chunks that genuinely decompose into several
 features.
 
@@ -195,7 +195,7 @@ may connect concepts to other concepts, components, or planned features.
 
 ## 3. Break it into task items
 
-Decompose the initiative into **task items — each a future `fluencyloop-feature`**. For each,
+Decompose the initiative into **task items — each a future `/fluencyloop:feature`**. For each,
 capture in the `## Task breakdown` table: an `id` (T1, T2, …), a slug-able **intent**, a rough
 **size** (S/M/L), and its **dependencies** (by id). Aim for items that are independently
 build-and-mergeable. Keep them coarse; a task that's really two features is two rows.
@@ -275,10 +275,10 @@ The plan is complete either way — no friction.
 
 ## 7. Hand off to the build loop
 
-The plan is the map; each task item is built with **`fluencyloop-feature`** (one branch per
+The plan is the map; each task item is built with **`/fluencyloop:feature`** (one branch per
 task, from the active development branch — `dev` for the 0.3 milestone), in roadmap order along
 the critical path first. Tell the user that — and that
-`fluencyloop-review` assembles each feature's PR view when it's done. Do not open feature
+`/fluencyloop:review` assembles each feature's PR view when it's done. Do not open feature
 branches yourself here; §7 hands off, it doesn't build.
 
 ## Rules
