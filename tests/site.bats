@@ -222,13 +222,13 @@ PY
     setup_initialized_repo
     mkdir -p "$TESTREPO/docs/fluencyloop/distillations"
     printf '%s\n' '# Product overview' '**Shape:**' \
-        '- `AppComponent` is a pure two-column layout host — it lays the list and detail panels side by' \
+        '- `AppComponent` is a pure two-column layout host; it lays the list and detail panels side by' \
         '  side and owns no state of its own.' > "$TESTREPO/docs/fluencyloop/distillations/product.md"
     start_site --port 0
 
     run request /
     [ "$status" -eq 0 ]
-    [[ "$output" == *'<li><code>AppComponent</code> is a pure two-column layout host — it lays the list and detail panels side by side and owns no state of its own.</li>'* ]]
+    [[ "$output" == *'<li><code>AppComponent</code> is a pure two-column layout host; it lays the list and detail panels side by side and owns no state of its own.</li>'* ]]
     [[ "$output" != *'</li></ul><p>side and owns no state of its own.</p>'* ]]
 }
 
