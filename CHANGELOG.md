@@ -2,6 +2,23 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.6
+
+### Added
+
+- `fluencyloop diagram` renders bounded linear, hub, and layered product or architectural-record
+  diagrams. It owns the geometry, arrow routes, theme tokens, and fixed document height, so the
+  local reader does not receive an overlapping connector or a scrolling embedded diagram.
+
+### Fixed
+
+- Claude Code and Codex now use explicit knowledge-record fields. Normal pipes and Windows paths
+  no longer require fragile escaping, while the compact form remains supported for compatibility.
+- Their workflow guidance now uses the public `fluencyloop plan` / `fluencyloop feature` commands
+  and keeps product overviews self-contained instead of emitting raw Markdown links to records.
+- Product and record diagrams take one bounded renderer path rather than searching templates,
+  generating bespoke SVG, and repeatedly inspecting screenshots.
+
 ## 0.3.5
 
 ### Fixed
