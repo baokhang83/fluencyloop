@@ -55,13 +55,13 @@ const IDENTITY_FIELDS = {
 
 function usage(message) {
   if (message) process.stderr.write(`Error: ${message}\n`);
-  process.stderr.write('Usage: fluencyloop site [--port <0-65535>] [--ensure [--open]|--status|--stop] [--json]\n');
+  process.stderr.write('Usage: fluencyloop site [--port <0-65535>] [--ensure [--open|--open-once]|--status|--stop] [--json]\n');
   process.exitCode = 1;
 }
 
 function parseArgs(argv) {
   const options = {
-    root: '', port: DEFAULT_PORT, portSpecified: false, ensure: false, status: false, stop: false, open: false, json: false,
+    root: '', port: DEFAULT_PORT, portSpecified: false, ensure: false, status: false, stop: false, open: false, openOnce: false, json: false,
     sessionStart: '', sessionEnd: '',
     managedState: '', managedId: '', managedStartup: '', managedSession: '',
   };
@@ -90,6 +90,7 @@ function parseArgs(argv) {
       }
     } else if (arg === '--ensure') options.ensure = true;
     else if (arg === '--open') options.open = true;
+    else if (arg === '--open-once') options.openOnce = true;
     else if (arg === '--status') options.status = true;
     else if (arg === '--stop') options.stop = true;
     else if (arg === '--json') options.json = true;
@@ -101,7 +102,8 @@ function parseArgs(argv) {
   if ([options.ensure, options.status, options.stop, options.sessionStart, options.sessionEnd].filter(Boolean).length > 1) {
     throw new Error('choose only one lifecycle action');
   }
-  if (options.open && !options.ensure) throw new Error('--open requires --ensure');
+  if (options.open && options.openOnce) throw new Error('choose either --open or --open-once');
+  if ((options.open || options.openOnce) && !options.ensure) throw new Error('--open and --open-once require --ensure');
   return options;
 }
 
@@ -403,6 +405,24 @@ function openLocalBrowser(url) {
   } catch (_) {
     return false;
   }
+}
+
+// Automated workflow entries may each request an opening. Persist the first successful request
+// with the managed reader so a plan -> feature -> feature sequence keeps one useful browser tab.
+// A stopped reader receives fresh metadata and can open again when it is started next.
+async function openManagedBrowserOnce(root, paths) {
+  return withSiteLock(paths, async () => {
+    const metadata = await currentManagedSite(root, paths);
+    if (!metadata || metadata.browser_opened) return false;
+    metadata.browser_opened = true;
+    writeJsonAtomically(paths.state, metadata);
+    const opened = openLocalBrowser(metadata.url);
+    if (!opened) {
+      metadata.browser_opened = false;
+      writeJsonAtomically(paths.state, metadata);
+    }
+    return opened;
+  });
 }
 
 function filesUnder(directory, extension) {
@@ -1246,6 +1266,7 @@ function recordManagedStart(root, managed, port) {
     url: 'http://127.0.0.1:' + port,
     version: SITE_VERSION,
     last_activity: Date.now(),
+    browser_opened: false,
     sessions: {},
   };
   recordSession(metadata, managed.session);
@@ -1315,8 +1336,10 @@ if (options) {
         : options.sessionEnd
           ? releaseManagedSession(root, paths, options.sessionEnd)
           : start(root, options.port, managedConfiguration(options));
-  operation.then((result) => {
-    if (options.open && result.running && result.url) {
+  operation.then(async (result) => {
+    if (options.openOnce && result.running && result.url) {
+      result.browser_opened = await openManagedBrowserOnce(root, paths);
+    } else if (options.open && result.running && result.url) {
       result.browser_opened = openLocalBrowser(result.url);
     }
     if (manager) printManagedResult(result, options.json);

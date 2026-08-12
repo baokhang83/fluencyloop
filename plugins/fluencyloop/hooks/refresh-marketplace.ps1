@@ -64,11 +64,11 @@ function Ensure-LocalSite {
     if ($sessionId) {
         & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --session-start $sessionId --json *> $null
         # Skills can announce the address, but opening the browser is an interaction guarantee.
-        # Do it here once per agent session so a model cannot accidentally skip the site step.
-        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --open --json *> $null
+        # Persist the first request with the managed reader so later workflow stages reuse its tab.
+        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --open-once --json *> $null
     } else {
         # Retain compatibility with hosts that do not pass a hook payload.
-        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --open --json *> $null
+        & $hostExe -NoProfile -ExecutionPolicy Bypass -File $launcher site --ensure --open-once --json *> $null
     }
 }
 

@@ -27,7 +27,7 @@ Describe 'FluencyLoop SessionStart hook' {
             $LASTEXITCODE | Should -Be 0
             '{"session_id":"codex-session"}' | & $script:PwshExe -NoProfile -File $script:Hook --session-end
             $LASTEXITCODE | Should -Be 0
-            (Get-Content -LiteralPath $calls -Raw).Trim() | Should -Be "site --session-start codex-session --json`nsite --ensure --open --json`nsite --session-end codex-session --json"
+            (Get-Content -LiteralPath $calls -Raw).Trim() | Should -Be "site --session-start codex-session --json`nsite --ensure --open-once --json`nsite --session-end codex-session --json"
         } finally {
             Remove-Item -Recurse -Force -LiteralPath $pluginRoot -ErrorAction SilentlyContinue
             Remove-Item -Force -LiteralPath $calls -ErrorAction SilentlyContinue

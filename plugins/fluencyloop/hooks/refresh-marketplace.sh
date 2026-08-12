@@ -57,11 +57,11 @@ ensure_local_site() {
     if [ -n "$SESSION_ID" ]; then
         (cd "$root" && "$launcher" site --session-start "$SESSION_ID" --json >/dev/null 2>&1) || true
         # Skills can announce the address, but opening the browser is an interaction guarantee.
-        # Do it here once per agent session so a model cannot accidentally skip the site step.
-        (cd "$root" && "$launcher" site --ensure --open --json >/dev/null 2>&1) || true
+        # Persist the first request with the managed reader so later workflow stages reuse its tab.
+        (cd "$root" && "$launcher" site --ensure --open-once --json >/dev/null 2>&1) || true
     else
         # Retain compatibility with hosts that do not pass a hook payload.
-        (cd "$root" && "$launcher" site --ensure --open --json >/dev/null 2>&1) || true
+        (cd "$root" && "$launcher" site --ensure --open-once --json >/dev/null 2>&1) || true
     fi
 }
 

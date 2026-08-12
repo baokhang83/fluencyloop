@@ -38,11 +38,12 @@ dispatcher from the loaded skill path as a silent fallback. On native Windows, i
 ## Local site — open once
 
 For a non-literal workflow entry, before the first user-visible response, run
-`fluencyloop site --ensure --open --json`. If it reports `running: true` and no earlier assistant
-message in this session starts with `FluencyLoop site:`, say `FluencyLoop site: <url> (opened in
-browser).` once, using its returned URL. Do not mention an unavailable site or repeat the
-announcement. The CLI opens the browser safely for the loopback URL. The Literal CLI Fast Path above
-remains exempt: literal commands receive only their requested command result.
+`fluencyloop site --ensure --open-once --json`. This ensures the reader for every workflow entry,
+but opens a browser tab only once while that managed reader is alive. If it reports `running: true`
+and no earlier assistant message in this session starts with `FluencyLoop site:`, say `FluencyLoop
+site: <url> (opened in browser).` once, using its returned URL. Do not mention an unavailable site
+or repeat the announcement. The Literal CLI Fast Path above remains exempt: literal commands receive
+only their requested command result.
 
 ## Question delivery
 
