@@ -45,12 +45,13 @@ STATE_MATCHES_BRANCH=true
 DETACHED_HEAD=false
 [ "$BRANCH" = "HEAD" ] && DETACHED_HEAD=true
 if [ -n "$STATE_BRANCH" ] && [ -n "$BRANCH" ] && [ "$STATE_BRANCH" != "$BRANCH" ]; then
-    # A detached checkout at the recorded branch tip is a recoverable transport state (for
-    # example after an agent has checked out a commit). It is not a conflicting feature context.
-    # Do not accept an arbitrary ancestor: attaching to it could silently discard newer branch work.
+    # A detached checkout at the recorded branch tip, or an earlier commit reachable from that
+    # branch, is a recoverable transport state. Reattaching moves only along the saved feature's
+    # history, so it cannot discard detached work. A detached descendant or divergent commit is
+    # still a genuine split state and needs the developer's decision.
     if $DETACHED_HEAD && git show-ref --verify --quiet "refs/heads/$STATE_BRANCH" \
-        && [ "$(git rev-parse HEAD 2>/dev/null || true)" = "$(git rev-parse "$STATE_BRANCH" 2>/dev/null || true)" ]; then
-        : # The feature skill reattaches this exact, clean branch tip before it writes work.
+        && git merge-base --is-ancestor HEAD "$STATE_BRANCH" 2>/dev/null; then
+        : # The feature skill reattaches this clean, recorded feature history before it writes.
     else
         STATE_MATCHES_BRANCH=false
     fi

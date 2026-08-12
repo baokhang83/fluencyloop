@@ -32,16 +32,12 @@ $lastSession = FlStateGet 'last_session'
 $stateMatchesBranch = (-not $stateBranch) -or (-not $branch) -or ($stateBranch -eq $branch)
 $detachedHead = $branch -eq 'HEAD'
 if (-not $stateMatchesBranch -and $detachedHead) {
-    # Treat only the exact recorded branch tip as recoverable. An arbitrary ancestor could be an
-    # intentional historical checkout, so it remains a real split state requiring user direction.
+    # The recorded branch may safely reattach an exact tip or an earlier commit it contains.
+    # A descendant or divergent detached commit remains a real split state requiring direction.
     & git show-ref --verify --quiet "refs/heads/$stateBranch" *> $null
     if ($LASTEXITCODE -eq 0) {
-        $headCommit = & git rev-parse HEAD 2>$null
-        $stateCommit = & git rev-parse $stateBranch 2>$null
-        if ($LASTEXITCODE -eq 0 -and $headCommit -and $stateCommit -and
-            (($headCommit | Select-Object -First 1) -eq ($stateCommit | Select-Object -First 1))) {
-            $stateMatchesBranch = $true
-        }
+        & git merge-base --is-ancestor HEAD $stateBranch *> $null
+        if ($LASTEXITCODE -eq 0) { $stateMatchesBranch = $true }
     }
 }
 
