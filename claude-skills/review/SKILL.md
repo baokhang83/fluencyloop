@@ -21,10 +21,11 @@ scripts. The bundled CLI creates the deterministic files and returns their paths
 ## Local site — open once
 
 Before the first user-visible response, invoke
-`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" site --ensure --open --json`. If it reports `running: true`
-and no earlier assistant message in this session starts with `FluencyLoop site:`, say
-`FluencyLoop site: <url> (opened in browser).` once, using its returned URL. Do not mention an
-unavailable site or repeat the announcement. The CLI opens the browser safely for the loopback URL.
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" site --ensure --open-once --json`. This ensures the
+reader for every workflow entry, but opens a browser tab only once while that managed reader is
+alive. If it reports `running: true` and no earlier assistant message in this session starts with
+`FluencyLoop site:`, say `FluencyLoop site: <url> (opened in browser).` once, using its returned
+URL. Do not mention an unavailable site or repeat the announcement.
 
 ## Generated prose — ASD-STE100
 

@@ -23,10 +23,11 @@ scripts. The bundled CLI creates the deterministic files and returns their paths
 ## Local site — open once
 
 Before the first user-visible response, invoke
-`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" site --ensure --open --json`. If it reports `running: true`
-and no earlier assistant message in this session starts with `FluencyLoop site:`, say
-`FluencyLoop site: <url> (opened in browser).` once, using its returned URL. Do not mention an
-unavailable site or repeat the announcement. The CLI opens the browser safely for the loopback URL.
+`"${CLAUDE_PLUGIN_ROOT}/bin/fluencyloop" site --ensure --open-once --json`. This ensures the
+reader for every workflow entry, but opens a browser tab only once while that managed reader is
+alive. If it reports `running: true` and no earlier assistant message in this session starts with
+`FluencyLoop site:`, say `FluencyLoop site: <url> (opened in browser).` once, using its returned
+URL. Do not mention an unavailable site or repeat the announcement.
 
 ## Generated prose — ASD-STE100
 
@@ -486,9 +487,9 @@ type and write the file in one bounded pass. Do not ask the user to choose the s
 whether to proceed. The local site embeds that file directly below the overview prose through a
 sandboxed route. Make it one restrained system overview, not a duplicate of every record diagram.
 Keep `product.md` prose-only: do not add a Mermaid copy of the companion HTML. Confirm the file is
-nonempty, then use `fluencyloop site --ensure --open --json` to open the result when Node is
-available. The prose remains complete without the diagram and explains the same product shape in
-words.
+nonempty, then use `fluencyloop site --ensure --open-once --json` when Node is available. It makes
+the result available without opening a duplicate tab. The prose remains complete without the diagram
+and explains the same product shape in words.
 
 **Do not distill decisions.** Their why was taught and captured contemporaneously by
 `fluencyloop decision`; re-synthesising it is both less trustworthy and unnecessary token spend.

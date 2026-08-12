@@ -44,8 +44,8 @@ Work in one bounded pass:
    necessary, place it only in a clear lane: give its opaque background mask at least 8px of visible
    space from both the connector and every card. If no lane exists, omit the label or change the
    layout; do not shrink, clip, or place text beneath a card.
-5. Confirm the file is nonempty, then run `fluencyloop site --ensure --open --json` when available
-   so the reader opens at its local URL. Inspect the rendered result before handing off: every label
+5. Confirm the file is nonempty, then run `fluencyloop site --ensure --open-once --json` when
+   available so the reader can show it without opening a duplicate tab. Inspect the rendered result before handing off: every label
    must be readable, with no text behind a card, connector overlap, or viewBox clipping. Do not
    block the feature if Node is unavailable; say that the prose is available and the diagram will
    appear when the optional site can run.

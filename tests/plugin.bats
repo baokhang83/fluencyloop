@@ -50,9 +50,9 @@ assert "Test-Path -LiteralPath $hook -PathType Leaf" in handler["commandWindows"
 assert (dist / "hooks" / "refresh-marketplace.sh").is_file()
 assert (dist / "hooks" / "refresh-marketplace.ps1").is_file()
 assert "ensure_local_site" in read_text(dist / "hooks" / "refresh-marketplace.sh")
-assert "site --ensure --open --json" in read_text(dist / "hooks" / "refresh-marketplace.sh")
+assert "site --ensure --open-once --json" in read_text(dist / "hooks" / "refresh-marketplace.sh")
 assert "Ensure-LocalSite" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
-assert "site --ensure --open --json" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
+assert "site --ensure --open-once --json" in read_text(dist / "hooks" / "refresh-marketplace.ps1")
 end_handler, = hooks["hooks"]["SessionEnd"][0]["hooks"]
 assert end_handler["type"] == "command"
 assert "--session-end" in end_handler["command"]
@@ -76,10 +76,10 @@ for alias, source in {
     assert "~/.local/bin/fluencyloop" in source_text
     assert "Invoke `fluencyloop …` directly" in source_text
     assert "## Local site — open once" in alias_text
-    assert "site --ensure --open --json" in alias_text
+    assert "site --ensure --open-once --json" in alias_text
     assert "FluencyLoop site: <url>" in alias_text
     assert "## Local site — open once" in source_text
-    assert "site --ensure --open --json" in source_text
+    assert "site --ensure --open-once --json" in source_text
     assert "FluencyLoop site: <url>" in source_text
     assert "## Generated prose — ASD-STE100" in alias_text
     assert "## Generated prose — ASD-STE100" in source_text
@@ -90,8 +90,8 @@ for alias, source in {
         assert "Apply this style to live decision-boundary teaching" in source_text
 router_text = read_text(dist / "skills" / "fluencyloop" / "SKILL.md")
 assert "## Local site — open once" in router_text
-assert "site --ensure --open --json" in router_text
-assert "Fast Path above\nremains exempt" in router_text
+assert "site --ensure --open-once --json" in router_text
+assert "Literal CLI Fast Path above remains exempt" in router_text
 feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in feature_text
 assert "state_matches_branch" in feature_text
@@ -176,7 +176,7 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "diagram fast path**. Give it" in feature_skill_text
     assert "Do not ask the user to choose the style, type, or" in feature_skill_text
     assert "Keep `product.md` prose-only" in feature_skill_text
-    assert "site --ensure --open --json" in feature_skill_text
+    assert "site --ensure --open-once --json" in feature_skill_text
     assert "**Do not distill decisions.**" in feature_skill_text
     assert "person-neutral" in feature_skill_text
 for diagram_skill_text in [
@@ -435,7 +435,7 @@ PY
     [ -z "$output" ]
     run cat "$calls"
     [ "$status" -eq 0 ]
-    [ "$output" = 'site --ensure --open --json' ]
+    [ "$output" = 'site --ensure --open-once --json' ]
 }
 
 @test "startup hook ensures a site when CLAUDE_PLUGIN_ROOT is the flattened repo root" {
@@ -453,7 +453,7 @@ PY
     [ -z "$output" ]
     run cat "$calls"
     [ "$status" -eq 0 ]
-    [ "$output" = 'site --ensure --open --json' ]
+    [ "$output" = 'site --ensure --open-once --json' ]
 }
 
 @test "session hooks acquire and release a site lease from the host session id" {
@@ -473,7 +473,7 @@ PY
 
     run cat "$calls"
     [ "$status" -eq 0 ]
-    [ "$output" = $'site --session-start codex-session --json\nsite --ensure --open --json\nsite --session-end codex-session --json' ]
+    [ "$output" = $'site --session-start codex-session --json\nsite --ensure --open-once --json\nsite --session-end codex-session --json' ]
 }
 
 @test "startup hook does not ensure a site in a non-FluencyLoop repository" {

@@ -278,13 +278,13 @@ PY
 @test "managed site opens the ensured loopback reader on request" {
     setup_initialized_repo
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
-    [ "$(uname -s)" = "Linux" ] || skip "browser-opener interception is Linux-specific"
+    case "$(uname -s)" in Linux) opener_name=xdg-open ;; Darwin) opener_name=open ;; *) skip "browser-opener interception is unsupported" ;; esac
     export FLUENCYLOOP_HOME="$BATS_TEST_TMPDIR/managed-home-$RANDOM"
     opener_dir="$BATS_TEST_TMPDIR/browser-opener-$RANDOM"
     opened_url="$BATS_TEST_TMPDIR/opened-url-$RANDOM"
     mkdir -p "$opener_dir"
-    printf '#!/usr/bin/env bash\nprintf %%s "$1" > "%s"\n' "$opened_url" > "$opener_dir/xdg-open"
-    chmod +x "$opener_dir/xdg-open"
+    printf '#!/usr/bin/env bash\nprintf %%s "$1" > "%s"\n' "$opened_url" > "$opener_dir/$opener_name"
+    chmod +x "$opener_dir/$opener_name"
     MANAGED_SITE=true
 
     run env PATH="$opener_dir:$PATH" bash "$DIST/fluencyloop" site --ensure --open --port 0 --json
@@ -296,6 +296,33 @@ PY
         sleep 0.1
     done
     [ "$(cat "$opened_url")" = "$expected_url" ]
+}
+
+@test "managed site opens once when successive workflow entries request it" {
+    setup_initialized_repo
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    case "$(uname -s)" in Linux) opener_name=xdg-open ;; Darwin) opener_name=open ;; *) skip "browser-opener interception is unsupported" ;; esac
+    export FLUENCYLOOP_HOME="$BATS_TEST_TMPDIR/managed-home-$RANDOM"
+    opener_dir="$BATS_TEST_TMPDIR/browser-opener-$RANDOM"
+    opened_urls="$BATS_TEST_TMPDIR/opened-urls-$RANDOM"
+    mkdir -p "$opener_dir"
+    printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$1" >> "%s"\n' "$opened_urls" > "$opener_dir/$opener_name"
+    chmod +x "$opener_dir/$opener_name"
+    MANAGED_SITE=true
+
+    run env PATH="$opener_dir:$PATH" bash "$DIST/fluencyloop" site --ensure --open-once --port 0 --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and d["browser_opened"],d'
+
+    run env PATH="$opener_dir:$PATH" bash "$DIST/fluencyloop" site --ensure --open-once --json
+    [ "$status" -eq 0 ]
+    printf '%s' "$output" | python3 -c 'import json,sys;d=json.load(sys.stdin);assert d["running"] and not d["browser_opened"],d'
+
+    for attempt in $(seq 1 50); do
+        [ -f "$opened_urls" ] && [ "$(wc -l < "$opened_urls")" -eq 1 ] && break
+        sleep 0.1
+    done
+    [ "$(wc -l < "$opened_urls")" -eq 1 ]
 }
 
 @test "managed site stays up for concurrent agent sessions, then idles after the last one ends" {
