@@ -31,6 +31,17 @@ Describe 'check.ps1' {
         $j.state_branch | Should -Be 'feature/001-add-search'
     }
 
+    It 'accepts a detached checkout at the recorded feature tip' {
+        $script:repo = Initialize-TestRepo
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add search' | Out-Null
+        git checkout -q --detach HEAD
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 0
+        $j = Get-FlJson 'check.ps1' '--json'
+        $j.branch | Should -Be 'HEAD'
+        $j.detached_head | Should -BeTrue
+        $j.state_matches_branch | Should -BeTrue
+    }
+
     It 'constitution states: present and pointer' {
         $script:repo = Initialize-TestRepo
         $c = "$script:repo/docs/fluencyloop/constitution.md"

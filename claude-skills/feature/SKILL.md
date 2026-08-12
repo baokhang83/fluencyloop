@@ -63,6 +63,14 @@ in the current project directory when needed, then creates FluencyLoop's state. 
 continuing. Only stop if `init` itself fails. Do not hand-create `.fluencyloop`, `docs`, or
 `.claude/skills`.
 
+**Reattach a safe detached checkout.** If `branch` is `HEAD`, `state_matches_branch` is `true`,
+and `state_branch` is nonempty, this is the exact recorded feature tip, not a split. Run `git
+status --porcelain`. If it is empty, run `git checkout <state_branch>`, then rerun the bundled
+`fluencyloop check --json` before any work. If it is not empty, stop and state that the detached
+checkout has changes which must be resolved before it can be reattached. Do not write records or
+start a new feature while detached. `check` deliberately treats only the exact branch tip this
+way; any other detached commit remains a split.
+
 **Refuse split state.** Parse `state_matches_branch` from the bundled `fluencyloop check --json`
 before any calibration, feature declaration, session, or writer command. If it is `false`, stop
 immediately: state the checkout branch and `state_branch`, and ask the developer which existing
@@ -356,8 +364,11 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    `documented`; use `follow-up` only when appropriate. Separate it from decisions: a role you
    explained is knowledge transfer even if no fork was chosen. **About the work, never the
    person** — no competence, prior knowledge, or "who learned what" (committed files, GDPR); the
-   per-developer picture lives only in the calibration profile. Escape a literal `|` as `\|` and a
-   literal backslash as `\\`.
+   per-developer picture lives only in the calibration profile. Compose and validate every value
+   before the one batched call: each `--component` has exactly three or four **nonempty**
+   pipe-separated fields and each `--gotcha` has exactly two **nonempty** fields. Omit a field
+   instead of emitting `||`. Escape a literal `|` as `\|` and a literal backslash as `\\`. Do not
+   run incomplete, bare, or trial `fluencyloop knowledge` commands to discover this syntax.
    - **Decisions** *(the script formats them — you supply only the field values)* — for each, run
      `fluencyloop decision` so the block is assembled deterministically; never hand-write the
      bullet schema:
@@ -450,6 +461,14 @@ Never distill during a slice, after a decision, or as a turn-by-turn summary: th
 and the store records already carry that detail. Read `fluencyloop calibration show --json` now,
 at distillation time, and pitch the prose to the developer's recorded level in the relevant
 domain:
+
+**Make the coverage decision explicit.** Re-read the feature's completed slices before writing.
+If they establish or change a product idea that a new joiner needs to hold, append its
+architectural record with one to three useful tags and create its explanation. If they establish
+the project's initial product shape or materially change its problem, shape, or major flow,
+refresh `product.md`. The first material feature is never an excuse to leave both blank. A wholly
+local feature may omit those two artifacts, but say why in the hand-off rather than silently
+skipping the decision.
 
 - `fluent` / `familiar`: concise product-level prose; name the load-bearing change without
   re-teaching fundamentals.

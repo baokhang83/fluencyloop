@@ -31,6 +31,18 @@ load test_helper
     [ "$(echo "$output" | json_field state_branch)" = "feature/001-add-search" ]
 }
 
+@test "check accepts a detached checkout at the recorded feature tip" {
+    setup_initialized_repo
+    bash "$BIN/new-feature.sh" "add search" >/dev/null
+    git checkout -q --detach HEAD
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | json_field branch)" = "HEAD" ]
+    [ "$(echo "$output" | json_field detached_head)" = "True" ] || [ "$(echo "$output" | json_field detached_head)" = "true" ]
+    [ "$(echo "$output" | json_field state_matches_branch)" = "True" ] || [ "$(echo "$output" | json_field state_matches_branch)" = "true" ]
+}
+
 @test "check: constitution states - present and pointer" {
     setup_initialized_repo
     printf '# Constitution\n\n## Principles\n\n### §1 — no sync calls in the request path\n' \

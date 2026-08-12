@@ -110,6 +110,9 @@ $rest = @()
 if ($args.Count -gt 1) { $rest = @($args[1..($args.Count - 1)]) }
 
 switch ($sub) {
+    'help' { FlOut 'Usage: fluencyloop calibration [init | show [--json] | edit | signal <dim> <wave|deeper|correct> | compact [--dry-run]]' }
+    '-h' { FlOut 'Usage: fluencyloop calibration [init | show [--json] | edit | signal <dim> <wave|deeper|correct> | compact [--dry-run]]' }
+    '--help' { FlOut 'Usage: fluencyloop calibration [init | show [--json] | edit | signal <dim> <wave|deeper|correct> | compact [--dry-run]]' }
     'init' {
         if (Test-Path -LiteralPath $CAL) { FlOut "Calibration profile already exists: $CAL" }
         else { Seed; FlOut "Created calibration profile: $CAL" }
