@@ -217,6 +217,21 @@ PY
     [[ "$output" == *"404"* ]]
 }
 
+@test "site keeps indented Markdown list continuations in their list item" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/distillations"
+    printf '%s\n' '# Product overview' '**Shape:**' \
+        '- `AppComponent` is a pure two-column layout host; it lays the list and detail panels side by' \
+        '  side and owns no state of its own.' > "$TESTREPO/docs/fluencyloop/distillations/product.md"
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'<li><code>AppComponent</code> is a pure two-column layout host; it lays the list and detail panels side by side and owns no state of its own.</li>'* ]]
+    [[ "$output" != *'</li></ul><p>side and owns no state of its own.</p>'* ]]
+}
+
 @test "site tries the next loopback port when the default is busy" {
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo

@@ -374,12 +374,23 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
      it to the global concept stream. Do this selectively, never once per feature as a ritual:
 
      ```bash
-     fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" [--realized-by "<...>" ...]
+     fluencyloop concept --name "<concept>" --problem "<product-specific problem>" --how "<how it works>" --realized-by "<component|file|area>" --tag "<well-known category>" [--tag "<second category>" ...]
      fluencyloop concept --relate "<from>|<to>|<kind>"
      ```
 
      Re-stating a name records the refined concept; use relations to connect concepts to each
      other, their realizing components, or the feature that changed them.
+
+     **Tags are mandatory for every new architectural record.** Choose one to three `--tag` values
+     *before* you call the writer; never append an untagged record with an intention to repair it
+     later. Tags name the widely-known ideas the record is an instance of — at most three words
+     each, naming the general pattern rather than restating the concept (`append-only log`, `event
+     sourcing`, `read model`, `idempotency`, `cache invalidation`). The concept name is this
+     product's own vocabulary, which a newcomer has never seen; the tags are what lets them attach
+     it to something they already know, and are what the local site filters on. If you cannot name
+     a meaningful familiar category, it is not an architectural record yet: record the work as a
+     decision or knowledge item instead. Existing imported records may remain untagged; this rule
+     applies to new records created during a live feature.
 
 4. **Log the engagement signal** *(cheap: one append, no level-guessing)*. Levels *adapt from
    demonstrated engagement* — you don't hand-edit them each slice. For each decision you just

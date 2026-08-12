@@ -314,6 +314,9 @@ for path in [
     assert "append one matching `fluencyloop principle` record" in text
     assert "Before citing an existing `§N`" in text
     assert "Never create a placeholder principle" in text
+    assert "Tags are mandatory for every new architectural record." in text
+    assert "never append an untagged record" in text
+    assert "it is not an architectural record yet" in text
 for path in [
     dist / "skills" / "review" / "SKILL.md",
     root / "claude-skills" / "review" / "SKILL.md",
