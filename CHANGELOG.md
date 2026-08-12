@@ -2,6 +2,21 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.4
+
+### Added
+
+- The product overview now renders the recorded project constitution. It shows only meaningful
+  initiative constraints and no longer exposes raw distillation file paths.
+
+### Fixed
+
+- Wrapped Markdown list items now render as one continuous list item in the local reader.
+- New architectural records created by Claude Code or Codex must include one to three familiar
+  category tags, so the local reader can filter them consistently.
+- The managed local reader opens one browser tab for its lifetime. Session start and later workflow
+  stages reuse that tab instead of opening duplicates.
+
 ## 0.3.3
 
 ### Added
