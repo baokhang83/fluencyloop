@@ -754,9 +754,11 @@ function prose(content) {
     list = [];
   };
   for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index].trim();
+    const rawLine = lines[index];
+    const line = rawLine.trim();
     const heading = /^(#{1,6})\s+(.+)$/.exec(line);
     const item = /^[-*]\s+(.+)$/.exec(line);
+    const continuation = /^\s{2,}(.+)$/.exec(rawLine);
     if (!line) { flushParagraph(); flushList(); continue; }
     if (heading) {
       flushParagraph(); flushList();
@@ -768,6 +770,12 @@ function prose(content) {
       continue;
     }
     if (item) { flushParagraph(); list.push(item[1]); continue; }
+    // Markdown allows a list item to wrap onto indented continuation lines. Treating one as a
+    // fresh paragraph visibly cuts a sentence in two on the reader page.
+    if (continuation && list.length) {
+      list[list.length - 1] += ` ${continuation[1].trim()}`;
+      continue;
+    }
     flushList();
     paragraph.push(line);
   }
