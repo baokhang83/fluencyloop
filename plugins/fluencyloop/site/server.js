@@ -554,6 +554,10 @@ function sortByLabel(records) {
   return [...records].sort((left, right) => recordLabel(left).localeCompare(recordLabel(right)));
 }
 
+function sortPrinciples(records) {
+  return [...records].sort((left, right) => Number(String(left.number).slice(1)) - Number(String(right.number).slice(1)));
+}
+
 function distillationIndex(distillations) {
   const index = new Map();
   for (const item of distillations) index.set(item.path, item);
@@ -644,6 +648,7 @@ function buildNavigation(data) {
     })),
     features: featureList,
     relations,
+    principles: sortPrinciples(byType(records, 'principle').filter((item) => item.feature === 'global')),
     requirements: sortByLabel(byType(records, 'requirement').filter((item) => item.feature === 'global')),
     openQuestions: sortByLabel(byType(records, 'open_question').filter((item) => item.feature === 'global')),
     hasCapturedHistoryWithoutConcepts: hasCapturedHistoryWithoutConcepts(records),
@@ -994,6 +999,14 @@ function renderConstraints(requirements, openQuestions) {
   return `<h3>Requirements</h3>${answered}<h3>Open questions</h3>${open}`;
 }
 
+function renderPrinciples(principles) {
+  return `<ol class="principle-list">${principles.map((principle) => `<li>
+    <div class="principle-heading"><span class="principle-number">${escapeHtml(principle.number)}</span><h3>${escapeHtml(principle.title)}</h3></div>
+    <p class="principle-rule">${escapeHtml(principle.rule)}</p>
+    <p class="principle-why"><span>Why</span> ${escapeHtml(principle.why)}</p>
+  </li>`).join('')}</ol>`;
+}
+
 function renderProduct(data) {
   const navigation = data.navigation;
   const concepts = recordList(
@@ -1012,16 +1025,19 @@ function renderProduct(data) {
   const overviewDiagram = overviewCompanion?.path
     ? `<figure class="record-diagram overview-diagram"><iframe src="/overview/diagram" title="${escapeHtml(overviewCompanion.alt)}" sandbox loading="lazy" referrerpolicy="no-referrer"></iframe><figcaption>${escapeHtml(overviewCompanion.alt)}</figcaption></figure>`
     : overviewCompanion?.unavailable ? `<aside class="diagram-unavailable" role="note"><strong>Diagram unavailable.</strong><p>${escapeHtml(overviewCompanion.unavailable)}</p></aside>` : '';
-  const distillations = data.distillations.length
-    ? `<ul class="path-list">${data.distillations.map((item) => `<li><code>${escapeHtml(item.path)}</code></li>`).join('')}</ul>`
-    : emptyState('No distillations have been written yet.');
+  const constitution = navigation.principles.length
+    ? `<section><h2>Constitution</h2>${renderPrinciples(navigation.principles)}</section>`
+    : '';
+  const initiativeConstraints = navigation.requirements.length || navigation.openQuestions.length
+    ? `<section><h2>Initiative constraints</h2>${renderConstraints(navigation.requirements, navigation.openQuestions)}</section>`
+    : '';
   return layout(data, 'Product overview', `
     <header class="record-header"><p class="eyebrow">Product overview</p><h1>${escapeHtml(data.project)}</h1></header>
     <section><h2>Technical overview</h2>${overview}${overviewDiagram}</section>
+    ${constitution}
     <section><h2>Architectural records</h2>${concepts}</section>
     <section><h2>Features as deltas</h2>${features}</section>
-    <section><h2>Initiative constraints</h2>${renderConstraints(navigation.requirements, navigation.openQuestions)}</section>
-    <section><h2>Available distillations</h2>${distillations}</section>
+    ${initiativeConstraints}
   `);
 }
 
