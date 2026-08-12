@@ -2,6 +2,17 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.5
+
+### Fixed
+
+- `fluencyloop calibration --help` now succeeds in both runtimes instead of reporting a usage
+  error.
+- A feature workflow now recognizes a detached checkout at the exact active feature-branch tip,
+  reattaches it before work, and keeps genuine detached history as a state conflict.
+- Claude Code and Codex validate batched knowledge records before writing them and explicitly
+  complete architectural-record and product-overview coverage at feature hand-off.
+
 ## 0.3.4
 
 ### Added
