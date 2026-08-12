@@ -63,6 +63,12 @@ assert "bogus" not in d, d                    # invalid level excluded
     [ "$status" -ne 0 ]
 }
 
+@test "--help prints calibration usage successfully" {
+    run cal --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Usage: fluencyloop calibration"* ]]
+}
+
 # --- signals + compact (demonstrated-engagement adaptation) ---------------
 
 level_of() { cal show --json | python3 -c "import json,sys;print(json.load(sys.stdin).get('$1',''))"; }

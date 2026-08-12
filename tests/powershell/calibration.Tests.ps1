@@ -47,6 +47,11 @@ Describe 'calibration.ps1' {
         (Invoke-FlExit 'calibration.ps1' 'frobnicate') | Should -Not -Be 0
     }
 
+    It '--help prints calibration usage successfully' {
+        (Invoke-FlExit 'calibration.ps1' '--help') | Should -Be 0
+        (Invoke-Fl 'calibration.ps1' '--help') | Should -Match 'Usage: fluencyloop calibration'
+    }
+
     It 'signal appends to the ledger; a calibration level is rejected as a signal' {
         & $script:PwshExe -NoProfile -File "$script:Bin/calibration.ps1" 'init' | Out-Null
         & $script:PwshExe -NoProfile -File "$script:Bin/calibration.ps1" 'signal' 'java' 'wave' | Out-Null

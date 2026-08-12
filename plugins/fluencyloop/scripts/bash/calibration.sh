@@ -121,6 +121,9 @@ reset_signals() {
 SUB="${1:-show}"; shift || true
 
 case "$SUB" in
+    help|-h|--help)
+        echo "Usage: fluencyloop calibration [init | show [--json] | edit | signal <dim> <wave|deeper|correct> | compact [--dry-run]]"
+        ;;
     init)
         if [ -f "$CAL" ]; then echo "Calibration profile already exists: $CAL"
         else seed; echo "Created calibration profile: $CAL"; fi

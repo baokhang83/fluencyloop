@@ -42,8 +42,18 @@ STAGE="$(state_get stage)"
 BASE="$(state_get base_ref)"; [ -z "$BASE" ] && BASE="main"
 LAST_SESSION="$(state_get last_session)"
 STATE_MATCHES_BRANCH=true
+DETACHED_HEAD=false
+[ "$BRANCH" = "HEAD" ] && DETACHED_HEAD=true
 if [ -n "$STATE_BRANCH" ] && [ -n "$BRANCH" ] && [ "$STATE_BRANCH" != "$BRANCH" ]; then
-    STATE_MATCHES_BRANCH=false
+    # A detached checkout at the recorded branch tip is a recoverable transport state (for
+    # example after an agent has checked out a commit). It is not a conflicting feature context.
+    # Do not accept an arbitrary ancestor: attaching to it could silently discard newer branch work.
+    if $DETACHED_HEAD && git show-ref --verify --quiet "refs/heads/$STATE_BRANCH" \
+        && [ "$(git rev-parse HEAD 2>/dev/null || true)" = "$(git rev-parse "$STATE_BRANCH" 2>/dev/null || true)" ]; then
+        : # The feature skill reattaches this exact, clean branch tip before it writes work.
+    else
+        STATE_MATCHES_BRANCH=false
+    fi
 fi
 
 # --- un-journaled drift: commits since the last committed session record. Before the first
@@ -249,12 +259,13 @@ if [ -n "$STORE_ROOT" ] && [ -d "$STORE_ROOT" ]; then
 fi
 
 if $JSON_MODE; then
-    printf '{"git_repo":%s,"fluency":%s,"legacy_imported_features":%s,"legacy_migration_pending":%s,"branch":"%s","state_branch":"%s","state_matches_branch":%s,"feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"node":%s,"constitution":"%s","store_errors":[%s]}\n' \
+    printf '{"git_repo":%s,"fluency":%s,"legacy_imported_features":%s,"legacy_migration_pending":%s,"branch":"%s","detached_head":%s,"state_branch":"%s","state_matches_branch":%s,"feature":"%s","stage":"%s","base_ref":"%s","last_session":"%s","unjournaled_commits":%s,"calibration":%s,"node":%s,"constitution":"%s","store_errors":[%s]}\n' \
         "$IN_GIT_REPO" \
         "$FLUENCY_PRESENT" \
         "$LEGACY_IMPORTED_FEATURES" \
         "$LEGACY_MIGRATION_PENDING" \
         "$(json_escape "$BRANCH")" \
+        "$DETACHED_HEAD" \
         "$(json_escape "$STATE_BRANCH")" \
         "$STATE_MATCHES_BRANCH" \
         "$(json_escape "$FEATURE")" \

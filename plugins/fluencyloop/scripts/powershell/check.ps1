@@ -30,6 +30,20 @@ $stage = FlStateGet 'stage'
 $base = FlStateGet 'base_ref'; if (-not $base) { $base = 'main' }
 $lastSession = FlStateGet 'last_session'
 $stateMatchesBranch = (-not $stateBranch) -or (-not $branch) -or ($stateBranch -eq $branch)
+$detachedHead = $branch -eq 'HEAD'
+if (-not $stateMatchesBranch -and $detachedHead) {
+    # Treat only the exact recorded branch tip as recoverable. An arbitrary ancestor could be an
+    # intentional historical checkout, so it remains a real split state requiring user direction.
+    & git show-ref --verify --quiet "refs/heads/$stateBranch" *> $null
+    if ($LASTEXITCODE -eq 0) {
+        $headCommit = & git rev-parse HEAD 2>$null
+        $stateCommit = & git rev-parse $stateBranch 2>$null
+        if ($LASTEXITCODE -eq 0 -and $headCommit -and $stateCommit -and
+            (($headCommit | Select-Object -First 1) -eq ($stateCommit | Select-Object -First 1))) {
+            $stateMatchesBranch = $true
+        }
+    }
+}
 
 # Un-journaled drift: commits since the last committed session record; else since base. Legacy
 # session markdown remains a read-only fallback for projects that have not imported it yet.
@@ -188,6 +202,7 @@ if ($jsonMode) {
             ',"legacy_imported_features":' + $legacyImportedFeatures +
             ',"legacy_migration_pending":' + $legacyMigrationPending.ToString().ToLowerInvariant() +
             ',"branch":"' + (FlJsonEscape $branch) + '"' +
+            ',"detached_head":' + $detachedHead.ToString().ToLowerInvariant() +
             ',"state_branch":"' + (FlJsonEscape $stateBranch) + '"' +
             ',"state_matches_branch":' + $stateMatchesBranch.ToString().ToLowerInvariant() +
             ',"feature":"' + (FlJsonEscape $feature) + '"' +

@@ -96,6 +96,8 @@ feature_text = read_text(root / "claude-skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in feature_text
 assert "state_matches_branch" in feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in feature_text
+assert "Reattach a safe detached checkout." in feature_text
+assert "git checkout <state_branch>" in feature_text
 assert "Resume preconditions after the answer." in feature_text
 assert "Immediately rerun `fluencyloop check --json`" in feature_text
 assert "**Migrate imported history before normal feature work.**" in feature_text
@@ -117,6 +119,8 @@ codex_feature_text = read_text(dist / "skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in codex_feature_text
 assert "state_matches_branch" in codex_feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in codex_feature_text
+assert "Reattach a safe detached checkout." in codex_feature_text
+assert "git checkout <state_branch>" in codex_feature_text
 assert "Resume preconditions after the answer." in codex_feature_text
 assert "Immediately rerun `fluencyloop check --json`" in codex_feature_text
 assert "complete the mandatory migration before calibration, preferences, ticket numbering" in codex_feature_text
@@ -146,6 +150,10 @@ assert "topic-specific question" in codex_feature_text
 assert "standalone comprehension question" not in codex_feature_text
 assert "do not run another implementation" in codex_feature_text
 for feature_skill_text in [feature_text, codex_feature_text]:
+    assert "exactly three or four **nonempty**" in feature_skill_text
+    assert "Do not\n   run incomplete, bare, or trial `fluencyloop knowledge`" in feature_skill_text
+    assert "Make the coverage decision explicit." in feature_skill_text
+    assert "The first material feature is never an excuse" in feature_skill_text
     assert "Understanding checks are self-report, never quizzes" in feature_skill_text
     assert "Do you understand this explanation, or should I clarify anything?" in feature_skill_text
     assert 'explaining it "in your own' in feature_skill_text
