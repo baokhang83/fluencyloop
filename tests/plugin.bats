@@ -175,6 +175,8 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "docs/fluencyloop/distillations/" in feature_skill_text
     assert "**Feature delta**" in feature_skill_text
     assert "**no overview rewrite**" in feature_skill_text
+    assert "do not add a `Related concepts` / `Related" in feature_skill_text
+    assert "raw file references add no explanation" in feature_skill_text
     assert "when this feature newly establishes a concept" in feature_skill_text
     assert "### Optional explanatory diagrams" in feature_skill_text
     assert "docs/fluencyloop/diagrams/product-overview.html" in feature_skill_text

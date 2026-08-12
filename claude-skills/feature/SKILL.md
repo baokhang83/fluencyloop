@@ -487,7 +487,10 @@ Write and commit at most these Markdown distillations under
    concepts and behavior, never as a file list.
 2. **Product overview** — refresh `product.md` only when this feature materially changes the
    product's problem, shape, or major flow. A feature that changes nothing at that altitude gets
-   **no overview rewrite**.
+   **no overview rewrite**. Keep it self-contained: do not add a `Related concepts` / `Related
+   records` section or Markdown links to record files. The reader's Records navigation already
+   provides that traversal; raw file references add no explanation and can appear as literal
+   Markdown in its deliberately small prose renderer.
 3. **Concept explanation** — when this feature newly establishes a concept, create
    `concepts/<concept-slug>.md`; revise an existing explanation only when a feature decision contradicts
    it. Do not create a concept explanation merely because the feature touched a concept.
