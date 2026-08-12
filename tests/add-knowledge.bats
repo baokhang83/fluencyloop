@@ -39,6 +39,25 @@ for record in records:
 PY
 }
 
+@test "accepts explicit fields without a pipe escape grammar" {
+    before="$(wc -l < "$STORE")"
+    run knowledge \
+        --component "C:\\work\\app.config.ts" --role "holds app providers | startup config" --conditions "loaded before bootstrap" \
+        --component "Dog list" --role "renders choices" --conditions "uses the current selection" --status follow-up \
+        --gotcha "selection | routing" --why "a normal Windows path C:\\work must stay literal"
+    [ "$status" -eq 0 ]
+    [ "$(wc -l < "$STORE")" -eq $((before + 3)) ]
+    python3 - "$STORE" <<'PY'
+import json, sys
+records = [json.loads(line) for line in open(sys.argv[1])][-3:]
+assert records[0]['name'] == r'C:\work\app.config.ts'
+assert records[0]['role'] == 'holds app providers | startup config'
+assert records[1]['status'] == 'follow-up'
+assert records[2]['subject'] == 'selection | routing'
+assert records[2]['why'] == r'a normal Windows path C:\work must stay literal'
+PY
+}
+
 @test "escaped pipes and backslashes round-trip through both record kinds" {
     run knowledge \
         --component 'cache\|fallback|uses \\ local state|after a miss' \

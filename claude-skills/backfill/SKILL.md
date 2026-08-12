@@ -3,7 +3,7 @@ name: backfill
 description: 'FluencyLoop safety net. Reconstruct store records for work that shipped without going through the loop — reads a merged diff, records the feature, session, decisions, knowledge, and architectural concepts, and defaults reconstructed decisions to unverified. Use post-merge, or when the user says "fluencyloop backfill", "document this PR after the fact", or "we skipped the loop on this one".'
 ---
 
-# fluencyloop-backfill — reconstruct, make fluent, then flag
+# /fluencyloop:backfill — reconstruct, make fluent, then flag
 
 FluencyLoop never blocks a merge. The safety net for work that skipped the loop is
 **post-merge backfill**: it gives ad-hoc work a home retroactively. Backfilled rationale

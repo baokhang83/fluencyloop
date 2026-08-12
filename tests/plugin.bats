@@ -114,6 +114,8 @@ assert "Create PR bodies through a file." in feature_text
 assert "never exclude the\n  completed legacy migration" in feature_text
 assert "If `git_repo` or `fluency` is" in feature_text
 assert "without asking the developer" in feature_text
+assert "Report real entry points after a fresh init." in feature_text
+assert "`fluencyloop plan \"<intent>\"` or `/fluencyloop:plan`" in feature_text
 assert "`store` must be a path under `docs/fluencyloop/`" in feature_text
 codex_feature_text = read_text(dist / "skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in codex_feature_text
@@ -142,6 +144,8 @@ assert "without a teaching turn" in codex_feature_text
 assert "### Codex design teaching gate - before implementation" in codex_feature_text
 assert "conversation pause, not a build or merge gate" in codex_feature_text
 assert "request sandbox elevation before its first" in codex_feature_text
+assert "Report real entry points after a fresh init." in codex_feature_text
+assert "`fluencyloop plan \"<intent>\"` or `/fluencyloop:plan`" in codex_feature_text
 assert "never make explanation sound like a burden" in codex_feature_text
 assert "I am not comfortable" in codex_feature_text
 assert "Understanding checks are self-report, never quizzes" in codex_feature_text
@@ -150,8 +154,9 @@ assert "topic-specific question" in codex_feature_text
 assert "standalone comprehension question" not in codex_feature_text
 assert "do not run another implementation" in codex_feature_text
 for feature_skill_text in [feature_text, codex_feature_text]:
-    assert "exactly three or four **nonempty**" in feature_skill_text
-    assert "Do not\n   run incomplete, bare, or trial `fluencyloop knowledge`" in feature_skill_text
+    assert "Use the explicit-field form above" in feature_skill_text
+    assert "accepts pipes and Windows paths unchanged" in feature_skill_text
+    assert "do not run incomplete, bare, or trial `fluencyloop knowledge`" in feature_skill_text
     assert "Make the coverage decision explicit." in feature_skill_text
     assert "The first material feature is never an excuse" in feature_skill_text
     assert "Understanding checks are self-report, never quizzes" in feature_skill_text
@@ -181,8 +186,8 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "### Product-overview diagram decision" in feature_skill_text
     assert "before drafting the overview" in feature_skill_text
     assert "Do not wait for the user to suggest a diagram" in feature_skill_text
-    assert "diagram fast path**. Give it" in feature_skill_text
-    assert "Do not ask the user to choose the style, type, or" in feature_skill_text
+    assert "**FluencyLoop native\nrenderer**" in feature_skill_text
+    assert "never edit its HTML" in feature_skill_text
     assert "Keep `product.md` prose-only" in feature_skill_text
     assert "site --ensure --open-once --json" in feature_skill_text
     assert "**Do not distill decisions.**" in feature_skill_text
@@ -192,23 +197,11 @@ for diagram_skill_text in [
     read_text(dist / "skills" / "diagram-design" / "SKILL.md"),
 ]:
     assert "## FluencyLoop embedded diagram fast path" in diagram_skill_text
-    assert "Do not load the full guide" in diagram_skill_text
-    assert "Load only that one type reference" in diagram_skill_text
-    assert "Use 4–7 nodes and 3–8 connectors" in diagram_skill_text
-    assert "do not add a Mermaid duplicate" in diagram_skill_text
-    assert "no Google Fonts `<link>`, remote `src`/`href`" in diagram_skill_text
-    assert "Keep the existing light palette as the default" in diagram_skill_text
-    assert "--diagram-canvas" in diagram_skill_text
-    assert ':root[data-fluencyloop-theme="dark"]' in diagram_skill_text
-    assert "do not use JavaScript or a system-preference media query" in diagram_skill_text
-    assert "For an **architecture** diagram, default to\n   unlabelled arrows" in diagram_skill_text
-    assert "label\n   every decision exit in a flowchart and every message in a sequence diagram" in diagram_skill_text
-    assert "Never abbreviate a\n   label merely to make it fit" in diagram_skill_text
-    assert "rounded orthogonal route" in diagram_skill_text
-    assert "Never overlap connector paths or reuse an attach point" in diagram_skill_text
-    assert "must never run behind a non-endpoint card" in diagram_skill_text
-    assert "8px of visible\n   space from both the connector and every card" in diagram_skill_text
-    assert "no text behind a card, connector overlap, or viewBox clipping" in diagram_skill_text
+    assert "native diagram renderer" in diagram_skill_text
+    assert "2–8 nodes and at most 10 edges" in diagram_skill_text
+    assert "Run exactly one `fluencyloop diagram` command" in diagram_skill_text
+    assert "Do not run Playwright, browser automation, screenshots" in diagram_skill_text
+    assert "Never edit its generated HTML" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),

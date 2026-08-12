@@ -3,7 +3,7 @@ name: feature
 description: 'FluencyLoop Stage 2–3. Declare a feature and build it while staying fluent: creates the feature branch, frames its concepts and relationships, then builds in slices, teaching the why of each real decision at the slice boundary and journaling it. Probes the concepts the work needs up front, adapts explanation depth to the developer''s knowledge, and builds/maintains a per-developer knowledge base in ~/.fluencyloop. Use when starting a new unit of work in a repo that has a .fluencyloop/ directory, or when the user says "fluencyloop feature", "start a feature", or describes something they want to build with FluencyLoop.'
 ---
 
-# fluencyloop-feature — declare a feature, build it fluent
+# /fluencyloop:feature — declare a feature, build it fluent
 
 This is the contributor's entry point. A **feature is a branch** (`feature/<slug>`); it owns
 its design reasoning and session journals. You will: (1) declare the feature, (2) frame its
@@ -62,6 +62,11 @@ in the current project directory when needed, then creates FluencyLoop's state. 
 `docs_dir`, and verify that it is the repository's `docs/fluencyloop` directory before
 continuing. Only stop if `init` itself fails. Do not hand-create `.fluencyloop`, `docs`, or
 `.claude/skills`.
+
+**Report real entry points after a fresh init.** Say that a larger initiative starts with
+`fluencyloop plan "<intent>"` or `/fluencyloop:plan`; one buildable unit starts with
+`fluencyloop feature "<intent>"` or `/fluencyloop:feature`. Never recommend the retired prose
+names `fluencyloop-plan`, `fluencyloop-feature`, `fluencyloop-review`, or `fluencyloop-backfill`.
 
 **Reattach a safe detached checkout.** If `branch` is `HEAD`, `state_matches_branch` is `true`,
 and `state_branch` is nonempty, this is the exact recorded feature tip, not a split. Run `git
@@ -353,9 +358,9 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
 
    ```bash
    fluencyloop knowledge \
-     --component "<name>|<role>|<conditions>" \
-     --component "<name>|<role>|<conditions>|follow-up" \
-     --gotcha "<subject>|<why it is this way or what breaks otherwise>"
+     --component "<name>" --role "<role>" --conditions "<conditions>" \
+     --component "<name>" --role "<role>" --conditions "<conditions>" --status follow-up \
+     --gotcha "<subject>" --why "<why it is this way or what breaks otherwise>"
    ```
 
    **Knowledge transfer** is still irreducible: make it **rich, not a token list**. Capture the
@@ -364,11 +369,10 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
    `documented`; use `follow-up` only when appropriate. Separate it from decisions: a role you
    explained is knowledge transfer even if no fork was chosen. **About the work, never the
    person** — no competence, prior knowledge, or "who learned what" (committed files, GDPR); the
-   per-developer picture lives only in the calibration profile. Compose and validate every value
-   before the one batched call: each `--component` has exactly three or four **nonempty**
-   pipe-separated fields and each `--gotcha` has exactly two **nonempty** fields. Omit a field
-   instead of emitting `||`. Escape a literal `|` as `\|` and a literal backslash as `\\`. Do not
-   run incomplete, bare, or trial `fluencyloop knowledge` commands to discover this syntax.
+   per-developer picture lives only in the calibration profile. Use the explicit-field form above:
+   quote each value normally; it accepts pipes and Windows paths unchanged. The old compact
+   pipe-delimited form remains only for compatibility. Compose the complete batch before one call;
+   do not run incomplete, bare, or trial `fluencyloop knowledge` commands to discover syntax.
    - **Decisions** *(the script formats them — you supply only the field values)* — for each, run
      `fluencyloop decision` so the block is assembled deterministically; never hand-write the
      bullet schema:
@@ -523,22 +527,22 @@ Choose the visual yourself from the implemented product shape:
 - Otherwise omit the diagram. A short hierarchy, list, or simple before/after statement remains
   prose or a table; never manufacture a visual merely because `product.md` exists.
 
-When it qualifies, load the bundled `diagram-design` skill and invoke its **FluencyLoop embedded
-diagram fast path**. Give it the exact output path and the one relationship to clarify; choose the
-type and write the file in one bounded pass. Do not ask the user to choose the style, type, or
-whether to proceed. The local site embeds that file directly below the overview prose through a
-sandboxed route. Make it one restrained system overview, not a duplicate of every record diagram.
-Keep `product.md` prose-only: do not add a Mermaid copy of the companion HTML. Confirm the file is
-nonempty, then use `fluencyloop site --ensure --open-once --json` when Node is available. It makes
-the result available without opening a duplicate tab. The prose remains complete without the diagram
-and explains the same product shape in words.
+When it qualifies, load the bundled `diagram-design` skill and use its **FluencyLoop native
+renderer**. Give it the output path, a bounded graph (2–8 concise nodes and at most 10 edges), and
+the matching linear, hub, or layered layout. Do not search the codebase for styling, read
+templates, invoke Playwright, take screenshots, inspect themes, or iterate on the diagram. The
+renderer owns geometry, routes, attachment points, dark theme, and no-scroll document height;
+never edit its HTML. If it rejects the graph, omit the overview diagram rather than escalating to
+general diagram design. The local site embeds its output through a sandboxed route. Keep `product.md` prose-only.
+Confirm the file is nonempty, then use
+`fluencyloop site --ensure --open-once --json` when Node is available.
 
 **Do not distill decisions.** Their why was taught and captured contemporaneously by
 `fluencyloop decision`; re-synthesising it is both less trustworthy and unnecessary token spend.
 Keep every distillation person-neutral: describe the product and its constraints, never a
 developer's competence, knowledge, or authorship.
 
-When the feature is ready for a PR, tell the user they can run **fluencyloop-review** to
+When the feature is ready for a PR, tell the user they can run **`/fluencyloop:review`** to
 assemble the reviewer-facing view from the sessions.
 
 **Check what's actually possible here first** — run `gh auth status`. If `gh` isn't installed or
@@ -549,7 +553,7 @@ open the PR (and file plan issues) for them — using the delivery rule above (*
 install from <https://cli.github.com> (pick the command that fits their OS — don't work from a
 hardcoded package-manager list) then `gh auth login`. If `gh` stays unavailable (declined or
 deferred), the hand-off is at most *commit + push*, and a PR can be opened later via
-`fluencyloop-review`. Only run the full **commit + push + open-PR** automation where `gh` works.
+`/fluencyloop:review`. Only run the full **commit + push + open-PR** automation where `gh` works.
 
 **Create PR bodies through a file.** Write the assembled Markdown to a temporary, untracked file
 and call `gh pr create --body-file <path>` (and `gh pr edit --body-file <path>` when correcting it).
@@ -563,8 +567,8 @@ The hand-off is a **behavioral pattern that recurs every feature** — so decide
 once per feature. Check `~/.fluencyloop/preferences.md` (loaded in §0):
 
 - **A preference is already recorded** — honor it silently, and **do not re-ask**. If it says
-  automatic, go ahead and commit + push + open the PR yourself (run fluencyloop-review first) at
-  completion; if manual, just point the user at fluencyloop-review and stop. Stage all
+  automatic, go ahead and commit + push + open the PR yourself (run `/fluencyloop:review` first) at
+  completion; if manual, just point the user at `/fluencyloop:review` and stop. Stage all
   `docs/fluencyloop/store/` records created in this worktree with the handoff; never exclude the
   completed legacy migration from the commit.
 - **No preference yet (this is the first feature)** — ask **exactly once**, via a single

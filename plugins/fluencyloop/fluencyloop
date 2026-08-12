@@ -24,6 +24,8 @@
 #   fluencyloop check [--json]             doctor: loop state + un-journaled drift
 #   fluencyloop site [--port <port>] [--ensure [--open|--open-once]|--status|--stop] [--json]
 #                                           serve or manage the local 0.3 site (requires Node.js 18+)
+#   fluencyloop diagram --output <path> --layout <linear|hub|layered> --node <id> --label <text> --detail <text> [--edge <from> <to> ...]
+#                                           render a bounded, self-contained site diagram (requires Node.js 18+)
 #   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
 #   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
 #   fluencyloop index                      regenerate docs/fluencyloop/README.md
@@ -122,6 +124,11 @@ start_site() {
     exec "$NODE_BIN" "$SELF/site/server.js" --root "$project_root" "$@"
 }
 
+render_diagram() {
+    require_node_for_site false || return 1
+    exec "$NODE_BIN" "$SELF/site/diagram-renderer.js" "$@"
+}
+
 cmd="${1:-help}"; shift || true
 case "$cmd" in
     init)     exec bash "$BIN/init.sh" "$@" ;;
@@ -138,6 +145,7 @@ case "$cmd" in
     review)   exec bash "$BIN/assemble-pr-view.sh" "$@" ;;
     check)    exec bash "$BIN/check.sh" "$@" ;;
     site)     start_site "$@" ;;
+    diagram)  render_diagram "$@" ;;
     slice-context) exec bash "$BIN/slice-context.sh" "$@" ;;
     calibration) exec bash "$BIN/calibration.sh" "$@" ;;
     index)    exec bash "$BIN/index.sh" "$@" ;;
