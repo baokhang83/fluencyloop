@@ -42,6 +42,31 @@ Describe 'check.ps1' {
         $j.state_matches_branch | Should -BeTrue
     }
 
+    It 'accepts a detached ancestor of the recorded feature branch' {
+        $script:repo = Initialize-TestRepo
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add search' | Out-Null
+        git add .fluencyloop docs/fluencyloop 2>&1 | Out-Null; git commit -q -m 'record feature state' 2>&1 | Out-Null
+        [System.IO.File]::WriteAllText("$script:repo/later.txt", "later feature work`n")
+        git add later.txt 2>&1 | Out-Null; git commit -q -m 'advance feature' 2>&1 | Out-Null
+        git checkout -q --detach HEAD~1
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 0
+        $j = Get-FlJson 'check.ps1' '--json'
+        $j.branch | Should -Be 'HEAD'
+        $j.state_matches_branch | Should -BeTrue
+    }
+
+    It 'rejects a detached descendant of the recorded feature branch' {
+        $script:repo = Initialize-TestRepo
+        & $script:PwshExe -NoProfile -File "$script:Bin/new-feature.ps1" 'add search' | Out-Null
+        git add .fluencyloop docs/fluencyloop 2>&1 | Out-Null; git commit -q -m 'record feature state' 2>&1 | Out-Null
+        git checkout -q --detach HEAD
+        [System.IO.File]::WriteAllText("$script:repo/detached.txt", "unattached work`n")
+        git add detached.txt 2>&1 | Out-Null; git commit -q -m 'detached work' 2>&1 | Out-Null
+        (Invoke-FlExit 'check.ps1' '--json') | Should -Be 1
+        $j = Get-FlJson 'check.ps1' '--json'
+        $j.state_matches_branch | Should -BeFalse
+    }
+
     It 'constitution states: present and pointer' {
         $script:repo = Initialize-TestRepo
         $c = "$script:repo/docs/fluencyloop/constitution.md"

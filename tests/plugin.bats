@@ -98,6 +98,7 @@ assert "state_matches_branch" in feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in feature_text
 assert "Reattach a safe detached checkout." in feature_text
 assert "git checkout <state_branch>" in feature_text
+assert "commit reachable from the" in feature_text
 assert "Resume preconditions after the answer." in feature_text
 assert "Immediately rerun `fluencyloop check --json`" in feature_text
 assert "**Migrate imported history before normal feature work.**" in feature_text
@@ -123,6 +124,7 @@ assert "state_matches_branch" in codex_feature_text
 assert "Do not create a new feature, switch branches, or overwrite state" in codex_feature_text
 assert "Reattach a safe detached checkout." in codex_feature_text
 assert "git checkout <state_branch>" in codex_feature_text
+assert "commit reachable from the" in codex_feature_text
 assert "Resume preconditions after the answer." in codex_feature_text
 assert "Immediately rerun `fluencyloop check --json`" in codex_feature_text
 assert "complete the mandatory migration before calibration, preferences, ticket numbering" in codex_feature_text

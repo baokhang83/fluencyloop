@@ -43,6 +43,33 @@ load test_helper
     [ "$(echo "$output" | json_field state_matches_branch)" = "True" ] || [ "$(echo "$output" | json_field state_matches_branch)" = "true" ]
 }
 
+@test "check accepts a detached ancestor of the recorded feature branch" {
+    setup_initialized_repo
+    bash "$BIN/new-feature.sh" "add search" >/dev/null
+    git add .fluencyloop docs/fluencyloop && git commit -q -m "record feature state"
+    printf 'later feature work\n' > later.txt
+    git add later.txt && git commit -q -m "advance feature"
+    git checkout -q --detach HEAD~1
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 0 ]
+    [ "$(echo "$output" | json_field branch)" = "HEAD" ]
+    [ "$(echo "$output" | json_field state_matches_branch)" = "True" ] || [ "$(echo "$output" | json_field state_matches_branch)" = "true" ]
+}
+
+@test "check rejects a detached descendant of the recorded feature branch" {
+    setup_initialized_repo
+    bash "$BIN/new-feature.sh" "add search" >/dev/null
+    git add .fluencyloop docs/fluencyloop && git commit -q -m "record feature state"
+    git checkout -q --detach HEAD
+    printf 'unattached work\n' > detached.txt
+    git add detached.txt && git commit -q -m "detached work"
+
+    run bash "$BIN/check.sh" --json
+    [ "$status" -eq 1 ]
+    [ "$(echo "$output" | json_field state_matches_branch)" = "False" ] || [ "$(echo "$output" | json_field state_matches_branch)" = "false" ]
+}
+
 @test "check: constitution states - present and pointer" {
     setup_initialized_repo
     printf '# Constitution\n\n## Principles\n\n### §1 — no sync calls in the request path\n' \

@@ -71,12 +71,13 @@ execution. It may create or update Codex-protected `.git` metadata; do not first
 standard sandbox.
 
 **Reattach a safe detached checkout.** If `branch` is `HEAD`, `state_matches_branch` is `true`,
-and `state_branch` is nonempty, this is the exact recorded feature tip, not a split. Run `git
+and `state_branch` is nonempty, the detached commit is on the recorded feature's history, not a
+split. Run `git
 status --porcelain`. If it is empty, run `git checkout <state_branch>`, then rerun `fluencyloop
 check --json` before any work. If it is not empty, stop and state that the detached checkout has
 changes which must be resolved before it can be reattached. Do not write records or start a new
-feature while detached. `check` deliberately treats only the exact branch tip this way; any other
-detached commit remains a split.
+feature while detached. `check` deliberately accepts only a commit reachable from the recorded
+feature branch; a descendant or divergent detached commit remains a split.
 
 **Refuse split state.** Parse `state_matches_branch` from `fluencyloop check --json` before any
 calibration, feature declaration, session, or writer command. If it is `false`, stop immediately:
