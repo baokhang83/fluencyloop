@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/e3a04a63-4b68-4f61-ad58-60df8cc67045" alt="FluencyLoop Banner" width="1774" style="max-width: 100%; height: auto;"/>
+  <img src="assets/fluencyloop-hero.png" alt="FluencyLoop workflow: optional plan, design, build with teaching, and review" width="1693" style="max-width: 100%; height: auto;"/>
 </p>
 
 # FluencyLoop
