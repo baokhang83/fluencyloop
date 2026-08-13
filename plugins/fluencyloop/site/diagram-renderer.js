@@ -100,10 +100,11 @@ const HEIGHT = 528;
 function card(node, box, shared = false) {
   node.box = box;
   const klass = shared ? 'card shared' : 'card';
+  const compact = box.w < 180 ? ' compact' : '';
   const nameY = box.y + box.h / 2 - 8;
   return `<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="10" class="${klass}"/>
-    <text x="${box.x + 20}" y="${nameY}" class="name">${escapeHtml(node.label)}</text>
-    <text x="${box.x + 20}" y="${nameY + 28}" class="detail">${escapeHtml(node.detail)}</text>`;
+    <text x="${box.x + 20}" y="${nameY}" class="name${compact}">${escapeHtml(node.label)}</text>
+    <text x="${box.x + 20}" y="${nameY + 28}" class="detail${compact}">${escapeHtml(node.detail)}</text>`;
 }
 
 function edgeLabel(edge, x, y) {
@@ -141,6 +142,9 @@ function mergeLayout() {
     || graph.nodes.some((node) => node !== hub && outgoing.get(node.id).length !== 1)) {
     fail('merge layout needs one directed path from every participant into --hub.');
   }
+  if (graph.edges.some((edge) => !edge.label)) {
+    fail('merge layout requires --edge-label after every --edge so each converging relationship is clear.');
+  }
   const depth = new Map([[hub.id, 0]]);
   const resolving = new Set();
   const resolveDepth = (node) => {
@@ -157,6 +161,10 @@ function mergeLayout() {
   graph.nodes.forEach(resolveDepth);
   const maxDepth = Math.max(...depth.values());
   if (maxDepth > 3) fail('merge layout supports paths up to four cards deep; use a concise overview.');
+  // Four columns still need visible lanes for arrows and labels. Compact only as much as this
+  // bounded topology needs, rather than letting full-width cards consume every inter-card gap.
+  const mergeCardW = Math.min(CARD_W, Math.floor((WIDTH - 96 - maxDepth * 64) / (maxDepth + 1)));
+  if (mergeCardW < 150) fail('merge layout cannot give this graph readable lanes; use a concise overview.');
   const leaves = graph.nodes.filter((node) => !incoming.get(node.id).length);
   const y = new Map();
   // Leave a deliberate title band above and a quiet breathing band below the graph. The embedded
@@ -170,10 +178,10 @@ function mergeLayout() {
     return value;
   };
   graph.nodes.forEach(resolveY);
-  const colGap = (WIDTH - 96 - CARD_W) / maxDepth;
+  const colGap = (WIDTH - 96 - mergeCardW) / maxDepth;
   graph.nodes.forEach((node) => {
     const centerY = resolveY(node);
-    node.box = { x: Math.round(48 + (maxDepth - depth.get(node.id)) * colGap), y: centerY - CARD_H / 2, w: CARD_W, h: CARD_H };
+    node.box = { x: Math.round(48 + (maxDepth - depth.get(node.id)) * colGap), y: centerY - CARD_H / 2, w: mergeCardW, h: CARD_H };
   });
   const inputPorts = new Map();
   graph.nodes.forEach((node) => {
@@ -284,7 +292,7 @@ const html = `<!doctype html>
 <style>
 :root{color-scheme:light;--diagram-canvas:#f7f4ee;--diagram-surface:#fffdfa;--diagram-ink:#202630;--diagram-muted:#66717d;--diagram-rule:#d7d1c7;--diagram-accent:#d85e40}
 :root[data-fluencyloop-theme="dark"]{color-scheme:dark;--diagram-canvas:#171c23;--diagram-surface:#222934;--diagram-ink:#edf1f5;--diagram-muted:#aab4c0;--diagram-rule:#4a5663;--diagram-accent:#ff8d6d}
-html,body{width:100%;height:${HEIGHT}px;margin:0;overflow:hidden;background:var(--diagram-canvas)}svg{display:block;width:100%;height:${HEIGHT}px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.eyebrow{fill:var(--diagram-muted);font-size:12px;font-weight:700;letter-spacing:.12em}.title{fill:var(--diagram-ink);font-size:24px;font-weight:700}.card{fill:var(--diagram-surface);stroke:var(--diagram-rule);stroke-width:2}.shared{stroke:var(--diagram-accent);stroke-width:3}.name{fill:var(--diagram-ink);font-size:17px;font-weight:700}.detail{fill:var(--diagram-muted);font-size:13px}.flow{fill:none;stroke:var(--diagram-accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;marker-end:url(#arrow)}.edge-label-bg{fill:var(--diagram-canvas);stroke:var(--diagram-rule);stroke-width:1}.edge-label{fill:var(--diagram-muted);font-size:11px;font-weight:700;letter-spacing:.04em}</style>
+html,body{width:100%;height:${HEIGHT}px;margin:0;overflow:hidden;background:var(--diagram-canvas)}svg{display:block;width:100%;height:${HEIGHT}px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.eyebrow{fill:var(--diagram-muted);font-size:12px;font-weight:700;letter-spacing:.12em}.title{fill:var(--diagram-ink);font-size:24px;font-weight:700}.card{fill:var(--diagram-surface);stroke:var(--diagram-rule);stroke-width:2}.shared{stroke:var(--diagram-accent);stroke-width:3}.name{fill:var(--diagram-ink);font-size:17px;font-weight:700}.name.compact{font-size:15px}.detail{fill:var(--diagram-muted);font-size:13px}.detail.compact{font-size:12px}.flow{fill:none;stroke:var(--diagram-accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;marker-end:url(#arrow)}.edge-label-bg{fill:var(--diagram-canvas);stroke:var(--diagram-rule);stroke-width:1}.edge-label{fill:var(--diagram-muted);font-size:11px;font-weight:700;letter-spacing:.04em}</style>
 </head><body><svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-labelledby="diagram-title"><title id="diagram-title">${escapeHtml(graph.title)}</title><defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="var(--diagram-accent)"/></marker></defs><text x="48" y="48" class="eyebrow">ARCHITECTURE</text><text x="48" y="84" class="title">${escapeHtml(graph.title)}</text>${rendered.paths.join('')}${rendered.cards.join('')}</svg></body></html>`;
 
 fs.mkdirSync(path.dirname(output), { recursive: true });
