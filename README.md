@@ -73,7 +73,7 @@ the code under `docs/fluencyloop/store/` as append-only JSONL. Small, bounded Ma
 distillations add product-level prose where it helps; the legacy feature Markdown remains read-only
 input for migration.
 
-### A local project knowledge site
+### A local project knowledge site (http://127.0.0.1:44444)
 
 When Node.js is available, FluencyLoop turns those committed records into a local website for the
 project. It is a useful map of the software rather than a folder browser: the overview explains the
