@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.11
+
+### Fixed
+
+- Generated diagrams now preserve clear routing lanes for converging relationships and require a
+  label on every merge edge. A compact reading key explains directed arrows and the
+  accent-bordered focal boundary without adding scroll or blank space to the embedded frame.
+
 ## 0.3.10
 
 ### Fixed
