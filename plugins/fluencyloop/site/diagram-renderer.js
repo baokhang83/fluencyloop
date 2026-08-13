@@ -96,6 +96,10 @@ const CARD_H = 104;
 // that is merely shorter looks like an unfinished white panel, even when its SVG is technically
 // valid.
 const HEIGHT = 528;
+// Keep a small, stable reading key inside the fixed iframe. Layouts use the remaining canvas so
+// the key never becomes an afterthought below a cropped or scrollable diagram.
+const KEY_H = 52;
+const CONTENT_BOTTOM = HEIGHT - KEY_H;
 
 function card(node, box, shared = false) {
   node.box = box;
@@ -112,6 +116,17 @@ function edgeLabel(edge, x, y) {
   const width = Math.max(60, edge.label.length * 7 + 18);
   return `<rect x="${Math.round(x - width / 2)}" y="${Math.round(y - 18)}" width="${width}" height="22" rx="11" class="edge-label-bg"/>
     <text x="${Math.round(x)}" y="${Math.round(y - 3)}" class="edge-label" text-anchor="middle">${escapeHtml(edge.label)}</text>`;
+}
+
+function readingKey() {
+  const ruleY = HEIGHT - KEY_H + 6;
+  const baseline = HEIGHT - 16;
+  return `<line x1="48" y1="${ruleY}" x2="912" y2="${ruleY}" class="key-rule"/>
+    <text x="48" y="${baseline}" class="key-heading">READING KEY</text>
+    <line x1="154" y1="${baseline - 5}" x2="186" y2="${baseline - 5}" class="key-flow"/>
+    <text x="198" y="${baseline}" class="key-text">arrow: directed relationship</text>
+    <rect x="454" y="${baseline - 15}" width="14" height="14" rx="3" class="key-focus"/>
+    <text x="480" y="${baseline}" class="key-text">accent border: focal boundary</text>`;
 }
 
 function linearLayout() {
@@ -216,9 +231,9 @@ function hubLayout() {
   // Every leaf gets its own horizontal port. No elbows means no crossing, shared attachment
   // point, or marker that can render inside a non-endpoint card.
   const LEAF_H = 80;
-  hub.box = { x: 380, y: 96, w: CARD_W, h: 380 };
+  hub.box = { x: 380, y: 88, w: CARD_W, h: 360 };
   const spaced = (items, x) => items.forEach((node, index) => {
-    const center = Math.round(136 + index * (300 / Math.max(1, items.length - 1)));
+    const center = Math.round(132 + index * (268 / Math.max(1, items.length - 1)));
     node.box = { x, y: center - LEAF_H / 2, w: CARD_W, h: LEAF_H };
   });
   spaced(left, 48); spaced(right, 712);
@@ -256,7 +271,7 @@ function layeredLayout() {
   const groups = Array.from({ length: maxRank + 1 }, () => []);
   graph.nodes.forEach((node) => groups[ranks.get(node.id)].push(node));
   groups.forEach((group, rank) => group.forEach((node, index) => {
-    const y = Math.round(126 + index * ((HEIGHT - 126 - CARD_H) / Math.max(1, group.length - 1)));
+    const y = Math.round(126 + index * ((CONTENT_BOTTOM - 126 - CARD_H) / Math.max(1, group.length - 1)));
     const x = Math.round(48 + rank * ((WIDTH - 96 - CARD_W) / Math.max(1, maxRank)));
     node.box = { x, y, w: CARD_W, h: CARD_H };
   }));
@@ -292,8 +307,8 @@ const html = `<!doctype html>
 <style>
 :root{color-scheme:light;--diagram-canvas:#f7f4ee;--diagram-surface:#fffdfa;--diagram-ink:#202630;--diagram-muted:#66717d;--diagram-rule:#d7d1c7;--diagram-accent:#d85e40}
 :root[data-fluencyloop-theme="dark"]{color-scheme:dark;--diagram-canvas:#171c23;--diagram-surface:#222934;--diagram-ink:#edf1f5;--diagram-muted:#aab4c0;--diagram-rule:#4a5663;--diagram-accent:#ff8d6d}
-html,body{width:100%;height:${HEIGHT}px;margin:0;overflow:hidden;background:var(--diagram-canvas)}svg{display:block;width:100%;height:${HEIGHT}px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.eyebrow{fill:var(--diagram-muted);font-size:12px;font-weight:700;letter-spacing:.12em}.title{fill:var(--diagram-ink);font-size:24px;font-weight:700}.card{fill:var(--diagram-surface);stroke:var(--diagram-rule);stroke-width:2}.shared{stroke:var(--diagram-accent);stroke-width:3}.name{fill:var(--diagram-ink);font-size:17px;font-weight:700}.name.compact{font-size:15px}.detail{fill:var(--diagram-muted);font-size:13px}.detail.compact{font-size:12px}.flow{fill:none;stroke:var(--diagram-accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;marker-end:url(#arrow)}.edge-label-bg{fill:var(--diagram-canvas);stroke:var(--diagram-rule);stroke-width:1}.edge-label{fill:var(--diagram-muted);font-size:11px;font-weight:700;letter-spacing:.04em}</style>
-</head><body><svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-labelledby="diagram-title"><title id="diagram-title">${escapeHtml(graph.title)}</title><defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="var(--diagram-accent)"/></marker></defs><text x="48" y="48" class="eyebrow">ARCHITECTURE</text><text x="48" y="84" class="title">${escapeHtml(graph.title)}</text>${rendered.paths.join('')}${rendered.cards.join('')}</svg></body></html>`;
+html,body{width:100%;height:${HEIGHT}px;margin:0;overflow:hidden;background:var(--diagram-canvas)}svg{display:block;width:100%;height:${HEIGHT}px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.eyebrow{fill:var(--diagram-muted);font-size:12px;font-weight:700;letter-spacing:.12em}.title{fill:var(--diagram-ink);font-size:24px;font-weight:700}.card{fill:var(--diagram-surface);stroke:var(--diagram-rule);stroke-width:2}.shared{stroke:var(--diagram-accent);stroke-width:3}.name{fill:var(--diagram-ink);font-size:17px;font-weight:700}.name.compact{font-size:15px}.detail{fill:var(--diagram-muted);font-size:13px}.detail.compact{font-size:12px}.flow{fill:none;stroke:var(--diagram-accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;marker-end:url(#arrow)}.edge-label-bg{fill:var(--diagram-canvas);stroke:var(--diagram-rule);stroke-width:1}.edge-label{fill:var(--diagram-muted);font-size:11px;font-weight:700;letter-spacing:.04em}.key-rule{stroke:var(--diagram-rule);stroke-width:1}.key-heading{fill:var(--diagram-muted);font-size:10px;font-weight:700;letter-spacing:.12em}.key-flow{fill:none;stroke:var(--diagram-accent);stroke-width:2;marker-end:url(#arrow)}.key-focus{fill:var(--diagram-surface);stroke:var(--diagram-accent);stroke-width:2}.key-text{fill:var(--diagram-muted);font-size:11px}</style>
+</head><body><svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-labelledby="diagram-title"><title id="diagram-title">${escapeHtml(graph.title)}</title><defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="var(--diagram-accent)"/></marker></defs><text x="48" y="48" class="eyebrow">ARCHITECTURE</text><text x="48" y="84" class="title">${escapeHtml(graph.title)}</text>${rendered.paths.join('')}${rendered.cards.join('')}${readingKey()}</svg></body></html>`;
 
 fs.mkdirSync(path.dirname(output), { recursive: true });
 fs.writeFileSync(output, html, 'utf8');

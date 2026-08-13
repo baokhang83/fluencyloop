@@ -20,6 +20,8 @@ load test_helper
     [ -s "$diagram" ]
     grep -q 'height:528px' "$diagram"
     grep -q 'overflow:hidden' "$diagram"
+    grep -q 'READING KEY' "$diagram"
+    grep -q 'accent border: focal boundary' "$diagram"
     [ "$(grep -o '<path d="M' "$diagram" | wc -l | tr -d ' ')" -eq 6 ]
     ! grep -q '<iframe\|<script\|https://' "$diagram"
 }
