@@ -18,10 +18,31 @@ load test_helper
     [ "$status" -eq 0 ]
     diagram="$TESTREPO/docs/fluencyloop/diagrams/product-overview.html"
     [ -s "$diagram" ]
-    grep -q 'height:520px' "$diagram"
+    grep -q 'height:528px' "$diagram"
     grep -q 'overflow:hidden' "$diagram"
     [ "$(grep -o '<path d="M' "$diagram" | wc -l | tr -d ' ')" -eq 6 ]
     ! grep -q '<iframe\|<script\|https://' "$diagram"
+}
+
+@test "renders a four-node merge with relationship labels and a full-height canvas" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the diagram renderer"
+    setup_initialized_repo
+    run bash "$DIST/fluencyloop" diagram \
+        --output docs/fluencyloop/diagrams/product-overview.html --layout merge --title "Architecture drift check" --hub drift \
+        --node reader --label "Store reader" --detail "Parses recorded history" \
+        --node resolver --label "Record resolver" --detail "Builds current state" \
+        --node scanner --label "Reality scanner" --detail "Reads repository facts" \
+        --node drift --label "Drift engine" --detail "Compares both views" \
+        --edge reader resolver --edge-label "records" \
+        --edge resolver drift --edge-label "current state" \
+        --edge scanner drift --edge-label "repository facts"
+    [ "$status" -eq 0 ]
+    diagram="$TESTREPO/docs/fluencyloop/diagrams/product-overview.html"
+    grep -q 'height:528px' "$diagram"
+    grep -q 'records' "$diagram"
+    grep -q 'current state' "$diagram"
+    grep -q 'repository facts' "$diagram"
+    [ "$(grep -o '<path d="M' "$diagram" | wc -l | tr -d ' ')" -eq 4 ]
 }
 
 @test "rejects a layered fan-out instead of producing overlapping routes" {

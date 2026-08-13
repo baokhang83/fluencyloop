@@ -18,14 +18,16 @@ Use this path when FluencyLoop asks for either
 It is a focused companion inside FluencyLoop's local site, not a branded design-system deliverable.
 
 Do not load the full guide, ask the user to choose a palette, tour templates, or review diagram
-alternatives. FluencyLoop owns the surrounding reader design. Produce one restrained,
-self-contained embedded HTML file with inline SVG and CSS.
+alternatives. FluencyLoop owns the surrounding site design. **Do not write an HTML, SVG, or CSS
+diagram by hand.** The native renderer is the only embedded-diagram writer.
 
 Use the native diagram renderer, not the general diagram workflow:
 
 1. Choose one supported layout without asking: `linear` for a 2–6 step path, `hub` for a shared
-   service/boundary with 2–7 participants, or `layered` for independent adjacent-layer mappings.
-   It supports 2–8 nodes and at most 10 edges. A fan-out or merge uses `hub`, never `layered`.
+   service/boundary with 2–7 direct participants, `merge` for independent inputs or short chains
+   converging on one result, or `layered` for independent adjacent-layer mappings. It supports
+   2–8 nodes and at most 10 edges. `merge` accepts one directed path from every participant to
+   `--hub` and labels each relationship; use it for a resolver plus scanner converging on an engine.
 2. Run exactly one `fluencyloop diagram` command. Give each node its short id, label, and detail as
    separate fields, then give the directed edges. For example:
 
@@ -38,9 +40,10 @@ Use the native diagram renderer, not the general diagram workflow:
      --edge list selection --edge selection detail
    ```
 
-   Keep labels at 28 characters or fewer and details at 42 or fewer. The renderer owns canvas
-   height, card positions, routes, attachment points, arrows, dark theme, and no-scroll geometry.
-   Never edit its generated HTML.
+   Add `--edge-label <short relationship>` directly after an edge in a `merge` diagram. Keep node
+   labels at 20 characters or fewer, details at 32 or fewer, and relationship labels at 24 or
+   fewer. The renderer owns canvas height, card positions, routes, attachment points, arrows,
+   relationship labels, dark theme, and no-scroll geometry. Never edit its generated HTML.
 3. If the renderer rejects a graph, omit the diagram. Do not load a type reference, inspect CSS,
    search the project for styling, browse templates, or escalate to custom SVG during a
    FluencyLoop feature; prose remains the complete explanation.

@@ -9,9 +9,9 @@ const fs = require('fs');
 const path = require('path');
 
 const usage = `Usage: fluencyloop diagram --output docs/fluencyloop/diagrams/<file>.html
-  --layout <linear|hub|layered> --title <title>
+  --layout <linear|hub|merge|layered> --title <title>
   --node <id> --label <label> --detail <detail> [--node ...]
-  [--edge <from> <to> ...] [--hub <id>]
+  [--edge <from> <to> [--edge-label <text>] ...] [--hub <id>]
 
 Limits: 2–8 nodes, at most 10 edges, labels up to 20 characters, details up to 32 characters.`;
 
@@ -27,6 +27,7 @@ function escapeHtml(value) {
 const args = process.argv.slice(2);
 const graph = { output: '', layout: '', title: '', nodes: [], edges: [], hub: '' };
 let active = null;
+let latestEdge = null;
 for (let index = 0; index < args.length; index += 1) {
   const arg = args[index];
   const next = () => {
@@ -51,9 +52,11 @@ for (let index = 0; index < args.length; index += 1) {
     case '--edge': {
       const from = next();
       const to = next();
-      graph.edges.push({ from, to });
+      latestEdge = { from, to, label: '' };
+      graph.edges.push(latestEdge);
       break;
     }
+    case '--edge-label': if (!latestEdge) fail('--edge-label must follow --edge.'); latestEdge.label = next(); break;
     case '--hub': graph.hub = next(); break;
     case '--help': process.stdout.write(`${usage}\n`); process.exit(0); break;
     default: fail(`unknown option: ${arg}`);
@@ -61,7 +64,7 @@ for (let index = 0; index < args.length; index += 1) {
 }
 
 if (!graph.output || !graph.layout || !graph.title) fail('--output, --layout, and --title are required.');
-if (!['linear', 'hub', 'layered'].includes(graph.layout)) fail(`unknown layout: ${graph.layout}`);
+if (!['linear', 'hub', 'merge', 'layered'].includes(graph.layout)) fail(`unknown layout: ${graph.layout}`);
 if (graph.nodes.length < 2 || graph.nodes.length > 8) fail('provide 2–8 nodes.');
 if (graph.edges.length > 10) fail('provide at most 10 edges.');
 if (graph.title.length > 56) fail('title is too long; use a concise site heading.');
@@ -76,6 +79,7 @@ if (graph.layout === 'linear' && graph.nodes.length >= 5
 const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
 for (const edge of graph.edges) {
   if (!nodeById.has(edge.from) || !nodeById.has(edge.to) || edge.from === edge.to) fail(`invalid edge: ${edge.from} → ${edge.to}`);
+  if (edge.label.length > 24) fail(`edge label is too long: ${edge.label}`);
 }
 if (!graph.edges.length) fail('provide at least one --edge.');
 
@@ -88,7 +92,10 @@ if (!output.startsWith(`${diagramsRoot}${path.sep}`) || path.extname(output) !==
 const WIDTH = 960;
 const CARD_W = 200;
 const CARD_H = 104;
-const HEIGHT = graph.layout === 'hub' ? 520 : 440;
+// `site.css` gives every embedded companion a 33rem (528px) frame. Match it exactly: a renderer
+// that is merely shorter looks like an unfinished white panel, even when its SVG is technically
+// valid.
+const HEIGHT = 528;
 
 function card(node, box, shared = false) {
   node.box = box;
@@ -97,6 +104,13 @@ function card(node, box, shared = false) {
   return `<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" rx="10" class="${klass}"/>
     <text x="${box.x + 20}" y="${nameY}" class="name">${escapeHtml(node.label)}</text>
     <text x="${box.x + 20}" y="${nameY + 28}" class="detail">${escapeHtml(node.detail)}</text>`;
+}
+
+function edgeLabel(edge, x, y) {
+  if (!edge.label) return '';
+  const width = Math.max(60, edge.label.length * 7 + 18);
+  return `<rect x="${Math.round(x - width / 2)}" y="${Math.round(y - 18)}" width="${width}" height="22" rx="11" class="edge-label-bg"/>
+    <text x="${Math.round(x)}" y="${Math.round(y - 3)}" class="edge-label" text-anchor="middle">${escapeHtml(edge.label)}</text>`;
 }
 
 function linearLayout() {
@@ -110,9 +124,72 @@ function linearLayout() {
     if (to.x <= from.x) fail('linear edges must point from left to right.');
     if (graph.nodes.some((node) => node.box.x > from.x && node.box.x < to.x)) fail('linear edges may connect adjacent nodes only.');
     if (to.y !== from.y) fail('linear layout requires aligned nodes.');
-    return `<path d="M${from.x + from.w} ${from.y + CARD_H / 2} H${to.x}" class="flow"/>`;
+    const midX = Math.round((from.x + from.w + to.x) / 2);
+    return `<path d="M${from.x + from.w} ${from.y + CARD_H / 2} H${to.x}" class="flow"/>${edgeLabel(edge, midX, from.y + CARD_H / 2 - 10)}`;
   });
   return { paths, cards: graph.nodes.map((node) => card(node, node.box)) };
+}
+
+function mergeLayout() {
+  const hub = nodeById.get(graph.hub);
+  if (!hub) fail('merge layout requires --hub <node-id>.');
+  const outgoing = new Map(graph.nodes.map((node) => [node.id, []]));
+  const incoming = new Map(graph.nodes.map((node) => [node.id, []]));
+  graph.edges.forEach((edge) => { outgoing.get(edge.from).push(edge); incoming.get(edge.to).push(edge); });
+  if (outgoing.get(hub.id).length) fail('merge edges must converge on --hub, never leave it.');
+  if (graph.edges.length !== graph.nodes.length - 1
+    || graph.nodes.some((node) => node !== hub && outgoing.get(node.id).length !== 1)) {
+    fail('merge layout needs one directed path from every participant into --hub.');
+  }
+  const depth = new Map([[hub.id, 0]]);
+  const resolving = new Set();
+  const resolveDepth = (node) => {
+    if (depth.has(node.id)) return depth.get(node.id);
+    if (resolving.has(node.id)) fail('merge layout does not support cycles.');
+    resolving.add(node.id);
+    const next = outgoing.get(node.id)[0];
+    if (!next) fail('merge layout has a participant that cannot reach --hub.');
+    const value = resolveDepth(nodeById.get(next.to)) + 1;
+    resolving.delete(node.id);
+    depth.set(node.id, value);
+    return value;
+  };
+  graph.nodes.forEach(resolveDepth);
+  const maxDepth = Math.max(...depth.values());
+  if (maxDepth > 3) fail('merge layout supports paths up to four cards deep; use a concise overview.');
+  const leaves = graph.nodes.filter((node) => !incoming.get(node.id).length);
+  const y = new Map();
+  // Leave a deliberate title band above and a quiet breathing band below the graph. The embedded
+  // frame is fixed-height, so filling it with the diagram canvas is part of the composition.
+  leaves.forEach((node, index) => y.set(node.id, Math.round(168 + index * ((HEIGHT - 320) / Math.max(1, leaves.length - 1)))));
+  const resolveY = (node) => {
+    if (y.has(node.id)) return y.get(node.id);
+    const parents = incoming.get(node.id).map((edge) => nodeById.get(edge.from));
+    const value = Math.round(parents.reduce((sum, parent) => sum + resolveY(parent), 0) / parents.length);
+    y.set(node.id, value);
+    return value;
+  };
+  graph.nodes.forEach(resolveY);
+  const colGap = (WIDTH - 96 - CARD_W) / maxDepth;
+  graph.nodes.forEach((node) => {
+    const centerY = resolveY(node);
+    node.box = { x: Math.round(48 + (maxDepth - depth.get(node.id)) * colGap), y: centerY - CARD_H / 2, w: CARD_W, h: CARD_H };
+  });
+  const inputPorts = new Map();
+  graph.nodes.forEach((node) => {
+    const edges = [...incoming.get(node.id)].sort((a, b) => nodeById.get(a.from).box.y - nodeById.get(b.from).box.y);
+    edges.forEach((edge, index) => inputPorts.set(edge, node.box.y + node.box.h * (index + 1) / (edges.length + 1)));
+  });
+  const paths = graph.edges.map((edge) => {
+    const from = nodeById.get(edge.from).box; const to = nodeById.get(edge.to).box;
+    const startY = from.y + from.h / 2; const endY = inputPorts.get(edge);
+    const lane = Math.round((from.x + from.w + to.x) / 2);
+    const label = Math.abs(endY - startY) > 24
+      ? edgeLabel(edge, lane, (startY + endY) / 2)
+      : edgeLabel(edge, (from.x + from.w + to.x) / 2, startY - 10);
+    return `<path d="M${from.x + from.w} ${startY} H${lane} V${endY} H${to.x}" class="flow"/>${label}`;
+  });
+  return { paths, cards: graph.nodes.map((node) => card(node, node.box, node === hub)) };
 }
 
 function hubLayout() {
@@ -196,18 +273,18 @@ function layeredLayout() {
   const paths = graph.edges.map((edge) => {
     const from = nodeById.get(edge.from).box; const to = nodeById.get(edge.to).box;
     const lane = Math.round((from.x + from.w + to.x) / 2);
-    return `<path d="M${from.x + from.w} ${from.y + CARD_H / 2} H${lane} V${to.y + CARD_H / 2} H${to.x}" class="flow"/>`;
+    return `<path d="M${from.x + from.w} ${from.y + CARD_H / 2} H${lane} V${to.y + CARD_H / 2} H${to.x}" class="flow"/>${edgeLabel(edge, lane, Math.min(from.y, to.y) - 8)}`;
   });
   return { paths, cards: graph.nodes.map((node) => card(node, node.box)) };
 }
 
-const rendered = graph.layout === 'linear' ? linearLayout() : graph.layout === 'hub' ? hubLayout() : layeredLayout();
+const rendered = graph.layout === 'linear' ? linearLayout() : graph.layout === 'hub' ? hubLayout() : graph.layout === 'merge' ? mergeLayout() : layeredLayout();
 const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(graph.title)}</title>
 <style>
 :root{color-scheme:light;--diagram-canvas:#f7f4ee;--diagram-surface:#fffdfa;--diagram-ink:#202630;--diagram-muted:#66717d;--diagram-rule:#d7d1c7;--diagram-accent:#d85e40}
 :root[data-fluencyloop-theme="dark"]{color-scheme:dark;--diagram-canvas:#171c23;--diagram-surface:#222934;--diagram-ink:#edf1f5;--diagram-muted:#aab4c0;--diagram-rule:#4a5663;--diagram-accent:#ff8d6d}
-html,body{width:100%;height:${HEIGHT}px;margin:0;overflow:hidden;background:var(--diagram-canvas)}svg{display:block;width:100%;height:${HEIGHT}px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.eyebrow{fill:var(--diagram-muted);font-size:12px;font-weight:700;letter-spacing:.12em}.title{fill:var(--diagram-ink);font-size:24px;font-weight:700}.card{fill:var(--diagram-surface);stroke:var(--diagram-rule);stroke-width:2}.shared{stroke:var(--diagram-accent);stroke-width:3}.name{fill:var(--diagram-ink);font-size:17px;font-weight:700}.detail{fill:var(--diagram-muted);font-size:13px}.flow{fill:none;stroke:var(--diagram-accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;marker-end:url(#arrow)}</style>
+html,body{width:100%;height:${HEIGHT}px;margin:0;overflow:hidden;background:var(--diagram-canvas)}svg{display:block;width:100%;height:${HEIGHT}px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.eyebrow{fill:var(--diagram-muted);font-size:12px;font-weight:700;letter-spacing:.12em}.title{fill:var(--diagram-ink);font-size:24px;font-weight:700}.card{fill:var(--diagram-surface);stroke:var(--diagram-rule);stroke-width:2}.shared{stroke:var(--diagram-accent);stroke-width:3}.name{fill:var(--diagram-ink);font-size:17px;font-weight:700}.detail{fill:var(--diagram-muted);font-size:13px}.flow{fill:none;stroke:var(--diagram-accent);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;marker-end:url(#arrow)}.edge-label-bg{fill:var(--diagram-canvas);stroke:var(--diagram-rule);stroke-width:1}.edge-label{fill:var(--diagram-muted);font-size:11px;font-weight:700;letter-spacing:.04em}</style>
 </head><body><svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-labelledby="diagram-title"><title id="diagram-title">${escapeHtml(graph.title)}</title><defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="var(--diagram-accent)"/></marker></defs><text x="48" y="48" class="eyebrow">ARCHITECTURE</text><text x="48" y="84" class="title">${escapeHtml(graph.title)}</text>${rendered.paths.join('')}${rendered.cards.join('')}</svg></body></html>`;
 
 fs.mkdirSync(path.dirname(output), { recursive: true });

@@ -193,8 +193,8 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "before drafting the overview" in feature_skill_text
     assert "Do not wait for the user to suggest a diagram" in feature_skill_text
     assert "**FluencyLoop native\nrenderer**" in feature_skill_text
-    assert "never edit its HTML" in feature_skill_text
-    assert "Keep `product.md` prose-only" in feature_skill_text
+    assert "never write or edit HTML, SVG, or" in feature_skill_text
+    assert "Keep `product.md`" in feature_skill_text
     assert "site --ensure --open-once --json" in feature_skill_text
     assert "**Do not distill decisions.**" in feature_skill_text
     assert "person-neutral" in feature_skill_text
@@ -204,6 +204,8 @@ for diagram_skill_text in [
 ]:
     assert "## FluencyLoop embedded diagram fast path" in diagram_skill_text
     assert "native diagram renderer" in diagram_skill_text
+    assert "Do not write an HTML, SVG, or CSS" in diagram_skill_text
+    assert "`merge` for independent inputs or short chains" in diagram_skill_text
     assert "2–8 nodes and at most 10 edges" in diagram_skill_text
     assert "Run exactly one `fluencyloop diagram` command" in diagram_skill_text
     assert "Do not run Playwright, browser automation, screenshots" in diagram_skill_text
