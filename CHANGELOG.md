@@ -2,6 +2,17 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.10
+
+### Fixed
+
+- Product-overview prose and diagram paths are now explicit in Claude Code and Codex guidance.
+  The native renderer is the only supported embedded-diagram writer, preventing hand-authored
+  diagrams from leaving blank iframe space or bypassing the shared visual rules.
+- The renderer now supports bounded converging flows, including a resolver and a scanner feeding
+  one engine. It gives those relationships readable labels and fills the local site's full diagram
+  frame.
+
 ## 0.3.9
 
 ### Changed
