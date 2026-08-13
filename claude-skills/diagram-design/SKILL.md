@@ -12,8 +12,10 @@ relationship, flow, or structure better than prose or a table.
 
 Use this path when FluencyLoop asks for either
 `docs/fluencyloop/diagrams/product-overview.html` or a file under
-`docs/fluencyloop/diagrams/records/`. It is a focused companion inside FluencyLoop's local reader,
-not a branded design-system deliverable.
+`docs/fluencyloop/diagrams/records/`. For a product overview, its prose is always
+`docs/fluencyloop/distillations/product.md`; its companion is always
+`docs/fluencyloop/diagrams/product-overview.html`. Never write `docs/fluencyloop/product.md`.
+It is a focused companion inside FluencyLoop's local site, not a branded design-system deliverable.
 
 Do not load the full guide, ask the user to choose a palette, tour templates, or review diagram
 alternatives. FluencyLoop owns the surrounding reader design. Produce one restrained,

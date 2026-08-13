@@ -177,8 +177,10 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "docs/fluencyloop/distillations/" in feature_skill_text
     assert "**Feature delta**" in feature_skill_text
     assert "**no overview rewrite**" in feature_skill_text
+    assert "docs/fluencyloop/distillations/product.md" in feature_skill_text
+    assert "Never write `docs/fluencyloop/product.md`" in feature_skill_text
     assert "do not add a `Related concepts` / `Related" in feature_skill_text
-    assert "raw file references add no explanation" in feature_skill_text
+    assert "references add no explanation" in feature_skill_text
     assert "when this feature newly establishes a concept" in feature_skill_text
     assert "### Optional explanatory diagrams" in feature_skill_text
     assert "docs/fluencyloop/diagrams/product-overview.html" in feature_skill_text
@@ -206,6 +208,7 @@ for diagram_skill_text in [
     assert "Run exactly one `fluencyloop diagram` command" in diagram_skill_text
     assert "Do not run Playwright, browser automation, screenshots" in diagram_skill_text
     assert "Never edit its generated HTML" in diagram_skill_text
+    assert "Never write `docs/fluencyloop/product.md`" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),
