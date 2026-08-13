@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.8
+
+### Changed
+
+- The README now describes `fluencyloop site` as a local project knowledge website. It explains
+  how the site connects product shape, architectural records, feature history, decisions, tags,
+  commits, and dates while keeping all project knowledge on the developer's loopback machine.
+
 ## 0.3.7
 
 ### Fixed
