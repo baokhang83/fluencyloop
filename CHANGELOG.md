@@ -2,6 +2,13 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.9
+
+### Changed
+
+- The README now includes a versioned workflow hero that shows the optional plan, design, build
+  with teaching, and review loop.
+
 ## 0.3.8
 
 ### Changed
