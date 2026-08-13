@@ -486,12 +486,14 @@ Write and commit at most these Markdown distillations under
 1. **Feature delta** — always one for this feature at
    `features/<feature-slug>.md`: what changed about the product before → after, expressed through
    concepts and behavior, never as a file list.
-2. **Product overview** — refresh `product.md` only when this feature materially changes the
-   product's problem, shape, or major flow. A feature that changes nothing at that altitude gets
-   **no overview rewrite**. Keep it self-contained: do not add a `Related concepts` / `Related
-   records` section or Markdown links to record files. The reader's Records navigation already
-   provides that traversal; raw file references add no explanation and can appear as literal
-   Markdown in its deliberately small prose renderer.
+2. **Product overview** — write or refresh exactly
+   `docs/fluencyloop/distillations/product.md` when this feature materially changes the product's
+   problem, shape, or major flow. Never write `docs/fluencyloop/product.md`: the local site does
+   not read it. A feature that changes nothing at that altitude gets **no overview rewrite**. Keep
+   it self-contained: do not add a `Related concepts` / `Related records` section or Markdown
+   links to record files. The site's Records navigation already provides that traversal; raw file
+   references add no explanation and can appear as literal Markdown in its deliberately small
+   prose renderer.
 3. **Concept explanation** — when this feature newly establishes a concept, create
    `concepts/<concept-slug>.md`; revise an existing explanation only when a feature decision contradicts
    it. Do not create a concept explanation merely because the feature touched a concept.
@@ -519,7 +521,11 @@ when a diagram is invalid.
 
 ### Product-overview diagram decision
 
-Whenever you refresh **`product.md`**, make the diagram decision **before drafting the overview**.
+Whenever you refresh **`docs/fluencyloop/distillations/product.md`**, make the diagram decision
+**before drafting the overview**. The prose and its companion have different, fixed paths:
+`docs/fluencyloop/distillations/product.md` and
+`docs/fluencyloop/diagrams/product-overview.html`. Do not put either in `docs/fluencyloop/`'s
+root.
 Do not wait for the user to suggest a diagram, and do not reopen the choice only after being asked.
 Choose the visual yourself from the implemented product shape:
 
@@ -533,11 +539,14 @@ Choose the visual yourself from the implemented product shape:
 
 When it qualifies, load the bundled `diagram-design` skill and use its **FluencyLoop native
 renderer**. Give it the output path, a bounded graph (2–8 concise nodes and at most 10 edges), and
-the matching linear, hub, or layered layout. Do not search the codebase for styling, read
-templates, invoke Playwright, take screenshots, inspect themes, or iterate on the diagram. The
-renderer owns geometry, routes, attachment points, dark theme, and no-scroll document height;
-never edit its HTML. If it rejects the graph, omit the overview diagram rather than escalating to
-general diagram design. The local site embeds its output through a sandboxed route. Keep `product.md` prose-only.
+the matching linear, hub, merge, or layered layout. Use `merge` when independent inputs or short
+chains converge on one result, and supply a short `--edge-label` for each relationship. Do not
+search the codebase for styling, read templates, invoke Playwright, take screenshots, inspect
+themes, or iterate on the diagram. The renderer owns geometry, routes, attachment points,
+relationship labels, dark theme, and no-scroll document height; never write or edit HTML, SVG, or
+CSS for it. If it rejects the graph, omit the overview diagram rather than escalating to general
+diagram design. The local site embeds its output through a sandboxed route. Keep `product.md`
+prose-only.
 Confirm the file is nonempty, then use
 `fluencyloop site --ensure --open-once --json` when Node is available.
 
