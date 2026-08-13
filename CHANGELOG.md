@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.7
+
+### Fixed
+
+- Claude Code and Codex now recover a clean detached checkout when it is already in the recorded
+  feature branch's history. They reattach that branch before continuing, while detached commits
+  that are newer or divergent remain protected split states.
+
 ## 0.3.6
 
 ### Added
