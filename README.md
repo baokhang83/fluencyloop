@@ -69,10 +69,22 @@ only person-neutral knowledge-transfer notes about the software enter the docume
 ### Project records that follow the code
 
 Plans, feature sessions, decisions, knowledge, architectural records, and requirements live beside
-the code under `docs/fluencyloop/store/` as append-only JSONL. The local reader resolves their
-latest form and links the product overview, records, features, and decisions. Small, bounded
-Markdown distillations add product-level prose where it helps; the legacy feature Markdown remains
-read-only input for migration.
+the code under `docs/fluencyloop/store/` as append-only JSONL. Small, bounded Markdown
+distillations add product-level prose where it helps; the legacy feature Markdown remains read-only
+input for migration.
+
+### A local project knowledge site (http://127.0.0.1:44444)
+
+When Node.js is available, FluencyLoop turns those committed records into a local website for the
+project. It is a useful map of the software rather than a folder browser: the overview explains the
+product shape, Architectural Records capture the durable ideas and their tags, Features show what
+changed over time, and each feature leads to the decisions and knowledge that explain it.
+
+The site resolves the latest version of append-only records, groups related work, makes category
+tags clickable filters, and keeps the date and commit beside every item. It is deliberately local:
+it binds only to `127.0.0.1`, reads the repository on your machine, and sends no project knowledge
+to a service. Open it during implementation, review, or onboarding to answer the practical
+questions: *What is this product? What ideas shape it? When did this change, and why?*
 
 ### Decision tracking with rationale
 
@@ -178,22 +190,22 @@ FluencyLoop requires [Claude Code](https://claude.com/claude-code) or
 or PowerShell (`pwsh`) on native Windows.
 
 Node.js is **optional**. The feature loop, planning, store, importer, review, and doctor work
-without it. Only the local `fluencyloop site` viewer needs **Node.js 18 or newer**, using built-in
-Node modules; when it is missing, that command explains how to install it without interrupting the
-rest of the loop.
+without it. Only the local `fluencyloop site` knowledge website needs **Node.js 18 or newer**,
+using built-in Node modules; when it is missing, that command explains how to install it without
+interrupting the rest of the loop.
 
 When a Claude Code or Codex session opens in an initialized project with Node available,
-FluencyLoop quietly starts its local reader and reports the exact loopback URL at the first
+FluencyLoop quietly starts its local knowledge website and reports the exact loopback URL at the first
 FluencyLoop interaction. It prefers `http://127.0.0.1:44444` and safely uses the next port when
-that one is busy. The reader stays available while one or more agent sessions are active in that
+that one is busy. The site stays available while one or more agent sessions are active in that
 project, then returns to its normal inactivity timeout after the final session ends.
 
-You can manage the reader directly too:
+You can manage the site directly too:
 
 ```bash
-fluencyloop site --ensure    # start or reuse the project reader
+fluencyloop site --ensure    # start or reuse the project knowledge site
 fluencyloop site --status    # print the current URL and lifecycle state
-fluencyloop site --stop      # stop this project's managed reader
+fluencyloop site --stop      # stop this project's managed site
 ```
 
 The store-facing commands are `fluencyloop session`, `fluencyloop decision`,
