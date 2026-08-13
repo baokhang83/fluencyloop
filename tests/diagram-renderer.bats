@@ -20,6 +20,8 @@ load test_helper
     [ -s "$diagram" ]
     grep -q 'height:528px' "$diagram"
     grep -q 'overflow:hidden' "$diagram"
+    grep -q 'READING KEY' "$diagram"
+    grep -q 'accent border: focal boundary' "$diagram"
     [ "$(grep -o '<path d="M' "$diagram" | wc -l | tr -d ' ')" -eq 6 ]
     ! grep -q '<iframe\|<script\|https://' "$diagram"
 }
@@ -43,6 +45,39 @@ load test_helper
     grep -q 'current state' "$diagram"
     grep -q 'repository facts' "$diagram"
     [ "$(grep -o '<path d="M' "$diagram" | wc -l | tr -d ' ')" -eq 4 ]
+}
+
+@test "gives a five-node merge readable lanes without full-width cards" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the diagram renderer"
+    setup_initialized_repo
+    run bash "$DIST/fluencyloop" diagram \
+        --output docs/fluencyloop/diagrams/product-overview.html --layout merge --title "Architecture drift check" --hub tools \
+        --node reader --label "Store reader" --detail "Parses stored records" \
+        --node resolver --label "Record resolver" --detail "Builds current state" \
+        --node scanner --label "Reality scanner" --detail "Reads repository facts" \
+        --node drift --label "Drift engine" --detail "Compares both views" \
+        --node tools --label "MCP tools" --detail "Expose the findings" \
+        --edge reader resolver --edge-label "records" \
+        --edge resolver drift --edge-label "current state" \
+        --edge scanner drift --edge-label "repository facts" \
+        --edge drift tools --edge-label "drift findings"
+    [ "$status" -eq 0 ]
+    diagram="$TESTREPO/docs/fluencyloop/diagrams/product-overview.html"
+    grep -q 'width="168"' "$diagram"
+    grep -q 'class="name compact"' "$diagram"
+    grep -q 'drift findings' "$diagram"
+}
+
+@test "rejects an unlabeled merge instead of producing an unexplained convergence" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the diagram renderer"
+    setup_initialized_repo
+    run bash "$DIST/fluencyloop" diagram \
+        --output docs/fluencyloop/diagrams/product-overview.html --layout merge --title "Missing labels" --hub sink \
+        --node source --label "Source" --detail "Provides input" \
+        --node sink --label "Sink" --detail "Combines input" \
+        --edge source sink
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"requires --edge-label"* ]]
 }
 
 @test "rejects a layered fan-out instead of producing overlapping routes" {
