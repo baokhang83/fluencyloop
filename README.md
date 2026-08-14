@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml"><img src="https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
   <a href="https://github.com/baokhang83/fluencyloop/releases/latest"><img src="https://img.shields.io/github/v/release/baokhang83/fluencyloop?display_name=tag&amp;sort=semver" alt="Latest release"/></a>
-  <a href="https://github.com/baokhang83/fluencyloop/stargazers"><img src="https://img.shields.io/github/stars/baokhang83/fluencyloop?style=flat&amp;label=stars" alt="GitHub stars"/></a>
+  <a href="https://github.com/baokhang83/fluencyloop/stargazers"><img src="https://img.shields.io/github/stars/baokhang83/fluencyloop?style=social" alt="GitHub stars"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/baokhang83/fluencyloop" alt="Apache-2.0 license"/></a>
   <a href="CONTRIBUTING.md#project-status"><img src="https://img.shields.io/badge/status-beta-blue" alt="Status beta"/></a>
 </p>
