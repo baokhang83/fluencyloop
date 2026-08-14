@@ -17,9 +17,7 @@ FluencyLoop turns each feature into a documented design, teaches decisions at yo
 rationale, and produces a reviewer-ready summary. A private knowledge base keeps that teaching
 calibrated across features.</p>
 
-<p align="center"><em>The code and your fluency in it are produced together, or not at all.</em></p>
-
-## 🧭 Table of contents
+## Table of contents
 
 - [🧭 The workflow](#workflow)
 - [✨ What it gives you](#what-it-gives-you)
@@ -55,15 +53,6 @@ are recorded as unverified by default; verification is optional and never blocks
 FluencyLoop also bundles `diagram-design` for architectural explanations. It is available to both
 clients after the normal plugin update; FluencyLoop uses it only when a diagram makes a record
 clearer than prose alone.
-
-### 🕰️ Moving from 0.2
-
-Install 0.3 normally, then continue working. On the first FluencyLoop command in a 0.2 project,
-the plugin silently imports legacy session history into the append-only store. There is no separate
-migration command or trust-confirmation step to run. 0.3 stops creating per-feature design and
-session Markdown; it writes JSONL store records instead. The importer never modifies the original
-Markdown, which remains in place as a read-only compatibility fallback. Reconstructed history is
-unverified by default until a later review establishes its trust.
 
 <a id="what-it-gives-you"></a>
 
