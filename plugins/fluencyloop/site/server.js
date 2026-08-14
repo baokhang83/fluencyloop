@@ -819,6 +819,7 @@ function diagramCompanion(root, explanation) {
 
 function productOverviewDiagram(root) {
   const directory = path.resolve(root, 'docs', 'fluencyloop', 'diagrams');
+  if (!fs.existsSync(path.resolve(root, PRODUCT_OVERVIEW_DIAGRAM_PATH))) return null;
   const companion = safeDiagram(root, PRODUCT_OVERVIEW_DIAGRAM_PATH, directory);
   if (!companion.path) return companion;
   return { ...companion, alt: 'System diagram supporting the technical overview.' };

@@ -725,6 +725,7 @@ PY
     [ "$status" -eq 0 ]
     [[ "$output" != *"<h2>Architectural records</h2>"* ]]
     [[ "$output" != *"<h2>Features as deltas</h2>"* ]]
+    [[ "$output" != *"Diagram unavailable."* ]]
     [[ "$output" == *'href="/constitution/#4"'* ]]
     [[ "$output" == *'href="/records/record-resolver"'* ]]
 
