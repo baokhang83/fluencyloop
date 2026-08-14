@@ -597,7 +597,19 @@ function sourceExcerpt(content, range, full) {
 
 function languageForSource(relative) {
   const extension = path.extname(relative).toLowerCase();
-  return ({ '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript', '.ts': 'typescript', '.tsx': 'typescript', '.jsx': 'javascript', '.java': 'java', '.json': 'json', '.css': 'css', '.html': 'xml', '.xml': 'xml', '.md': 'markdown', '.sh': 'bash', '.ps1': 'powershell', '.py': 'python', '.yml': 'yaml', '.yaml': 'yaml', '.diff': 'diff' })[extension] || 'plaintext';
+  const basename = path.basename(relative).toLowerCase();
+  if (basename === 'makefile' || basename === 'gnumakefile') return 'makefile';
+  return ({
+    '.sh': 'bash', '.bash': 'bash', '.zsh': 'bash', '.fish': 'shell',
+    '.c': 'c', '.h': 'c', '.cc': 'cpp', '.cpp': 'cpp', '.cxx': 'cpp', '.hh': 'cpp', '.hpp': 'cpp', '.hxx': 'cpp',
+    '.cs': 'csharp', '.css': 'css', '.diff': 'diff', '.patch': 'diff', '.go': 'go', '.gql': 'graphql', '.graphql': 'graphql',
+    '.ini': 'ini', '.cfg': 'ini', '.conf': 'ini', '.java': 'java', '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript', '.jsx': 'javascript',
+    '.json': 'json', '.kt': 'kotlin', '.kts': 'kotlin', '.less': 'less', '.lua': 'lua', '.md': 'markdown', '.markdown': 'markdown',
+    '.m': 'objectivec', '.mm': 'objectivec', '.pl': 'perl', '.pm': 'perl', '.php': 'php', '.phtml': 'php-template',
+    '.py': 'python', '.pyw': 'python', '.r': 'r', '.rb': 'ruby', '.rake': 'ruby', '.rs': 'rust', '.scss': 'scss', '.sql': 'sql',
+    '.swift': 'swift', '.ts': 'typescript', '.tsx': 'typescript', '.vb': 'vbnet', '.wat': 'wasm', '.html': 'xml', '.htm': 'xml', '.svg': 'xml', '.xml': 'xml',
+    '.yml': 'yaml', '.yaml': 'yaml',
+  })[extension] || 'plaintext';
 }
 
 function storeFileHistory(root, record) {
