@@ -2,6 +2,13 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.12
+
+### Changed
+
+- The README now has the updated FluencyLoop hero, a centred release and social-proof badge rail,
+  a navigable table of contents, and direct Claude Code and Codex uninstall instructions.
+
 ## 0.3.11
 
 ### Fixed
