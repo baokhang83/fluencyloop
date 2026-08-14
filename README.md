@@ -1,21 +1,39 @@
 <p align="center">
-  <img src="assets/fluencyloop-hero.png" alt="FluencyLoop workflow: optional plan, design, build with teaching, and review" width="1693" style="max-width: 100%; height: auto;"/>
+  <img src="assets/fluencyloop-hero.png" alt="FluencyLoop — stay fluent in the code your AI agent writes" width="1686" style="max-width: 100%; height: auto;"/>
 </p>
 
-# FluencyLoop
+<h1 align="center">FluencyLoop</h1>
 
-[![CI](https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml/badge.svg)](https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/baokhang83/fluencyloop)](LICENSE)
-[![Top language](https://img.shields.io/github/languages/top/baokhang83/fluencyloop?cacheSeconds=86400)](https://github.com/baokhang83/fluencyloop)
-[![Status: beta](https://img.shields.io/badge/status-beta-blue)](CONTRIBUTING.md#project-status) 
-      
-**Stay fluent in the code your AI agent writes.** FluencyLoop turns each feature into a documented
-design, teaches the decisions at your level, tracks the rationale, and produces a reviewer-ready
-summary. A private knowledge base keeps that teaching calibrated across features.
+<p align="center">
+  <a href="https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml"><img src="https://github.com/baokhang83/fluencyloop/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="https://github.com/baokhang83/fluencyloop/releases/latest"><img src="https://img.shields.io/github/v/release/baokhang83/fluencyloop?display_name=tag&amp;sort=semver" alt="Latest release"/></a>
+  <a href="https://github.com/baokhang83/fluencyloop/stargazers"><img src="https://img.shields.io/github/stars/baokhang83/fluencyloop?style=flat&amp;label=stars" alt="GitHub stars"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/baokhang83/fluencyloop" alt="Apache-2.0 license"/></a>
+  <a href="CONTRIBUTING.md#project-status"><img src="https://img.shields.io/badge/status-beta-blue" alt="Status beta"/></a>
+</p>
 
-> The code and your fluency in it are produced together, or not at all.
+<p align="center"><strong>Stay fluent in the code your AI agent writes.</strong><br/>
+FluencyLoop turns each feature into a documented design, teaches decisions at your level, tracks
+rationale, and produces a reviewer-ready summary. A private knowledge base keeps that teaching
+calibrated across features.</p>
 
-## The workflow
+<p align="center"><em>The code and your fluency in it are produced together, or not at all.</em></p>
+
+## 🧭 Table of contents
+
+- [The workflow](#workflow)
+- [What it gives you](#what-it-gives-you)
+- [What gets committed](#what-gets-committed)
+- [Install](#install)
+- [Uninstall](#uninstall)
+- [Help shape FluencyLoop](#help-shape-fluencyloop)
+- [Requirements](#requirements)
+- [More detail](#more-detail)
+- [License](#license)
+
+<a id="workflow"></a>
+
+## 🧭 The workflow
 
 Initialize the project once, then run one feature loop per branch. Use **plan** only when the work
 is too large for a single feature.
@@ -38,7 +56,7 @@ FluencyLoop also bundles `diagram-design` for architectural explanations. It is 
 clients after the normal plugin update; FluencyLoop uses it only when a diagram makes a record
 clearer than prose alone.
 
-### Moving from 0.2
+### 🕰️ Moving from 0.2
 
 Install 0.3 normally, then continue working. On the first FluencyLoop command in a 0.2 project,
 the plugin silently imports legacy session history into the append-only store. There is no separate
@@ -47,15 +65,17 @@ session Markdown; it writes JSONL store records instead. The importer never modi
 Markdown, which remains in place as a read-only compatibility fallback. Reconstructed history is
 unverified by default until a later review establishes its trust.
 
-## What it gives you
+<a id="what-it-gives-you"></a>
 
-### A living constitution
+## ✨ What it gives you
+
+### 📜 A living constitution
 
 The constitution is a short set of checkable engineering principles for the project. It starts
 from the first real plan or feature and grows when a decision reveals a repeatable stance. Every
 later design and review is checked against it, but it never blocks a conventional merge.
 
-### Knowledge transfer, taught to your level
+### 🧠 Knowledge transfer, taught to your level
 
 FluencyLoop teaches at the moment a meaningful decision is made. It explains the mechanism, the
 reason for the chosen path, and the rejected alternative, then checks that the explanation landed
@@ -66,14 +86,14 @@ engagement. That profile carries across projects and features, keeping explanati
 familiar ground and deeper where knowledge is still forming. It is never committed to a project;
 only person-neutral knowledge-transfer notes about the software enter the documentation.
 
-### Project records that follow the code
+### 🗂️ Project records that follow the code
 
 Plans, feature sessions, decisions, knowledge, architectural records, and requirements live beside
 the code under `docs/fluencyloop/store/` as append-only JSONL. Small, bounded Markdown
 distillations add product-level prose where it helps; the legacy feature Markdown remains read-only
 input for migration.
 
-### A local project knowledge site (http://127.0.0.1:44444)
+### 🖥️ A local project knowledge site (http://127.0.0.1:44444)
 
 When Node.js is available, FluencyLoop turns those committed records into a local website for the
 project. It is a useful map of the software rather than a folder browser: the overview explains the
@@ -86,13 +106,15 @@ it binds only to `127.0.0.1`, reads the repository on your machine, and sends no
 to a service. Open it during implementation, review, or onboarding to answer the practical
 questions: *What is this product? What ideas shape it? When did this change, and why?*
 
-### Decision tracking with rationale
+### ⚖️ Decision tracking with rationale
 
 Each real fork records what was chosen, where it applies, why it was chosen, which alternative was
 rejected, how it relates to the constitution and design, and whether the rationale was verified.
 Reviewers get the decisions that shaped the feature instead of only a list of changed files.
 
-## What gets committed
+<a id="what-gets-committed"></a>
+
+## 🧱 What gets committed
 
 ```text
 docs/fluencyloop/
@@ -113,9 +135,11 @@ docs/fluencyloop/
 `~/.fluencyloop/`; it controls teaching depth and is never committed. Store records describe the
 work, never the person.
 
-## Install
+<a id="install"></a>
 
-### Claude Code
+## 📦 Install
+
+### 🟣 Claude Code
 
 ```text
 /plugin marketplace add baokhang83/fluencyloop
@@ -151,7 +175,7 @@ On native Windows, use the project-scoped setup in
 and read-only Git prompts without granting broad Git or Bash access.
 </details>
 
-### Codex
+### 🤖 Codex
 
 ```bash
 codex plugin marketplace add baokhang83/fluencyloop
@@ -176,14 +200,49 @@ running. To update by hand, run `codex plugin marketplace upgrade fluencyloop`, 
 
 </details>
 
-## Help shape FluencyLoop
+<a id="uninstall"></a>
+
+## 🗑️ Uninstall
+
+Removing FluencyLoop removes the client plugin and its cached files. It does not modify your
+projects, their `.fluencyloop/` state, or committed `docs/fluencyloop/` records.
+
+### 🟣 Claude Code
+
+```text
+/plugin uninstall fluencyloop@fluencyloop
+```
+
+If FluencyLoop is the only plugin you use from this marketplace, remove the marketplace too:
+
+```text
+/plugin marketplace remove fluencyloop
+```
+
+### 🤖 Codex
+
+```bash
+codex plugin remove fluencyloop@fluencyloop
+```
+
+If FluencyLoop is the only plugin you use from this marketplace, remove the marketplace too:
+
+```bash
+codex plugin marketplace remove fluencyloop
+```
+
+<a id="help-shape-fluencyloop"></a>
+
+## 💬 Help shape FluencyLoop
 
 Have you tried FluencyLoop, stopped during setup, or only looked through the workflow? Share where
 you are and what helped or got in the way in
 [the adoption feedback discussion](https://github.com/baokhang83/fluencyloop/discussions/69).
 Critical feedback is especially useful and a one-line response is enough.
 
-## Requirements
+<a id="requirements"></a>
+
+## ✅ Requirements
 
 FluencyLoop requires [Claude Code](https://claude.com/claude-code) or
 [Codex](https://developers.openai.com/codex/), `git`, and either Bash on macOS/Linux/Git Bash/WSL
@@ -213,12 +272,16 @@ The store-facing commands are `fluencyloop session`, `fluencyloop decision`,
 `fluencyloop requirement`. The installed Claude Code and Codex skills select them as part of the
 normal plan, feature, backfill, and review workflows.
 
-## More detail
+<a id="more-detail"></a>
+
+## 📚 More detail
 
 Read [MANIFESTO.md](MANIFESTO.md) for the product principles, calibration and privacy model, and
 the boundary between deterministic tooling and agent reasoning. See [CONTRIBUTING.md](CONTRIBUTING.md)
 for the repository layout, test commands, and distribution notes.
 
-## License
+<a id="license"></a>
+
+## 📄 License
 
 [Apache-2.0](LICENSE).
