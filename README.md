@@ -12,7 +12,7 @@
   <a href="CONTRIBUTING.md#project-status"><img src="https://img.shields.io/badge/status-beta-blue" alt="Status beta"/></a>
 </p>
 
-<p align="center">FluencyLoop captures the decisions behind each feature while your agent builds it, so the codebase stays explainable after the chat ends.</p>
+<p align="center">FluencyLoop captures the decisions behind each feature while your agent builds it,<br/>so the codebase stays explainable after the chat ends.</p>
 
 ## Table of contents
 
