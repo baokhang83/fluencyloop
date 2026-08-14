@@ -704,7 +704,9 @@ PY
     command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
     setup_initialized_repo
     mkdir -p "$TESTREPO/docs/fluencyloop/store" "$TESTREPO/docs/fluencyloop/distillations" "$TESTREPO/src/mcp"
-    printf '%s\n' 'export function resolveEvidence() { return true; }' > "$TESTREPO/src/mcp/server.ts"
+    for number in $(seq 1 81); do
+        printf 'export const evidenceLine%s = %s;\n' "$number" "$number" >> "$TESTREPO/src/mcp/server.ts"
+    done
     printf '%s\n' '{"schema_version":"1","type":"principle","ts":"2026-08-14","feature":"global","session":"none","commit":"ed8821a","number":"§4","title":"Evidence stays local","rule":"Keep evidence in the reader.","why":"Readers need inspectable records."}' \
         > "$TESTREPO/docs/fluencyloop/store/principles.jsonl"
     printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-14","feature":"evidence","session":"001","commit":"ed8821a","name":"record resolver","problem":"Readers need evidence.","how":"Resolve constrained links.","realized_by":"src/mcp/server.ts#L1-L2"}' \
