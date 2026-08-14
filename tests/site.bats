@@ -637,6 +637,8 @@ PY
     [[ "$output" == *":root[data-theme=\"dark\"]"* ]]
     [[ "$output" == *"prefers-reduced-motion"* ]]
     [[ "$output" == *"overflow-x: hidden"* ]]
+    [[ "$output" == *".record-row {"* ]]
+    [[ "$output" == *"background: var(--surface);"* ]]
     # The reader ships no bundled typeface: it sets type in the system UI font, so no @font-face
     # or font asset should be served at all.
     [[ "$output" != *"@font-face"* ]]

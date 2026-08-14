@@ -360,6 +360,8 @@ main section:has(> .empty-state) { padding: var(--space-4); }
   align-items: start;
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
   transition: background-color 120ms ease;
 }
 .record-list > .record-row:first-child { border-top: 0; }
