@@ -193,6 +193,18 @@ fluencyloop concept --relate "<from>|<to>|<kind>"
 Use a later record with the same name to refine it as the implementation teaches more; relations
 may connect concepts to other concepts, components, or planned features.
 
+### Preserve evidence for the reader
+
+When a planned concept already has implementation evidence, put the exact existing
+project-relative path in `--realized-by` (for example `src/mcp/server.ts`). Add `#Lx-Ly` only for
+a stable, small evidence range. Do not use absolute paths, URLs, invented source paths, or a
+symbol name in place of a path. The reader can then link the record to source without making the
+plan guess at a future implementation. Cite Constitution principles by their recorded `§N`.
+
+`plan.md` is planning prose, not a local-reader page. Do not add raw Markdown file links to it.
+When later distillation prose needs inspectable support, use `[[record-slug]]`,
+`[[src/path/to/file.ts]]`, `[[ed8821a]]`, or `[[§8]]` only after the target exists.
+
 ## 3. Break it into task items
 
 Decompose the initiative into **task items — each a future `/fluencyloop:feature`**. For each,

@@ -273,6 +273,10 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "fluencyloop requirement --open" in plan_skill_text
     assert "Record the same outcome in the store exactly once per gap" in plan_skill_text
     assert "Never edit or delete the earlier `open_question`" in plan_skill_text
+    assert "### Preserve evidence for the reader" in plan_skill_text
+    assert "project-relative path in `--realized-by`" in plan_skill_text
+    assert "[[record-slug]]" in plan_skill_text
+    assert "only after the target exists" in plan_skill_text
     assert "## 5. Elicit the constitution" in plan_skill_text
     for area in [
         "Guardrails", "Architecture principles", "Test methodology", "Data and state",
