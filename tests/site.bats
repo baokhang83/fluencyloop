@@ -705,9 +705,9 @@ PY
     setup_initialized_repo
     mkdir -p "$TESTREPO/docs/fluencyloop/store" "$TESTREPO/docs/fluencyloop/distillations" "$TESTREPO/src/mcp"
     printf '%s\n' 'export function resolveEvidence() { return true; }' > "$TESTREPO/src/mcp/server.ts"
-    printf '%s\n' '{"schema_version":"1","type":"principle","ts":"2026-08-14","feature":"global","session":"none","commit":"captured123","number":"§4","title":"Evidence stays local","rule":"Keep evidence in the reader.","why":"Readers need inspectable records."}' \
+    printf '%s\n' '{"schema_version":"1","type":"principle","ts":"2026-08-14","feature":"global","session":"none","commit":"ed8821a","number":"§4","title":"Evidence stays local","rule":"Keep evidence in the reader.","why":"Readers need inspectable records."}' \
         > "$TESTREPO/docs/fluencyloop/store/principles.jsonl"
-    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-14","feature":"evidence","session":"001","commit":"captured123","name":"record resolver","problem":"Readers need evidence.","how":"Resolve constrained links.","realized_by":"src/mcp/server.ts#L1-L2"}' \
+    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-14","feature":"evidence","session":"001","commit":"ed8821a","name":"record resolver","problem":"Readers need evidence.","how":"Resolve constrained links.","realized_by":"src/mcp/server.ts#L1-L2"}' \
         > "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
     printf '%s\n' 'Use [[record-resolver]], [[src/mcp/server.ts]], [[§4]], and constitution SS4.' \
         > "$TESTREPO/docs/fluencyloop/distillations/product.md"
@@ -735,7 +735,7 @@ PY
 
     run request '/records/record-resolver?drawer=1'
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Captured during captured123"* ]]
+    [[ "$output" == *"Captured during ed8821a"* ]]
 
     run request /code/src/mcp/server.ts
     [ "$status" -eq 0 ]
