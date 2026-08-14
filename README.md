@@ -1,7 +1,6 @@
-<img width="1254" height="686" alt="FL" src="" />
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/6fda25ee-ec82-48b2-81cf-51052b7045a5" alt="FluencyLoop — stay fluent in the code your AI agent writes" width="1686" style="max-width: 100%; height: auto;"/>
+  <img src="https://github.com/user-attachments/assets/6fda25ee-ec82-48b2-81cf-51052b7045a5" alt="FluencyLoop — stay fluent in the code your AI agent writes" width="300" style="max-width: 100%; height: auto;"/>
 </p>
 
 <h1 align="center">FluencyLoop</h1>
