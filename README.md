@@ -21,15 +21,15 @@ calibrated across features.</p>
 
 ## 🧭 Table of contents
 
-- [The workflow](#workflow)
-- [What it gives you](#what-it-gives-you)
-- [What gets committed](#what-gets-committed)
-- [Install](#install)
-- [Uninstall](#uninstall)
-- [Help shape FluencyLoop](#help-shape-fluencyloop)
-- [Requirements](#requirements)
-- [More detail](#more-detail)
-- [License](#license)
+- [🧭 The workflow](#workflow)
+- [✨ What it gives you](#what-it-gives-you)
+- [🧱 What gets committed](#what-gets-committed)
+- [📦 Install](#install)
+- [🗑️ Uninstall](#uninstall)
+- [💬 Help shape FluencyLoop](#help-shape-fluencyloop)
+- [✅ Requirements](#requirements)
+- [📚 More detail](#more-detail)
+- [📄 License](#license)
 
 <a id="workflow"></a>
 
@@ -139,7 +139,7 @@ work, never the person.
 
 ## 📦 Install
 
-### 🟣 Claude Code
+### Claude Code
 
 ```text
 /plugin marketplace add baokhang83/fluencyloop
@@ -175,7 +175,7 @@ On native Windows, use the project-scoped setup in
 and read-only Git prompts without granting broad Git or Bash access.
 </details>
 
-### 🤖 Codex
+### Codex
 
 ```bash
 codex plugin marketplace add baokhang83/fluencyloop
@@ -207,7 +207,7 @@ running. To update by hand, run `codex plugin marketplace upgrade fluencyloop`, 
 Removing FluencyLoop removes the client plugin and its cached files. It does not modify your
 projects, their `.fluencyloop/` state, or committed `docs/fluencyloop/` records.
 
-### 🟣 Claude Code
+### Claude Code
 
 ```text
 /plugin uninstall fluencyloop@fluencyloop
@@ -219,7 +219,7 @@ If FluencyLoop is the only plugin you use from this marketplace, remove the mark
 /plugin marketplace remove fluencyloop
 ```
 
-### 🤖 Codex
+### Codex
 
 ```bash
 codex plugin remove fluencyloop@fluencyloop
