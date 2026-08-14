@@ -2,6 +2,23 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.13
+
+### Added
+
+- The local reader now opens architectural records, Constitution principles, source files, and
+  Git commits as linked evidence drawers. Canonical routes remain available for shared links and
+  clients without JavaScript.
+- Source and commit evidence stay local. The reader vendors Highlight.js 11.12.0, its BSD notice,
+  and a paired FluencyLoop highlight theme. It rejects unsafe source paths and binary or oversized
+  files.
+
+### Changed
+
+- The product overview now focuses on the technical overview and initiative constraints.
+  Constitution principles have their own linked page. Record freshness now links to the last
+  commit that changed the record's JSONL store file.
+
 ## 0.3.12
 
 ### Changed
