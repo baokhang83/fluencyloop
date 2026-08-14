@@ -197,11 +197,6 @@ projects, their `.fluencyloop/` state, or committed `docs/fluencyloop/` records.
 
 ```text
 /plugin uninstall fluencyloop@fluencyloop
-```
-
-If FluencyLoop is the only plugin you use from this marketplace, remove the marketplace too:
-
-```text
 /plugin marketplace remove fluencyloop
 ```
 
@@ -209,11 +204,6 @@ If FluencyLoop is the only plugin you use from this marketplace, remove the mark
 
 ```bash
 codex plugin remove fluencyloop@fluencyloop
-```
-
-If FluencyLoop is the only plugin you use from this marketplace, remove the marketplace too:
-
-```bash
 codex plugin marketplace remove fluencyloop
 ```
 
