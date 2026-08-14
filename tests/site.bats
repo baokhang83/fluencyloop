@@ -51,6 +51,8 @@ request() {
 import sys
 import urllib.request
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 with urllib.request.urlopen(sys.argv[1]) as response:
     print(response.status)
     print(response.headers['Content-Type'])
