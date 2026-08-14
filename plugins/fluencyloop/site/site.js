@@ -220,6 +220,96 @@ function syncEmbeddedDiagramThemes(theme) {
   });
 }
 
+function highlightCode(scope = document) {
+  if (!window.hljs) return;
+  scope.querySelectorAll('code[data-highlight]').forEach((element) => {
+    try { window.hljs.highlightElement(element); } catch (_) { /* Plain text stays readable. */ }
+  });
+}
+
+// Evidence is a normal same-tab route first. JavaScript upgrades it to a drawer by fetching the
+// same route with a presentation hint, so copied links and disabled JavaScript still reach the
+// complete canonical page.
+function installEvidenceDrawer() {
+  let drawer = null;
+  let opener = null;
+  let pushed = false;
+  const focusable = () => drawer ? [...drawer.querySelectorAll('a[href], button:not([disabled]), input, summary, [tabindex]:not([tabindex="-1"])')].filter((item) => !item.hidden) : [];
+
+  const close = (fromHistory = false) => {
+    if (!drawer) return;
+    const current = drawer;
+    drawer = null;
+    current.remove();
+    document.body.classList.remove('drawer-open');
+    if (opener?.isConnected) opener.focus();
+    opener = null;
+    if (pushed && !fromHistory) history.back();
+    pushed = false;
+  };
+
+  const open = async (href, trigger, replace = false) => {
+    const target = new URL(href, window.location.href);
+    const range = target.hash.match(/^#L?(\d+)(?:-L?(\d+))?$/i);
+    if (range && target.pathname.startsWith('/code/')) target.searchParams.set('range', `${range[1]}${range[2] ? `-L${range[2]}` : ''}`);
+    target.hash = '';
+    target.searchParams.set('drawer', '1');
+    const response = await fetch(target.href, { headers: { Accept: 'text/html' } });
+    if (!response.ok) return;
+    const documentForDrawer = new DOMParser().parseFromString(await response.text(), 'text/html');
+    const content = documentForDrawer.querySelector('#content');
+    if (!content) return;
+    const retainHistory = replace && pushed;
+    close(true);
+    pushed = retainHistory;
+    opener = trigger || document.activeElement;
+    const shell = document.createElement('div');
+    shell.className = 'evidence-drawer';
+    shell.innerHTML = '<div class="evidence-backdrop" data-drawer-close></div><aside class="evidence-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="evidence-drawer-title"><div class="drawer-heading"><h2 id="evidence-drawer-title">Evidence</h2><button type="button" data-drawer-close aria-label="Close evidence">Close</button></div><div class="drawer-content"></div></aside>';
+    const destination = shell.querySelector('.drawer-content');
+    [...content.children].forEach((child) => {
+      if (child.matches('nav[aria-label="Primary"], nav[aria-label="Breadcrumb"]')) return;
+      destination.append(child);
+    });
+    document.body.append(shell);
+    drawer = shell;
+    document.body.classList.add('drawer-open');
+    highlightCode(shell);
+    if (!replace) {
+      history.pushState({ ...(history.state || {}), fluencyloopEvidenceDrawer: true }, '', new URL(href, window.location.href).href);
+      pushed = true;
+    }
+    shell.querySelector('[data-drawer-close]')?.focus();
+  };
+
+  document.addEventListener('click', (event) => {
+    const evidence = event.target.closest('a[data-evidence]');
+    if (evidence && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      open(evidence.href, evidence).catch(() => {});
+      return;
+    }
+    const expand = event.target.closest('a[data-expand-source]');
+    if (expand && drawer) {
+      event.preventDefault();
+      open(expand.href, opener, true).catch(() => {});
+      return;
+    }
+    if (drawer && event.target.closest('[data-drawer-close]')) close();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!drawer) return;
+    if (event.key === 'Escape') { event.preventDefault(); close(); return; }
+    if (event.key !== 'Tab') return;
+    const items = focusable();
+    if (!items.length) return;
+    const first = items[0]; const last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
+  window.addEventListener('popstate', () => { if (drawer) close(true); });
+}
+
 // Keep personal presentation preferences in the browser, never in the project store.
 (() => {
   const root = document.documentElement;
@@ -258,5 +348,7 @@ function syncEmbeddedDiagramThemes(theme) {
 
   requestAnimationFrame(() => { document.body.dataset.motion = 'ready'; });
   document.querySelectorAll('.diagram[data-mermaid]').forEach(renderDiagram);
+  highlightCode();
   installCatalogFilters();
+  installEvidenceDrawer();
 })();

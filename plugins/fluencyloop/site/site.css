@@ -559,6 +559,23 @@ pre {
   overflow-wrap: anywhere;
 }
 code { font-family: var(--font-mono); font-size: 0.95em; }
+.source-summary, .commit-details { color: var(--ink-muted); font-size: var(--text-sm); }
+.source-code { max-height: 68vh; white-space: pre; overflow-wrap: normal; }
+.changed-files { padding-left: 1.15rem; font-family: var(--font-mono); font-size: var(--text-sm); }
+.commit-diff summary { cursor: pointer; color: var(--accent); }
+
+/* --- evidence drawer --------------------------------------------------- */
+
+body.drawer-open { overflow: hidden; }
+.evidence-drawer { position: fixed; z-index: 20; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr) min(44rem, 92vw); }
+.evidence-backdrop { grid-column: 1; background: rgb(8 12 16 / 0.42); cursor: pointer; }
+.evidence-drawer-panel { grid-column: 2; min-width: 0; overflow: auto; padding: var(--space-4); border-left: 1px solid var(--line-strong); background: var(--canvas); box-shadow: -0.75rem 0 2rem rgb(0 0 0 / 0.16); }
+.drawer-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.drawer-heading h2 { margin: 0; font-size: var(--text-sm); color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.drawer-heading button { padding: 0.3rem 0.55rem; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.drawer-content > header { margin-top: 0; }
+.drawer-content main, .drawer-content #content { width: auto; padding: 0; }
+.record-captured { color: var(--ink-faint); font-size: var(--text-xs); }
 
 /* --- diagrams ----------------------------------------------------------- */
 
@@ -627,6 +644,9 @@ code { font-family: var(--font-mono); font-size: 0.95em; }
   .catalog-status { padding: var(--space-2) var(--space-3) 0; }
   main section:has(> .catalog) > h2, main section:has(> .record-list) > h2 { padding: var(--space-3); }
   .constraint-detail > span { display: block; min-width: 0; }
+  .evidence-drawer { display: block; }
+  .evidence-backdrop { display: none; }
+  .evidence-drawer-panel { width: 100vw; min-height: 100vh; border-left: 0; box-shadow: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

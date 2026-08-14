@@ -1,0 +1,6 @@
+/* FluencyLoop's local Highlight.js theme. It uses the reader palette, so light and dark mode
+   follow the existing --tone-* values without a network request or a separate theme switch. */
+.source-code .hljs-comment, .source-code .hljs-quote { color: var(--ink-faint); }
+.source-code .hljs-keyword, .source-code .hljs-selector-tag, .source-code .hljs-addition { color: var(--tone-1); }
+.source-code .hljs-string, .source-code .hljs-attribute { color: var(--tone-6); }
+.source-code .hljs-number, .source-code .hljs-literal, .source-code .hljs-deletion { color: var(--tone-4); }

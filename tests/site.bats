@@ -695,3 +695,61 @@ PY
     [[ "$output" != *'class="diagram"'* ]]
     [[ "$output" != *'class="diagram-unavailable"'* ]]
 }
+
+@test "site keeps the overview focused and serves linked constitution, source, and commit evidence" {
+    command -v node >/dev/null 2>&1 || skip "Node.js is required for the site test"
+    setup_initialized_repo
+    mkdir -p "$TESTREPO/docs/fluencyloop/store" "$TESTREPO/docs/fluencyloop/distillations" "$TESTREPO/src/mcp"
+    printf '%s\n' 'export function resolveEvidence() { return true; }' > "$TESTREPO/src/mcp/server.ts"
+    printf '%s\n' '{"schema_version":"1","type":"principle","ts":"2026-08-14","feature":"global","session":"none","commit":"captured123","number":"§4","title":"Evidence stays local","rule":"Keep evidence in the reader.","why":"Readers need inspectable records."}' \
+        > "$TESTREPO/docs/fluencyloop/store/principles.jsonl"
+    printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-14","feature":"evidence","session":"001","commit":"captured123","name":"record resolver","problem":"Readers need evidence.","how":"Resolve constrained links.","realized_by":"src/mcp/server.ts#L1-L2"}' \
+        > "$TESTREPO/docs/fluencyloop/store/concepts.jsonl"
+    printf '%s\n' 'Use [[record-resolver]], [[src/mcp/server.ts]], [[§4]], and constitution SS4.' \
+        > "$TESTREPO/docs/fluencyloop/distillations/product.md"
+    git add -A && git commit -qm "seed evidence reader"
+    source_commit="$(git rev-parse HEAD)"
+    start_site --port 0
+
+    run request /
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"<h2>Architectural records</h2>"* ]]
+    [[ "$output" != *"<h2>Features as deltas</h2>"* ]]
+    [[ "$output" == *'href="/constitution/#4"'* ]]
+    [[ "$output" == *'href="/records/record-resolver"'* ]]
+
+    run request /constitution
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'id="4"'* ]]
+
+    run request /records/record-resolver
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Current as of ${source_commit:0:7}"* ]]
+    [[ "$output" == *"href=\"/commits/$source_commit\""* ]]
+    [[ "$output" != *"Captured during"* ]]
+    [[ "$output" == *'href="/code/src/mcp/server.ts?range=L1-L2#L1-L2"'* ]]
+
+    run request '/records/record-resolver?drawer=1'
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Captured during captured123"* ]]
+
+    run request /code/src/mcp/server.ts
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"First 80 meaningful lines"* ]]
+    [[ "$output" == *'class="language-typescript"'* ]]
+    [[ "$output" == *"Show full file"* ]]
+
+    run request /assets/highlight-11.12.0-common.min.js
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Highlight.js v11.12.0"* ]]
+
+    run request /assets/highlight-theme.css
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"--tone-1"* ]]
+
+    run request "/commits/$source_commit"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"seed evidence reader"* ]]
+    [[ "$output" == *"Show syntax-highlighted diff"* ]]
+    [[ "$output" == *'class="language-diff"'* ]]
+}

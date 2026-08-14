@@ -33,7 +33,12 @@ const SITE_VERSION = fs.existsSync(path.join(__dirname, '..', 'VERSION'))
 const SITE_ASSETS = {
   '/assets/site.css': { file: 'site.css', contentType: 'text/css; charset=utf-8' },
   '/assets/site.js': { file: 'site.js', contentType: 'application/javascript; charset=utf-8' },
+  '/assets/highlight-11.12.0-common.min.js': { file: 'assets/highlight-11.12.0-common.min.js', contentType: 'application/javascript; charset=utf-8' },
+  '/assets/highlight-theme.css': { file: 'assets/highlight-theme.css', contentType: 'text/css; charset=utf-8' },
+  '/assets/HIGHLIGHTJS-LICENSE.txt': { file: 'assets/HIGHLIGHTJS-LICENSE.txt', contentType: 'text/plain; charset=utf-8' },
 };
+const MAX_SOURCE_BYTES = 1024 * 1024;
+const DEFAULT_SOURCE_LINES = 80;
 // How many tag colours the palette cycles through before repeating.
 const TAG_TONES = 8;
 // A broad, cross-cutting feature can inherit many tags from its concepts. Catalogue rows should
@@ -460,6 +465,9 @@ function readStore(storeDir) {
         const record = JSON.parse(line);
         if (!record || typeof record !== 'object' || Array.isArray(record)) throw new Error('expected a JSON object');
         const key = identityFor(record, `${relative}:${lineIndex + 1}:${ordinal}`);
+        // Store provenance is internal reader state. It must survive supersession so the visible
+        // "Current as of" link describes the JSONL file that supplies this current record.
+        Object.defineProperty(record, '_fluencyloopSourceFile', { value: file, enumerable: false });
         current.set(key, record);
       } catch (error) {
         errors.push({ file: relative, line: lineIndex + 1, message: error.message });
@@ -518,6 +526,89 @@ function readSiteData(root) {
   Object.defineProperty(data, 'root', { value: root, enumerable: false });
   data.navigation = buildNavigation(data);
   return data;
+}
+
+function runGit(root, arguments_) {
+  try {
+    return childProcess.execFileSync('git', ['-C', root, ...arguments_], {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 4 * 1024 * 1024,
+    });
+  } catch (_) {
+    return null;
+  }
+}
+
+function resolveCommit(root, revision) {
+  if (!/^[0-9a-f]{7,64}$/i.test(String(revision || ''))) return null;
+  const resolved = runGit(root, ['rev-parse', '--verify', `${revision}^{commit}`]);
+  return resolved ? resolved.trim() : null;
+}
+
+function sourceRelativePath(root, candidate) {
+  if (!candidate || candidate.includes('\0') || path.isAbsolute(candidate)) return null;
+  const resolved = path.resolve(root, candidate);
+  const relative = path.relative(root, resolved);
+  if (!relative || relative.startsWith('..' + path.sep) || path.isAbsolute(relative) || relative === '.git' || relative.startsWith('.git' + path.sep)) return null;
+  return relative.split(path.sep).join('/');
+}
+
+function sourceFile(root, requestedPath, commit = null) {
+  const relative = sourceRelativePath(root, requestedPath);
+  if (!relative) return { unavailable: 'Source path is unavailable.' };
+  let content;
+  if (commit) {
+    content = runGit(root, ['show', `${commit}:${relative}`]);
+    if (content === null) return { unavailable: 'Source snapshot is unavailable.' };
+  } else {
+    const file = path.resolve(root, relative);
+    try {
+      const stat = fs.statSync(file);
+      if (!stat.isFile()) return { unavailable: 'Source path is unavailable.' };
+      const resolvedRoot = fs.realpathSync(root);
+      const resolvedFile = fs.realpathSync(file);
+      if (!resolvedFile.startsWith(resolvedRoot + path.sep)) return { unavailable: 'Source path is unavailable.' };
+      if (stat.size > MAX_SOURCE_BYTES) return { unavailable: 'Source file is too large to display.' };
+      content = fs.readFileSync(file, 'utf8');
+    } catch (_) {
+      return { unavailable: 'Source path is unavailable.' };
+    }
+  }
+  if (Buffer.byteLength(content, 'utf8') > MAX_SOURCE_BYTES || content.includes('\0')) return { unavailable: 'Source file is binary or too large to display.' };
+  return { relative, content };
+}
+
+function sourceRange(value) {
+  const match = String(value || '').match(/^L?(\d+)(?:-L?(\d+))?$/i);
+  if (!match) return null;
+  const start = Number(match[1]);
+  const end = Number(match[2] || match[1]);
+  return start > 0 && end >= start ? { start, end } : null;
+}
+
+function sourceExcerpt(content, range, full) {
+  const lines = content.split(/\r?\n/);
+  if (full) return { lines: lines.map((text, index) => ({ number: index + 1, text })), truncated: false };
+  if (range) return { lines: lines.slice(range.start - 1, range.end).map((text, index) => ({ number: range.start + index, text })), truncated: lines.length > range.end };
+  let meaningful = 0;
+  let end = 0;
+  for (; end < lines.length && meaningful < DEFAULT_SOURCE_LINES; end += 1) if (lines[end].trim()) meaningful += 1;
+  return { lines: lines.slice(0, end).map((text, index) => ({ number: index + 1, text })), truncated: end < lines.length };
+}
+
+function languageForSource(relative) {
+  const extension = path.extname(relative).toLowerCase();
+  return ({ '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript', '.ts': 'typescript', '.tsx': 'typescript', '.jsx': 'javascript', '.json': 'json', '.css': 'css', '.html': 'xml', '.xml': 'xml', '.md': 'markdown', '.sh': 'bash', '.ps1': 'powershell', '.py': 'python', '.yml': 'yaml', '.yaml': 'yaml', '.diff': 'diff' })[extension] || 'plaintext';
+}
+
+function storeFileHistory(root, record) {
+  if (!record || !record._fluencyloopSourceFile) return { state: 'unavailable' };
+  const relative = sourceRelativePath(root, path.relative(root, record._fluencyloopSourceFile));
+  if (!relative) return { state: 'unavailable' };
+  const dirty = runGit(root, ['status', '--porcelain', '--', relative]);
+  if (dirty === null) return { state: 'unavailable' };
+  if (dirty.trim()) return { state: 'uncommitted' };
+  const commit = resolveCommit(root, runGit(root, ['log', '-1', '--format=%H', '--', relative])?.trim());
+  return commit ? { state: 'committed', commit } : { state: 'unavailable' };
 }
 
 function escapeHtml(value) {
@@ -622,6 +713,7 @@ function buildNavigation(data) {
     const record = featureRecords.get(feature.slug);
     return {
       ...feature,
+      data,
       record,
       concepts: sortByLabel([...feature.concepts].map((name) => conceptByName.get(name))),
       // A feature carries the tags of every concept it touches, so the same shared vocabulary
@@ -639,6 +731,7 @@ function buildNavigation(data) {
     tags: tagIndex,
     concepts: concepts.map((concept) => ({
       ...concept,
+      data,
       slug: slugFor(concept.name),
       tags: tagsOf(concept),
       explanation: explanationByRecord.get(concept.name) || null,
@@ -726,7 +819,7 @@ function recordExplanationMarkup(data, concept) {
   const explanation = concept.explanation;
   if (!explanation) {
     return concept.distillation
-      ? markdown(concept.distillation.content)
+      ? markdown(concept.distillation.content, data)
       : emptyState('No architectural record explanation has been written yet.');
   }
   const companion = diagramCompanion(data.root, explanation);
@@ -734,10 +827,10 @@ function recordExplanationMarkup(data, concept) {
     ? `<figure class="record-diagram"><iframe src="${escapeHtml(`${conceptPath(concept)}/diagram`)}" title="${escapeHtml(companion.alt)}" sandbox loading="lazy" referrerpolicy="no-referrer"></iframe><figcaption>${escapeHtml(companion.alt)}</figcaption></figure>`
     : companion?.unavailable ? `<aside class="diagram-unavailable" role="note"><strong>Diagram unavailable.</strong><p>${escapeHtml(companion.unavailable)}</p></aside>` : '';
   return `<div class="record-explanation">
-    <h3>Context</h3><p>${escapeHtml(explanation.context)}</p>
-    <h3>Decision</h3><p>${escapeHtml(explanation.decision)}</p>
-    <h3>How it works</h3><p>${escapeHtml(explanation.mechanism)}</p>
-    <h3>Consequences</h3><p>${escapeHtml(explanation.consequences)}</p>
+    <h3>Context</h3><p>${evidenceText(data, explanation.context)}</p>
+    <h3>Decision</h3><p>${evidenceText(data, explanation.decision)}</p>
+    <h3>How it works</h3><p>${evidenceText(data, explanation.mechanism)}</p>
+    <h3>Consequences</h3><p>${evidenceText(data, explanation.consequences)}</p>
     ${diagram}
   </div>`;
 }
@@ -755,8 +848,43 @@ function link(href, label) {
   return `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
 }
 
-function inlineMarkdown(text) {
-  return escapeHtml(text)
+function evidenceLink(data, reference, label) {
+  const normalized = String(reference).trim();
+  const constitution = normalized.match(/^(?:constitution\s+)?(?:§|SS)\s*(\d+)$/i);
+  if (constitution && data.navigation.principles.some((item) => String(item.number).replace(/^§?/, '') === constitution[1])) {
+    return `<a data-evidence href="/constitution/#${constitution[1]}">Constitution §${constitution[1]}</a>`;
+  }
+  const record = data.navigation.concepts.find((item) => item.slug === slugFor(normalized) || item.name === normalized);
+  if (record) return `<a data-evidence href="${escapeHtml(conceptPath(record))}">${escapeHtml(label || record.name)}</a>`;
+  const commit = resolveCommit(data.root, normalized);
+  if (commit) return `<a data-evidence href="/commits/${commit}">${escapeHtml(label || normalized)}</a>`;
+  const [sourcePath, requestedRange] = normalized.split('#', 2);
+  const source = sourceFile(data.root, sourcePath);
+  if (source.relative) {
+    const range = sourceRange(requestedRange);
+    const query = range ? `?range=L${range.start}${range.end !== range.start ? `-L${range.end}` : ''}` : '';
+    const fragment = range ? `#L${range.start}${range.end !== range.start ? `-L${range.end}` : ''}` : '';
+    return `<a data-evidence href="/code/${source.relative.split('/').map(encodeURIComponent).join('/')}${query}${fragment}">${escapeHtml(label || normalized)}</a>`;
+  }
+  return escapeHtml(label || normalized);
+}
+
+function evidenceText(data, text) {
+  const source = String(text || '');
+  const token = /(constitution\s+(?:§|SS)\s*\d+)|\[\[([^\]]+)\]\]/gi;
+  let output = '';
+  let cursor = 0;
+  let match;
+  while ((match = token.exec(source))) {
+    output += escapeHtml(source.slice(cursor, match.index));
+    output += evidenceLink(data, match[2] || match[1]);
+    cursor = token.lastIndex;
+  }
+  return output + escapeHtml(source.slice(cursor));
+}
+
+function inlineMarkdown(text, data) {
+  return evidenceText(data, text)
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em>$1</em>');
@@ -764,18 +892,18 @@ function inlineMarkdown(text) {
 
 // Distillations are regular Markdown, not source code. Keep the renderer deliberately small and
 // dependency-free, while making headings, paragraphs, lists, emphasis, and inline code readable.
-function prose(content) {
+function prose(content, data) {
   const lines = content.trim().split(/\r?\n/);
   if (!content.trim()) return '';
   const rendered = [];
   let paragraph = [];
   let list = [];
   const flushParagraph = () => {
-    if (paragraph.length) rendered.push(`<p>${inlineMarkdown(paragraph.join(' '))}</p>`);
+    if (paragraph.length) rendered.push(`<p>${inlineMarkdown(paragraph.join(' '), data)}</p>`);
     paragraph = [];
   };
   const flushList = () => {
-    if (list.length) rendered.push(`<ul>${list.map((item) => `<li>${inlineMarkdown(item)}</li>`).join('')}</ul>`);
+    if (list.length) rendered.push(`<ul>${list.map((item) => `<li>${inlineMarkdown(item, data)}</li>`).join('')}</ul>`);
     list = [];
   };
   for (let index = 0; index < lines.length; index += 1) {
@@ -790,7 +918,7 @@ function prose(content) {
       // The page already supplies the document title, so omit a leading H1 rather than repeating it.
       if (!(index === 0 && heading[1].length === 1)) {
         const level = Math.min(heading[1].length + 1, 6);
-        rendered.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+        rendered.push(`<h${level}>${inlineMarkdown(heading[2], data)}</h${level}>`);
       }
       continue;
     }
@@ -819,13 +947,13 @@ function isSupportedDiagram(source) {
     /^sequenceDiagram\b/i.test(source.trim());
 }
 
-function markdown(content) {
+function markdown(content, data) {
   const pattern = /\`\`\`mermaid[^\n]*\r?\n([\s\S]*?)\`\`\`(?:\r?\n(?:Diagram|Caption):[ \t]*(.+))?/gi;
   let cursor = 0;
   let match;
   let rendered = '';
   while ((match = pattern.exec(content))) {
-    rendered += prose(content.slice(cursor, match.index));
+    rendered += prose(content.slice(cursor, match.index), data);
     const source = match[1].trim();
     const caption = diagramCaption(match[2]);
     if (isSupportedDiagram(source)) {
@@ -835,7 +963,7 @@ function markdown(content) {
     }
     cursor = pattern.lastIndex;
   }
-  return rendered + prose(content.slice(cursor));
+  return rendered + prose(content.slice(cursor), data);
 }
 
 function emptyState(message) {
@@ -844,15 +972,22 @@ function emptyState(message) {
 
 // Every catalog row states when the record was written and which commit it describes. Those two
 // facts are what let a reader judge whether the record still applies to the code in front of them.
-function recordMeta(record) {
+function recordMeta(data, record, options = {}) {
   if (!record) return '<div class="record-meta"></div>';
   const date = record.ts
     ? `<time class="record-date" datetime="${escapeHtml(record.ts)}" title="Recorded ${escapeHtml(record.ts)}">${escapeHtml(record.ts)}</time>`
     : '';
-  let commit = '';
-  if (record.commit === 'uncommitted') commit = '<span class="record-commit is-pending">uncommitted</span>';
-  else if (record.commit) commit = `<code class="record-commit">${escapeHtml(record.commit.slice(0, 7))}</code>`;
-  return `<div class="record-meta">${date}${commit}</div>`;
+  if (!data.storeHistory) Object.defineProperty(data, 'storeHistory', { value: new Map(), enumerable: false });
+  const sourceKey = record._fluencyloopSourceFile || '';
+  if (!data.storeHistory.has(sourceKey)) data.storeHistory.set(sourceKey, storeFileHistory(data.root, record));
+  const history = data.storeHistory.get(sourceKey);
+  const currentAsOf = history.state === 'committed'
+    ? `<a class="record-commit" data-evidence href="/commits/${history.commit}" aria-label="Current as of ${history.commit}">Current as of ${escapeHtml(history.commit.slice(0, 7))}</a>`
+    : `<span class="record-commit is-pending">Current as of ${history.state}</span>`;
+  const captured = options.drawer && record.commit
+    ? `<span class="record-captured">Captured during ${record.commit === 'uncommitted' ? 'uncommitted work' : evidenceLink(data, record.commit, record.commit.slice(0, 7))}</span>`
+    : '';
+  return `<div class="record-meta">${date}${currentAsOf}${captured}</div>`;
 }
 
 // `clickable` renders each tag as the same data-tag-filter button the toolbar chips use, so a
@@ -887,7 +1022,7 @@ function recordRow(item) {
       ${item.summary ? `<p class="record-summary">${escapeHtml(item.summary)}</p>` : ''}
       ${tagList(tags, true, CATALOG_TAG_LIMIT)}
     </div>
-    ${recordMeta(item.record)}
+    ${recordMeta(item.data, item.record)}
   </li>`;
 }
 
@@ -931,6 +1066,7 @@ function conceptItem(concept) {
     summary: concept.problem,
     tags: concept.tags,
     record: concept,
+    data: concept.data,
   };
 }
 
@@ -942,10 +1078,11 @@ function featureItem(feature) {
     summary: feature.record ? feature.record.intent : '',
     tags: feature.tags,
     record: feature.record,
+    data: feature.data,
   };
 }
 
-function decisionItem(decision, tags) {
+function decisionItem(data, decision, tags) {
   return {
     label: 'Decision',
     title: decision.title,
@@ -953,6 +1090,7 @@ function decisionItem(decision, tags) {
     summary: decision.why,
     tags,
     record: decision,
+    data,
   };
 }
 
@@ -971,19 +1109,20 @@ function layout(data, title, body, crumbs = []) {
     : '';
   return `<!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} — ${escapeHtml(data.project)} — FluencyLoop</title><link rel="stylesheet" href="/assets/site.css"></head>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} — ${escapeHtml(data.project)} — FluencyLoop</title><link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/highlight-theme.css"></head>
   <body data-depth="${Math.min(crumbs.length, 3)}">
     <main id="content" tabindex="-1">
       <nav aria-label="Primary">
         <a class="site-mark" href="/" aria-label="Product overview">FL</a>
         <span class="project-name">${escapeHtml(data.project)}</span>
-        <span class="nav-links">${link('/', 'Overview')}${link('/records', 'Records')}${link('/features', 'Features')}</span>
+        <span class="nav-links">${link('/', 'Overview')}${link('/constitution', 'Constitution')}${link('/records', 'Records')}${link('/features', 'Features')}</span>
         <button type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="false">Theme</button>
       </nav>
       ${breadcrumb}
       ${storeWarning}
       ${body}
     </main>
+    <script src="/assets/highlight-11.12.0-common.min.js" defer></script>
     <script src="/assets/site.js" defer></script>
   </body>
 </html>`;
@@ -1000,7 +1139,7 @@ function renderConstraints(requirements, openQuestions) {
 }
 
 function renderPrinciples(principles) {
-  return `<ol class="principle-list">${principles.map((principle) => `<li>
+  return `<ol class="principle-list">${principles.map((principle) => `<li id="${escapeHtml(String(principle.number).replace(/^§?/, ''))}">
     <div class="principle-heading"><span class="principle-number">${escapeHtml(principle.number)}</span><h3>${escapeHtml(principle.title)}</h3></div>
     <p class="principle-rule">${escapeHtml(principle.rule)}</p>
     <p class="principle-why"><span>Why</span> ${escapeHtml(principle.why)}</p>
@@ -1009,15 +1148,8 @@ function renderPrinciples(principles) {
 
 function renderProduct(data) {
   const navigation = data.navigation;
-  const concepts = recordList(
-    newestFirst(navigation.concepts.map(conceptItem)),
-    navigation.hasCapturedHistoryWithoutConcepts
-      ? 'No architectural records have been recorded yet. This project has imported decision history — ask your assistant to "fluencyloop backfill" it to synthesize the architecture, or capture one directly with fluencyloop concept.'
-      : 'No architectural records have been recorded yet. Capture one with fluencyloop concept.',
-  );
-  const features = recordList(newestFirst(navigation.features.map(featureItem)), 'No features have been recorded yet.');
   const overview = navigation.product
-    ? markdown(navigation.product.content)
+    ? markdown(navigation.product.content, data)
     : emptyState(navigation.hasCapturedHistoryWithoutConcepts
       ? 'No product overview has been distilled yet. Ask your assistant to "fluencyloop backfill" the imported history to synthesize one, or it will appear automatically once a feature materially changes the product shape.'
       : 'No product overview has been distilled yet. It will appear when a feature materially changes the product shape.');
@@ -1025,20 +1157,23 @@ function renderProduct(data) {
   const overviewDiagram = overviewCompanion?.path
     ? `<figure class="record-diagram overview-diagram"><iframe src="/overview/diagram" title="${escapeHtml(overviewCompanion.alt)}" sandbox loading="lazy" referrerpolicy="no-referrer"></iframe><figcaption>${escapeHtml(overviewCompanion.alt)}</figcaption></figure>`
     : overviewCompanion?.unavailable ? `<aside class="diagram-unavailable" role="note"><strong>Diagram unavailable.</strong><p>${escapeHtml(overviewCompanion.unavailable)}</p></aside>` : '';
-  const constitution = navigation.principles.length
-    ? `<section><h2>Constitution</h2>${renderPrinciples(navigation.principles)}</section>`
-    : '';
   const initiativeConstraints = navigation.requirements.length || navigation.openQuestions.length
     ? `<section><h2>Initiative constraints</h2>${renderConstraints(navigation.requirements, navigation.openQuestions)}</section>`
     : '';
   return layout(data, 'Product overview', `
     <header class="record-header"><p class="eyebrow">Product overview</p><h1>${escapeHtml(data.project)}</h1></header>
     <section><h2>Technical overview</h2>${overview}${overviewDiagram}</section>
-    ${constitution}
-    <section><h2>Architectural records</h2>${concepts}</section>
-    <section><h2>Features as deltas</h2>${features}</section>
     ${initiativeConstraints}
   `);
+}
+
+function renderConstitution(data) {
+  const principles = data.navigation.principles.length
+    ? renderPrinciples(data.navigation.principles)
+    : emptyState('No constitution principles have been recorded yet.');
+  return layout(data, 'Constitution', `<header class="record-header"><p class="eyebrow">Constitution</p><h1>Principles</h1></header><section>${principles}</section>`, [
+    { href: '/', label: 'Product overview' }, { label: 'Constitution' },
+  ]);
 }
 
 function renderConceptList(data) {
@@ -1063,7 +1198,18 @@ function endpointLink(navigation, endpoint) {
   return escapeHtml(endpoint);
 }
 
-function renderConcept(data, concept) {
+function realizedByMarkup(data, value) {
+  const [rawPath, rawRange] = String(value).split('#', 2);
+  const source = sourceFile(data.root, rawPath);
+  if (!source.relative) return escapeHtml(value);
+  const range = sourceRange(rawRange);
+  const suffix = range ? `L${range.start}${range.end !== range.start ? `-L${range.end}` : ''}` : '';
+  const query = suffix ? `?range=${suffix}` : '';
+  return `<a data-evidence href="/code/${source.relative.split('/').map(encodeURIComponent).join('/')}${query}${suffix ? `#${suffix}` : ''}">${escapeHtml(value)}</a>`;
+}
+
+function renderConcept(data, concept, drawer = false) {
+  drawer = drawer || Boolean(data.drawer);
   const realizedBy = String(concept.realized_by || '').split(/\r?\n/).filter(Boolean);
   const relationships = concept.relations.length
     ? `<ul class="relation-list">${concept.relations.map((relation) => `<li>${endpointLink(data.navigation, relation.from)} <span class="relation-kind">${escapeHtml(relation.kind)}</span> &rarr; ${endpointLink(data.navigation, relation.to)}</li>`).join('')}</ul>`
@@ -1078,10 +1224,10 @@ function renderConcept(data, concept) {
       <p class="eyebrow">Architectural record</p>
       <h1>${escapeHtml(concept.name)}</h1>
       ${tagList(concept.tags)}
-      ${recordMeta(concept)}
+      ${recordMeta(data, concept, { drawer })}
     </header>
     <section><h2>Problem in this product</h2><p>${escapeHtml(concept.problem)}</p><h2>How it works</h2><p>${escapeHtml(concept.how)}</p>
-    <h2>Realized by</h2>${realizedBy.length ? `<ul>${realizedBy.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : emptyState('No implementation area was recorded.')}</section>
+    <h2>Realized by</h2>${realizedBy.length ? `<ul>${realizedBy.map((item) => `<li>${realizedByMarkup(data, item)}</li>`).join('')}</ul>` : emptyState('No implementation area was recorded.')}</section>
     <section><h2>Architectural record explanation</h2>${explanation}</section>
     <section><h2>Relationships</h2>${relationships}</section>
     <section><h2>Features that change this record</h2>${features}</section>
@@ -1105,18 +1251,18 @@ function renderFeature(data, feature) {
     'This feature has no linked architectural records yet.',
   );
   const decisions = recordList(
-    newestFirst(feature.decisions.map((decision) => decisionItem(decision, feature.tags))),
+    newestFirst(feature.decisions.map((decision) => decisionItem(data, decision, feature.tags))),
     'No decisions have been recorded for this feature yet.',
   );
   const delta = feature.distillation
-    ? markdown(feature.distillation.content)
+    ? markdown(feature.distillation.content, data)
     : emptyState('No feature delta has been distilled yet.');
   return layout(data, feature.slug, `
     <header class="record-header">
       <p class="eyebrow">Feature</p>
       <h1>${escapeHtml(feature.slug)}</h1>
       ${tagList(feature.tags)}
-      ${recordMeta(feature.record)}
+      ${recordMeta(data, feature.record, { drawer: data.drawer })}
     </header>
     ${feature.record && feature.record.intent ? `<p>${escapeHtml(feature.record.intent)}</p>` : ''}
     <section><h2>Feature delta</h2>${delta}</section>
@@ -1136,7 +1282,7 @@ function renderDecision(data, feature, decision) {
       <p class="eyebrow">Decision in ${link(featurePath(feature), feature.slug)}</p>
       <h1>${escapeHtml(decision.title)}</h1>
       ${tagList(feature.tags)}
-      ${recordMeta(decision)}
+      ${recordMeta(data, decision, { drawer: data.drawer })}
     </header>
     <section class="detail-section">
       <h2>Why</h2><p>${escapeHtml(decision.why)}</p>
@@ -1145,6 +1291,63 @@ function renderDecision(data, feature, decision) {
     </section>
     <section class="detail-section"><h2>Architectural records served</h2>${concepts}</section>
   `, [{ href: '/', label: 'Product overview' }, { href: '/features', label: 'Features' }, { href: featurePath(feature), label: feature.slug }, { label: decision.title }]);
+}
+
+function sourceCodeMarkup(source, options = {}) {
+  const excerpt = sourceExcerpt(source.content, options.range, options.full);
+  const text = excerpt.lines.map((line) => line.text).join('\n');
+  const language = languageForSource(source.relative);
+  const expand = excerpt.truncated && !options.full
+    ? `<p><a data-expand-source href="${escapeHtml(options.href)}">Show full file</a></p>`
+    : '';
+  const rangeLabel = options.range ? `Lines ${options.range.start}–${options.range.end}` : `First ${DEFAULT_SOURCE_LINES} meaningful lines`;
+  return `<p class="source-summary">${escapeHtml(rangeLabel)} · ${escapeHtml(source.relative)}</p>
+    <pre class="source-code"><code class="language-${language}" data-highlight>${escapeHtml(text)}</code></pre>${expand}`;
+}
+
+function sourcePageBody(source, options = {}) {
+  const snapshot = options.commit ? `<p class="eyebrow">Source snapshot ${escapeHtml(options.commit.slice(0, 7))}</p>` : '<p class="eyebrow">Project source</p>';
+  return `<header class="record-header">${snapshot}<h1><code>${escapeHtml(source.relative)}</code></h1></header><section>${sourceCodeMarkup(source, options)}</section>`;
+}
+
+function renderSource(data, source, options = {}) {
+  const body = sourcePageBody(source, options);
+  return layout(data, source.relative, body, [{ href: '/', label: 'Product overview' }, { label: 'Source' }, { label: source.relative }]);
+}
+
+function commitDetails(root, commit) {
+  const fields = runGit(root, ['show', '-s', '--format=%H%x00%s%x00%an%x00%aI', commit]);
+  if (!fields) return null;
+  const [full, subject, author, date] = fields.trimEnd().split('\0');
+  if (!full) return null;
+  const files = (runGit(root, ['diff-tree', '--no-commit-id', '--name-status', '-r', full]) || '')
+    .trim().split(/\r?\n/).filter(Boolean).map((line) => {
+      const [status, ...parts] = line.split('\t');
+      return { status, path: parts[parts.length - 1] };
+    });
+  const diff = runGit(root, ['show', '--format=', '--no-ext-diff', '--unified=3', full]) || '';
+  return { full, subject, author, date, files, diff };
+}
+
+function commitPageBody(data, details) {
+  const files = details.files.length
+    ? `<ul class="changed-files">${details.files.map((item) => {
+      const source = sourceFile(data.root, item.path, details.full);
+      const name = `${item.status} ${item.path}`;
+      return `<li>${source.relative ? `<a data-evidence href="/code/${source.relative.split('/').map(encodeURIComponent).join('/')}?at=${details.full}">${escapeHtml(name)}</a>` : escapeHtml(name)}</li>`;
+    }).join('')}</ul>`
+    : emptyState('This commit changed no files.');
+  return `<header class="record-header"><p class="eyebrow">Commit</p><h1>${escapeHtml(details.subject)}</h1><p><code>${escapeHtml(details.full)}</code></p><div class="commit-details"><span>${escapeHtml(details.author)}</span><time datetime="${escapeHtml(details.date)}">${escapeHtml(details.date)}</time></div></header>
+    <section><h2>Changed files</h2>${files}</section>
+    <section><details class="commit-diff"><summary>Show syntax-highlighted diff</summary><pre class="source-code"><code class="language-diff" data-highlight>${escapeHtml(details.diff)}</code></pre></details></section>`;
+}
+
+function renderCommit(data, details) {
+  return layout(data, details.subject, commitPageBody(data, details), [{ href: '/', label: 'Product overview' }, { label: 'Commit' }, { label: details.full.slice(0, 7) }]);
+}
+
+function drawerMarkup(data, body, title) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head><body><article class="evidence-drawer-panel" data-drawer-panel tabindex="-1"><div class="drawer-heading"><p class="eyebrow">Evidence</p><button type="button" data-drawer-close aria-label="Close evidence">Close</button></div>${body}</article></body></html>`;
 }
 
 function send(response, status, contentType, body) {
@@ -1193,8 +1396,13 @@ function createServer(root, managed = null) {
         return;
       }
       const data = readSiteData(root);
+      // Drawer responses reuse canonical page renderers. The query is only an enhancement hint;
+      // every evidence URL remains a shareable, no-JavaScript destination without it.
+      data.drawer = requestUrl.searchParams.get('drawer') === '1';
       if (pathname === '/api/site-data') {
-        send(response, 200, 'application/json; charset=utf-8', request.method === 'HEAD' ? '' : `${JSON.stringify(data)}\n`);
+        // Navigation entries carry a non-public rendering context. Do not expose that circular
+        // context through the live-data endpoint.
+        send(response, 200, 'application/json; charset=utf-8', request.method === 'HEAD' ? '' : `${JSON.stringify(data, (key, value) => key === 'data' ? undefined : value)}\n`);
         return;
       }
       if (pathname === '/concepts' || pathname.startsWith('/concepts/')) {
@@ -1205,6 +1413,8 @@ function createServer(root, managed = null) {
       let page = null;
       if (segments.length === 0) {
         page = renderProduct(data);
+      } else if (segments.length === 1 && segments[0] === 'constitution') {
+        page = renderConstitution(data);
       } else if (segments.length === 2 && segments[0] === 'overview' && segments[1] === 'diagram') {
         const companion = data.navigation.product && productOverviewDiagram(data.root);
         if (companion?.path) {
@@ -1223,6 +1433,26 @@ function createServer(root, managed = null) {
       } else if (segments.length === 2 && segments[0] === 'records') {
         const concept = data.navigation.concepts.find((item) => item.slug === segments[1]);
         if (concept) page = renderConcept(data, concept);
+      } else if (segments.length >= 2 && segments[0] === 'code') {
+        const requestedPath = segments.slice(1).join('/');
+        const requestedCommit = requestUrl.searchParams.get('at');
+        const commit = requestedCommit ? resolveCommit(root, requestedCommit) : null;
+        if (!requestedCommit || commit) {
+          const source = sourceFile(root, requestedPath, commit);
+          if (source.relative) {
+            const range = sourceRange(requestUrl.searchParams.get('range'));
+            const full = requestUrl.searchParams.get('full') === '1';
+            const search = new URLSearchParams();
+            if (commit) search.set('at', commit);
+            search.set('full', '1');
+            const href = `/code/${source.relative.split('/').map(encodeURIComponent).join('/')}?${search}`;
+            page = renderSource(data, source, { commit, range, full, href });
+          }
+        }
+      } else if (segments.length === 2 && segments[0] === 'commits') {
+        const commit = resolveCommit(root, segments[1]);
+        const details = commit && commitDetails(root, commit);
+        if (details) page = renderCommit(data, details);
       } else if (segments.length === 1 && segments[0] === 'features') {
         page = renderFeatureList(data);
       } else if (segments.length === 2 && segments[0] === 'features') {

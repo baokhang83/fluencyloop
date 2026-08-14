@@ -13,3 +13,10 @@ with its upstream third-party notices:
 
 Update both directories from the same reviewed upstream commit. Preserve `LICENSE` and
 `THIRD_PARTY_LICENSES.md`; do not selectively update one client package.
+
+## Highlight.js
+
+The local reader vendors the Highlight.js 11.12.0 common-language browser bundle at
+`plugins/fluencyloop/site/assets/highlight-11.12.0-common.min.js`. It is distributed under the
+BSD 3-Clause License. The complete notice is at
+`plugins/fluencyloop/site/assets/HIGHLIGHTJS-LICENSE.txt`.
