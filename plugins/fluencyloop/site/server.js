@@ -597,7 +597,7 @@ function sourceExcerpt(content, range, full) {
 
 function languageForSource(relative) {
   const extension = path.extname(relative).toLowerCase();
-  return ({ '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript', '.ts': 'typescript', '.tsx': 'typescript', '.jsx': 'javascript', '.json': 'json', '.css': 'css', '.html': 'xml', '.xml': 'xml', '.md': 'markdown', '.sh': 'bash', '.ps1': 'powershell', '.py': 'python', '.yml': 'yaml', '.yaml': 'yaml', '.diff': 'diff' })[extension] || 'plaintext';
+  return ({ '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript', '.ts': 'typescript', '.tsx': 'typescript', '.jsx': 'javascript', '.java': 'java', '.json': 'json', '.css': 'css', '.html': 'xml', '.xml': 'xml', '.md': 'markdown', '.sh': 'bash', '.ps1': 'powershell', '.py': 'python', '.yml': 'yaml', '.yaml': 'yaml', '.diff': 'diff' })[extension] || 'plaintext';
 }
 
 function storeFileHistory(root, record) {
