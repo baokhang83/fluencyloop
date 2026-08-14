@@ -197,8 +197,10 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "### Product-overview diagram decision" in feature_skill_text
     assert "before drafting the overview" in feature_skill_text
     assert "Do not wait for the user to suggest a diagram" in feature_skill_text
-    assert "**FluencyLoop native\nrenderer**" in feature_skill_text
-    assert "never write or edit HTML, SVG, or" in feature_skill_text
+    assert "let topology choose the writer" in feature_skill_text
+    assert "full architecture or data-flow workflow" in feature_skill_text
+    assert "Do not simplify the product shape merely to satisfy the" in feature_skill_text
+    assert "light/dark-theme-aware HTML/SVG" in feature_skill_text
     assert "Keep `product.md`" in feature_skill_text
     assert "site --ensure --open-once --json" in feature_skill_text
     assert "**Do not distill decisions.**" in feature_skill_text
@@ -214,12 +216,14 @@ for diagram_skill_text in [
     read_text(dist / "skills" / "diagram-design" / "SKILL.md"),
 ]:
     assert "## FluencyLoop embedded diagram fast path" in diagram_skill_text
-    assert "native diagram renderer" in diagram_skill_text
-    assert "Do not write an HTML, SVG, or CSS" in diagram_skill_text
-    assert "`merge` for independent inputs or short chains" in diagram_skill_text
+    assert "Choose the rendering path by topology" in diagram_skill_text
+    assert "never recast the architecture merely to make the command pass" in diagram_skill_text
+    assert "parallel flows that merge and then continue to another boundary" in diagram_skill_text
     assert "2–8 nodes and at most 10 edges" in diagram_skill_text
-    assert "Run exactly one `fluencyloop diagram` command" in diagram_skill_text
-    assert "Do not run Playwright, browser automation, screenshots" in diagram_skill_text
+    assert "exactly one `fluencyloop diagram` command" in diagram_skill_text
+    assert "type-architecture.md" in diagram_skill_text
+    assert "Do not omit a diagram solely because the native renderer rejects a valid graph" in diagram_skill_text
+    assert "remote-font or first-time style gate" in diagram_skill_text
     assert "Never edit its generated HTML" in diagram_skill_text
     assert "Never write `docs/fluencyloop/product.md`" in diagram_skill_text
 for full_guide_text in [

@@ -17,19 +17,21 @@ Use this path when FluencyLoop asks for either
 `docs/fluencyloop/diagrams/product-overview.html`. Never write `docs/fluencyloop/product.md`.
 It is a focused companion inside FluencyLoop's local site, not a branded design-system deliverable.
 
-Do not load the full guide, ask the user to choose a palette, tour templates, or review diagram
-alternatives. FluencyLoop owns the surrounding site design. **Do not write an HTML, SVG, or CSS
-diagram by hand.** The native renderer is the only embedded-diagram writer.
+FluencyLoop owns the surrounding site design, but the diagram must still describe the product
+faithfully. Use a self-contained HTML document with inline SVG and CSS: no scripts, remote URLs,
+remote fonts, iframes, or embedded executable content. Support the reader's themes with local
+light tokens and a `:root[data-fluencyloop-theme="dark"]` token override.
 
-Use the native diagram renderer, not the general diagram workflow:
+Choose the rendering path by topology, not by the convenience of the renderer:
 
-1. Choose one supported layout without asking: `linear` for a 2–6 step path, `hub` for a shared
-   service/boundary with 2–7 direct participants, `merge` for independent inputs or short chains
-   converging on one result, or `layered` for independent adjacent-layer mappings. It supports
-   2–8 nodes and at most 10 edges. `merge` accepts one directed path from every participant to
-   `--hub` and labels each relationship; use it for a resolver plus scanner converging on an engine.
-2. Run exactly one `fluencyloop diagram` command. Give each node its short id, label, and detail as
-   separate fields, then give the directed edges. For example:
+1. Use the native renderer only when one of its layouts faithfully captures every material node
+   and relationship: `linear` for a 2–6 step path, `hub` for a shared service/boundary with 2–7
+   direct participants, `merge` for inputs or short chains that end at one result, or `layered`
+   for one-to-one adjacent-layer mappings. It supports 2–8 nodes and at most 10 edges. A graph
+   with parallel flows that merge and then continue to another boundary does **not** fit these
+   layouts; never recast the architecture merely to make the command pass.
+2. For a fitting native graph, run exactly one `fluencyloop diagram` command. Give each node its
+   short id, label, and detail as separate fields, then give the directed edges. For example:
 
    ```bash
    fluencyloop diagram --output docs/fluencyloop/diagrams/product-overview.html --layout hub \
@@ -44,15 +46,19 @@ Use the native diagram renderer, not the general diagram workflow:
    labels at 20 characters or fewer, details at 32 or fewer, and relationship labels at 24 or
    fewer. The renderer owns canvas height, card positions, routes, attachment points, arrows,
    relationship labels, dark theme, and no-scroll geometry. Never edit its generated HTML.
-3. If the renderer rejects a graph, omit the diagram. Do not load a type reference, inspect CSS,
-   search the project for styling, browse templates, or escalate to custom SVG during a
-   FluencyLoop feature; prose remains the complete explanation.
-4. Do not run Playwright, browser automation, screenshots, theme checks, or iterative visual
-   inspection. The renderer validates its topology before writing. Confirm only that the file is
-   nonempty, then use `fluencyloop site --ensure --open-once --json` when available. Node remains
-   optional.
+3. For any graph that does not fit, use the general workflow: read
+   [the full guide](references/full-guide.md), then read exactly one relevant type reference
+   (`type-architecture.md` for component topology or `type-data-flow.md` for role-scoped flows).
+   Apply its hierarchy, connector, and pre-output rules. For this embedded fallback, retain the
+   FluencyLoop contract above instead of the full guide's remote-font or first-time style gate.
+   The generated artifact must be a static, local, theme-aware HTML/SVG document at the fixed
+   FluencyLoop path.
+4. Do not omit a diagram solely because the native renderer rejects a valid graph. Omit it only
+   when prose or a table communicates the relationship better. Confirm the generated file is
+   nonempty, contains no active or remote content, and can be opened through
+   `fluencyloop site --ensure --open-once --json` when available. Node remains optional.
 
-## General diagrams
+## Non-embedded diagrams
 
 For any other target, read [the full diagram guide](references/full-guide.md) before generating.
 It contains the style-guide gate, type-selection table, visual system, and output checklist. Then
