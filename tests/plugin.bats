@@ -171,6 +171,11 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "never run `fluencyloop calibration signal <dimension> learning` or `new`" in feature_skill_text
     assert "Only that later response can justify a signal" in feature_skill_text
     assert "### Distill once at feature wrap-up" in feature_skill_text
+    assert "### Link evidence in distillations" in feature_skill_text
+    assert "[[record-slug]]" in feature_skill_text
+    assert "[[src/path/to/file.ts]]" in feature_skill_text
+    assert "[[ed8821a]]" in feature_skill_text
+    assert "Make record evidence linkable." in feature_skill_text
     assert "**only after the feature is complete**" in feature_skill_text
     assert "Never distill during a slice, after a decision, or as a turn-by-turn summary" in feature_skill_text
     assert "fluencyloop calibration show --json" in feature_skill_text
@@ -180,7 +185,7 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "docs/fluencyloop/distillations/product.md" in feature_skill_text
     assert "Never write `docs/fluencyloop/product.md`" in feature_skill_text
     assert "do not add a `Related concepts` / `Related" in feature_skill_text
-    assert "references add no explanation" in feature_skill_text
+    assert "Use a constrained evidence reference" in feature_skill_text
     assert "when this feature newly establishes a concept" in feature_skill_text
     assert "### Optional explanatory diagrams" in feature_skill_text
     assert "docs/fluencyloop/diagrams/product-overview.html" in feature_skill_text
@@ -198,6 +203,12 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "site --ensure --open-once --json" in feature_skill_text
     assert "**Do not distill decisions.**" in feature_skill_text
     assert "person-neutral" in feature_skill_text
+for backfill_skill_text in [
+    read_text(root / "claude-skills" / "backfill" / "SKILL.md"),
+    read_text(dist / "skills" / "backfill" / "SKILL.md"),
+]:
+    assert "same constrained references as a\nlive feature" in backfill_skill_text
+    assert "Do not\ninvent links for uncertain reconstruction evidence." in backfill_skill_text
 for diagram_skill_text in [
     read_text(root / "claude-skills" / "diagram-design" / "SKILL.md"),
     read_text(dist / "skills" / "diagram-design" / "SKILL.md"),

@@ -203,6 +203,11 @@ feature deltas for the most consequential backfilled features and concept explan
 the store's problem/how fields are not enough for a reader to hold the model. Do not distill
 individual decisions.
 
+When a recovered distillation needs inspectable support, use the same constrained references as a
+live feature: `[[record-slug]]`, `[[src/path/to/file.ts]]`, `[[ed8821a]]`, or `[[§8]]`. Source
+paths must exist in the project; commit references must name the exact evidence commit. Do not
+invent links for uncertain reconstruction evidence.
+
 Keep the prose person-neutral and product-level. This is the same wrap-up pass used by a live
 feature, delayed until the reconstructed record is stable rather than omitted because the work was
 backfilled.

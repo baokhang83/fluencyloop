@@ -409,6 +409,12 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
      decision or knowledge item instead. Existing imported records may remain untagged; this rule
      applies to new records created during a live feature.
 
+     **Make record evidence linkable.** When `--realized-by` names implementation evidence, use
+     an existing project-relative source path such as `src/mcp/server.ts`, not an absolute path,
+     URL, symbol name, or guessed file. Add `#Lx-Ly` only when that small, recorded range is the
+     stable evidence for the record. The local reader turns valid paths into source evidence;
+     unknown paths remain honest plain text. Do not add a source path just to create a link.
+
 4. **Log the engagement signal** *(cheap: one append, no level-guessing)*. Levels *adapt from
    demonstrated engagement* — you don't hand-edit them each slice. For each decision you just
    taught, judge how the developer engaged and append **one signal per domain dimension** it
@@ -475,6 +481,16 @@ refresh `product.md`. The first material feature is never an excuse to leave bot
 local feature may omit those two artifacts, but say why in the hand-off rather than silently
 skipping the decision.
 
+### Link evidence in distillations
+
+Use the local reader's constrained evidence references when a sentence needs a reader to inspect
+its support. Write `[[record-slug]]` for an architectural record, `[[src/path/to/file.ts]]` for
+an existing project-relative source file, `[[ed8821a]]` for an exact Git commit, and `[[§8]]` for
+a recorded Constitution principle. Existing prose such as `constitution §8` also resolves, but
+write the corrected `Constitution §8` form in new text. Link only evidence that explains the
+claim. Keep the distillation self-contained when no inspection is needed, and leave unknown or
+unstable references as visible plain text rather than inventing a target.
+
 - `fluent` / `familiar`: concise product-level prose; name the load-bearing change without
   re-teaching fundamentals.
 - `learning` / `new`: explain the terms, flow, and product consequence needed to hold the
@@ -491,9 +507,9 @@ Write and commit at most these Markdown distillations under
    problem, shape, or major flow. Never write `docs/fluencyloop/product.md`: the local site does
    not read it. A feature that changes nothing at that altitude gets **no overview rewrite**. Keep
    it self-contained: do not add a `Related concepts` / `Related records` section or Markdown
-   links to record files. The site's Records navigation already provides that traversal; raw file
-   references add no explanation and can appear as literal Markdown in its deliberately small
-   prose renderer.
+   links to record files. Use a constrained evidence reference in the surrounding prose only when
+   a specific record, source, commit, or Constitution principle proves the claim. Raw file links
+   can appear as literal Markdown in the deliberately small prose renderer.
 3. **Concept explanation** — when this feature newly establishes a concept, create
    `concepts/<concept-slug>.md`; revise an existing explanation only when a feature decision contradicts
    it. Do not create a concept explanation merely because the feature touched a concept.
