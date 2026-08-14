@@ -78,8 +78,12 @@ PY
     [ "$status" -eq 0 ]
     [[ "$output" == *"200"* ]]
     [[ "$output" == *"text/html"* ]]
-    [[ "$output" == *"live reader"* ]]
+    [[ "$output" != *"live reader"* ]]
     [[ "$output" != *"live-reader.md"* ]]
+
+    run request /records
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"live reader"* ]]
 
     run request /api/site-data
     [ "$status" -eq 0 ]
@@ -424,7 +428,7 @@ PY
     setup_initialized_repo
     start_site --port 0
 
-    run request /
+    run request /records
     [ "$status" -eq 0 ]
     [[ "$output" == *"No architectural records have been recorded yet."* ]]
 
@@ -447,7 +451,7 @@ PY
     printf '%s\n' '# Product overview' 'The product is readable.' > "$TESTREPO/docs/fluencyloop/distillations/product.md"
     start_site --port 0
 
-    run request /
+    run request /constitution
     [ "$status" -eq 0 ]
     [[ "$output" == *"Constitution"* ]]
     [[ "$output" == *'class="principle-number">'* ]]
@@ -535,8 +539,8 @@ PY
     run request /
     [ "$status" -eq 0 ]
     [[ "$output" == *"The product is navigable."* ]]
-    [[ "$output" == *'href="/records/concept-graph"'* ]]
-    [[ "$output" == *'href="/features/site-navigation"'* ]]
+    [[ "$output" != *'<h2>Architectural records</h2>'* ]]
+    [[ "$output" != *'<h2>Features as deltas</h2>'* ]]
 
     run request /records
     [ "$status" -eq 0 ]

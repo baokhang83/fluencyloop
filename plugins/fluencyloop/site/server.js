@@ -630,6 +630,16 @@ function byType(records, type) {
   return records.filter((record) => record.type === type);
 }
 
+// Navigation enriches store records with display data. Preserve the non-enumerable source-file
+// provenance while doing so; object spread deliberately omits it.
+function withStoreProvenance(record, properties) {
+  const copy = { ...record, ...properties };
+  if (record._fluencyloopSourceFile) {
+    Object.defineProperty(copy, '_fluencyloopSourceFile', { value: record._fluencyloopSourceFile, enumerable: false });
+  }
+  return copy;
+}
+
 // True once the store holds decisions/components/conditions but no concepts yet — the shape a
 // project takes right after `fluencyloop import`, since the legacy importer deterministically
 // parses what old markdown already said and never synthesizes a concept (that needs judgment,
@@ -729,8 +739,7 @@ function buildNavigation(data) {
   return {
     product: distillations.get('product.md') || null,
     tags: tagIndex,
-    concepts: concepts.map((concept) => ({
-      ...concept,
+    concepts: concepts.map((concept) => withStoreProvenance(concept, {
       data,
       slug: slugFor(concept.name),
       tags: tagsOf(concept),
