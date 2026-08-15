@@ -283,12 +283,18 @@ or imply a stance.
 
 Do not infer, fill, or soften an answer from the architecture, existing code, or general best
 practice. A question with no answer is still useful: retain that area in `constitution.md` as
-`_No stance recorded yet._` so the gap stays visible. Do not pad it with a platitude.
+`_No stance recorded yet._` so the gap stays visible. Do not pad an unanswered area with a
+platitude.
 
-For every developer-stated stance, distill only what they supplied into a checkable principle:
-a short title, a non-negotiable `rule`, and the failure its `why` prevents. Append it to the
-active constitution under `## Principles` using the next matching citation `§N`, then append
-the same values to the store:
+For every developer-stated stance, preserve its rule and scope faithfully, then distill it into a
+checkable principle: a short title, a non-negotiable `rule`, and the failure its `why` prevents.
+When the developer gives a rule but no rationale, add one short rationale that follows directly
+from that rule. It must explain the obvious practical benefit or failure avoided, not introduce a
+new mandate, technology, exception, or trade-off. For example, `Use SOLID and Clean Code
+principles` can carry the why `Keeps responsibilities focused and dependencies understandable, so
+changes remain localized as the codebase evolves.` Never leave `Why: No further rationale was
+recorded.` for a stated rule. Append the principle to the active constitution under `## Principles`
+using the next matching citation `§N`, then append the same values to the store:
 
 ```bash
 fluencyloop principle --number "§N" --title "<title>" --rule "<developer-stated rule>" --why "<failure it prevents>"

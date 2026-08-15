@@ -12,6 +12,8 @@ All notable changes to FluencyLoop are documented here.
 - Planning no longer creates the unused `docs/fluencyloop/README.md` index.
 - Embedded-diagram guidance now requires measured text fit and padded region containment before a
   diagram is delivered.
+- Planning now supplies a short, directly derived rationale for a stated constitution rule when
+  the developer does not provide one.
 
 ## 0.3.14
 

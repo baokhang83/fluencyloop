@@ -302,6 +302,10 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "data/state or dependency constraints" in plan_skill_text
     assert "Use their terms; do not supply" in plan_skill_text
     assert "_No stance recorded yet._" in plan_skill_text
+    assert "When the developer gives a rule but no rationale" in plan_skill_text
+    assert "add one short rationale that follows directly" in plan_skill_text
+    assert "Never leave `Why: No further rationale was\nrecorded.` for a stated rule." in plan_skill_text
+    assert "Keeps responsibilities focused and dependencies understandable" in plan_skill_text
     assert "fluencyloop principle --number" in plan_skill_text
     assert "Source of truth:" in plan_skill_text
     assert "SpecKit" in plan_skill_text
