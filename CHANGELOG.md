@@ -10,6 +10,8 @@ All notable changes to FluencyLoop are documented here.
   Architecture, Test strategy, and Security. It does not require a response for six fixed
   constitution areas; developers may still add data/state or dependency constraints.
 - Planning no longer creates the unused `docs/fluencyloop/README.md` index.
+- Embedded-diagram guidance now requires measured text fit and padded region containment before a
+  diagram is delivered.
 
 ## 0.3.14
 

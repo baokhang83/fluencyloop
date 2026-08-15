@@ -58,6 +58,23 @@ Choose the rendering path by topology, not by the convenience of the renderer:
    nonempty, contains no active or remote content, and can be opened through
    `fluencyloop site --ensure --open-once --json` when available. Node remains optional.
 
+### Geometry preflight — no cramped or escaping content
+
+Before delivering an embedded diagram, validate the rendered SVG in the local reader at its actual
+iframe width. This applies to native-renderer candidates and fallback HTML alike:
+
+- Measure every visible text element with the chosen font and size (for example, with SVG
+  `getBBox()` or `getComputedTextLength()` in a browser); character count is not a fit check. Its
+  measured bounds must remain inside its intended node with at least 12 SVG units of horizontal
+  and 8 units of vertical clearance. Widen or heighten the node, use deliberate two-line text, or
+  choose a shorter faithful label — never let a label escape or clip.
+- A node inside a dashed or solid region must leave at least 16 SVG units between its outer stroke
+  and every region edge. Compute the region from its contents plus that padding; do not set a node
+  edge equal to the region edge or hide the collision with clipping.
+- Check both light and dark themes. If a native-renderer result fails either check, it does not fit
+  this graph: use the general fallback rather than editing generated HTML or accepting cramped
+  geometry.
+
 ## Non-embedded diagrams
 
 For any other target, read [the full diagram guide](references/full-guide.md) before generating.

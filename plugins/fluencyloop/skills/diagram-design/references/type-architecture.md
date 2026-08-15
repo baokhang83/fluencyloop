@@ -33,7 +33,11 @@ Reserve left/right ports for connections that travel primarily horizontally. Ent
 
 **Dashed paths — same routing rules.** Optional, return, async, and passive flows use `stroke-dasharray="4,3"` and a lighter stroke weight (`stroke-width="1"`). Apply the **same orthogonal routing, port-selection, and bridge/hop rules** as solid paths — the dash pattern only communicates semantic weight, not a different routing grammar. When a dashed path and a solid path must cross, bridge the dashed one (it is by definition the less important connection).
 
-**Zone label margin.** Leave ≥16px between the bottom of the zone eyebrow label and the top of the first enclosed node. Size the zone rect tall enough to contain this header gap (zone `y` = node_top − 32; label mask `y` = zone_y + 4).
+**Zone label and containment margin.** Leave ≥16px between the bottom of the zone eyebrow label
+and the top of the first enclosed node. Every enclosed node's *outer stroke* must also leave ≥16px
+from every zone edge, including the bottom and sides; size the zone from the padded node bounds,
+never so a node touches it. A typical top calculation is `zone_y = node_top − 32`, with the label
+mask at `zone_y + 4`.
 
 ## Crossing arrows — bridge / hop
 

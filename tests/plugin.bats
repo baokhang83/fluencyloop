@@ -226,12 +226,24 @@ for diagram_skill_text in [
     assert "remote-font or first-time style gate" in diagram_skill_text
     assert "Never edit its generated HTML" in diagram_skill_text
     assert "Never write `docs/fluencyloop/product.md`" in diagram_skill_text
+    assert "### Geometry preflight — no cramped or escaping content" in diagram_skill_text
+    assert "character count is not a fit check" in diagram_skill_text
+    assert "at least 16 SVG units between its outer stroke" in diagram_skill_text
+    assert "use the general fallback rather than editing generated HTML" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),
 ]:
     assert "## 0. First-time setup — style guide gate" in full_guide_text
     assert "Before generating your first diagram" in full_guide_text
+    assert "Measured every visible text bounding box" in full_guide_text
+    assert "≥16px from its outer stroke to every" in full_guide_text
+for architecture_reference in [
+    read_text(root / "claude-skills" / "diagram-design" / "references" / "type-architecture.md"),
+    read_text(dist / "skills" / "diagram-design" / "references" / "type-architecture.md"),
+]:
+    assert "**Zone label and containment margin.**" in architecture_reference
+    assert "including the bottom and sides" in architecture_reference
 claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "**Migrate imported history before planning.**" in claude_plan_text
