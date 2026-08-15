@@ -106,7 +106,8 @@ fluencyloop plan --json "<intent>"
 ```
 
 This creates `docs/fluencyloop/plans/<slug>/plan.md` from the template **on the current branch**
-(a plan is a committed doc, not a branch). Parse the JSON for `slug`, `plan_dir`, `plan`.
+(a plan is a committed doc, not a branch). Parse the JSON for `slug`, `plan_dir`, `plan`. Do not
+create or update `docs/fluencyloop/README.md`; it is not a planning artifact.
 
 Nail down **goal, in-scope, and non-goals** with the user before designing — a plan's value is
 mostly in what it excludes. Fill the `## Goal & scope` section from that exchange.

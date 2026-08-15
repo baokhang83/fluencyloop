@@ -48,7 +48,6 @@ Usage:
                                          render a bounded, self-contained site diagram (requires Node.js 18+)
   fluencyloop slice-context [--json]     changed hunks + metadata for the current slice
   fluencyloop calibration <init|show|edit|signal|compact>  your knowledge profile + its ledger
-  fluencyloop index                      regenerate docs/fluencyloop/README.md
   fluencyloop rename-feature-dir --pr <n>  swap the active feature's dir to carry its PR number
   fluencyloop migrate [--dry-run]        move docs from .fluencyloop/ to docs/fluencyloop/
   fluencyloop version                    print the installed version
@@ -142,7 +141,6 @@ switch -Regex ($cmd) {
     '^diagram$'       { RenderDiagram }
     '^slice-context$' { Run 'slice-context.ps1' }
     '^calibration$'   { Run 'calibration.ps1' }
-    '^index$'         { Run 'index.ps1' }
     '^rename-feature-dir$' { Run 'rename-feature-dir.ps1' }
     '^migrate$'       { Run 'migrate.ps1' }
     '^(version|--version|-v)$' { [Console]::Out.Write((ReadVersion $VersionFile) + "`n"); exit 0 }

@@ -359,6 +359,7 @@ for path in [
     assert "concepts and relationships" in text
     assert "Do not require class or sequence diagrams" in text
     assert "Diagrams are not banned" in text
+    assert "Do not\ncreate or update `docs/fluencyloop/README.md`; it is not a planning artifact." in text
     assert "artifact-design" not in text
     assert "Markdown: Open Preview" not in text
     assert "Mermaid" not in text

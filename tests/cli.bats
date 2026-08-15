@@ -20,6 +20,7 @@ load test_helper
     [[ "$output" == *"import"* ]]
     [[ "$output" == *"check"* ]]
     [[ "$output" == *"site"* ]]
+    [[ "$output" != *"fluencyloop index"* ]]
     [[ "$output" != *"self upgrade"* ]]
 }
 
@@ -27,6 +28,14 @@ load test_helper
     run bash "$DIST/fluencyloop" bogus
     [ "$status" -ne 0 ]
     [[ "$output" == *"Unknown command"* ]]
+}
+
+@test "the retired index command cannot create a docs README" {
+    setup_initialized_repo
+    run bash "$DIST/fluencyloop" index
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Unknown command: index"* ]]
+    [ ! -e "$TESTREPO/docs/fluencyloop/README.md" ]
 }
 
 @test "check --json is wired through the dispatcher inside a repo" {

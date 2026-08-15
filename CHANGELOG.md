@@ -9,6 +9,7 @@ All notable changes to FluencyLoop are documented here.
 - Planning now asks one short, grouped question about project preconditions for Guardrails,
   Architecture, Test strategy, and Security. It does not require a response for six fixed
   constitution areas; developers may still add data/state or dependency constraints.
+- Planning no longer creates the unused `docs/fluencyloop/README.md` index.
 
 ## 0.3.14
 

@@ -55,8 +55,6 @@ if [ ! -f "$PLAN" ]; then
     CREATED=true
 fi
 
-"$SCRIPT_DIR/index.sh" >/dev/null
-
 if $JSON_MODE; then
     emit_json \
         slug "$SLUG" \
