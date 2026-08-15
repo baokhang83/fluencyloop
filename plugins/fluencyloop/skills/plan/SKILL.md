@@ -117,7 +117,8 @@ fluencyloop plan --json "<intent>"
 ```
 
 This creates `docs/fluencyloop/plans/<slug>/plan.md` from the template **on the current branch**
-(a plan is a committed doc, not a branch). Parse the JSON for `slug`, `plan_dir`, `plan`.
+(a plan is a committed doc, not a branch). Parse the JSON for `slug`, `plan_dir`, `plan`. Do not
+create or update `docs/fluencyloop/README.md`; it is not a planning artifact.
 
 Nail down **goal, in-scope, and non-goals** with the user before designing — a plan's value is
 mostly in what it excludes. Fill the `## Goal & scope` section from that exchange.
@@ -263,7 +264,7 @@ Order the tasks by dependency into `## Roadmap & critical path`:
   finish. Call it out explicitly (`T1 → T3 → T6`) so it's scheduled first and watched. Teach
   *why* it's the critical path — that's an architectural insight worth the developer holding.
 
-## 5. Elicit the constitution — every project needs a stated position
+## 5. Elicit the constitution — invite project preconditions
 
 Read `docs/fluencyloop/constitution.md`. If it contains a `Source of truth:` pointer, leave
 that pointer in place and amend the cited source instead, following its conventions. In particular,
@@ -271,25 +272,29 @@ amend SpecKit's `.specify/memory/constitution.md` rather than forking a second c
 its version and Sync Impact Report conventions intact. Otherwise amend the existing local
 constitution in place — whether it is the empty stub or already has principles.
 
-Raise the following **fixed areas**. The model raises each area; it never supplies the stance.
-Ask the developer for their position on every area in one clearly labelled, batched set of
-questions, using **Question delivery — preserve the pause** above:
+Ask one short, open, batched preconditions question using **Question delivery — preserve the
+pause** above. Prefer this wording:
 
-1. **Guardrails** — what must never happen in this codebase?
-2. **Architecture principles** — which boundaries, coupling, or layering rules matter?
-3. **Test methodology** — what must be tested, and how, before work is done?
-4. **Data and state** — what is persisted, derived, or never stored?
-5. **Dependencies** — what earns a new dependency?
-6. **Security and privacy** — what never leaves the machine or is never committed?
+> Do you have any preconditions for Guardrails, Architecture, Test strategy, or Security?
+
+Do not enumerate six questions or require a position on every constitution area. The developer may
+also state data/state or dependency constraints in the same reply. Use their terms; do not supply
+or imply a stance.
 
 Do not infer, fill, or soften an answer from the architecture, existing code, or general best
 practice. A question with no answer is still useful: retain that area in `constitution.md` as
-`_No stance recorded yet._` so the gap stays visible. Do not pad it with a platitude.
+`_No stance recorded yet._` so the gap stays visible. Do not pad an unanswered area with a
+platitude.
 
-For every developer-stated stance, distill only what they supplied into a checkable principle:
-a short title, a non-negotiable `rule`, and the failure its `why` prevents. Append it to the
-active constitution under `## Principles` using the next matching citation `§N`, then append
-the same values to the store:
+For every developer-stated stance, preserve its rule and scope faithfully, then distill it into a
+checkable principle: a short title, a non-negotiable `rule`, and the failure its `why` prevents.
+When the developer gives a rule but no rationale, add one short rationale that follows directly
+from that rule. It must explain the obvious practical benefit or failure avoided, not introduce a
+new mandate, technology, exception, or trade-off. For example, `Use SOLID and Clean Code
+principles` can carry the why `Keeps responsibilities focused and dependencies understandable, so
+changes remain localized as the codebase evolves.` Never leave `Why: No further rationale was
+recorded.` for a stated rule. Append the principle to the active constitution under `## Principles`
+using the next matching citation `§N`, then append the same values to the store:
 
 ```bash
 fluencyloop principle --number "§N" --title "<title>" --rule "<developer-stated rule>" --why "<failure it prevents>"

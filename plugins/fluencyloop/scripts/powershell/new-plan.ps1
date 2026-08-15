@@ -49,8 +49,6 @@ if (-not (Test-Path -LiteralPath $plan)) {
     $created = 'true'
 }
 
-FlRefreshIndex
-
 if ($jsonMode) {
     FlOut (FlEmitJson @('slug', $slug, 'intent', $intent, 'plan_dir', $planDir, 'plan', $plan, 'created', $created))
 } else {

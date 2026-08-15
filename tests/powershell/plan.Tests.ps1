@@ -12,6 +12,7 @@ Describe 'new-plan.ps1' {
         $j = Get-FlJson 'new-plan.ps1' '--json' 'revamp the checkout flow'
         $j.slug | Should -Be 'revamp-the-checkout-flow'
         "$script:repo/docs/fluencyloop/plans/revamp-the-checkout-flow/plan.md" | Should -Exist
+        "$script:repo/docs/fluencyloop/README.md" | Should -Not -Exist
         (git rev-parse --abbrev-ref HEAD) | Should -Be 'main'
     }
 

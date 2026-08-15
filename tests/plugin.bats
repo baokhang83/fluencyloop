@@ -226,12 +226,27 @@ for diagram_skill_text in [
     assert "remote-font or first-time style gate" in diagram_skill_text
     assert "Never edit its generated HTML" in diagram_skill_text
     assert "Never write `docs/fluencyloop/product.md`" in diagram_skill_text
+    assert "### Geometry preflight — no cramped or escaping content" in diagram_skill_text
+    assert "character count is not a fit check" in diagram_skill_text
+    assert "at least 16 SVG units between its outer stroke" in diagram_skill_text
+    assert "use the general fallback rather than editing generated HTML" in diagram_skill_text
+    assert "This is a design loop, not a one-shot fallback" in diagram_skill_text
+    assert "then measure again after every revision" in diagram_skill_text
+    assert "never ship a failed first pass" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),
 ]:
     assert "## 0. First-time setup — style guide gate" in full_guide_text
     assert "Before generating your first diagram" in full_guide_text
+    assert "Measured every visible text bounding box" in full_guide_text
+    assert "≥16px from its outer stroke to every" in full_guide_text
+for architecture_reference in [
+    read_text(root / "claude-skills" / "diagram-design" / "references" / "type-architecture.md"),
+    read_text(dist / "skills" / "diagram-design" / "references" / "type-architecture.md"),
+]:
+    assert "**Zone label and containment margin.**" in architecture_reference
+    assert "including the bottom and sides" in architecture_reference
 claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "**Migrate imported history before planning.**" in claude_plan_text
@@ -282,13 +297,15 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "[[record-slug]]" in plan_skill_text
     assert "only after the target exists" in plan_skill_text
     assert "## 5. Elicit the constitution" in plan_skill_text
-    for area in [
-        "Guardrails", "Architecture principles", "Test methodology", "Data and state",
-        "Dependencies", "Security and privacy",
-    ]:
-        assert area in plan_skill_text
-    assert "The model raises each area; it never supplies the stance." in plan_skill_text
+    assert "Do you have any preconditions for Guardrails, Architecture, Test strategy, or Security?" in plan_skill_text
+    assert "Do not enumerate six questions or require a position on every constitution area." in plan_skill_text
+    assert "data/state or dependency constraints" in plan_skill_text
+    assert "Use their terms; do not supply" in plan_skill_text
     assert "_No stance recorded yet._" in plan_skill_text
+    assert "When the developer gives a rule but no rationale" in plan_skill_text
+    assert "add one short rationale that follows directly" in plan_skill_text
+    assert "Never leave `Why: No further rationale was\nrecorded.` for a stated rule." in plan_skill_text
+    assert "Keeps responsibilities focused and dependencies understandable" in plan_skill_text
     assert "fluencyloop principle --number" in plan_skill_text
     assert "Source of truth:" in plan_skill_text
     assert "SpecKit" in plan_skill_text
@@ -361,6 +378,7 @@ for path in [
     assert "concepts and relationships" in text
     assert "Do not require class or sequence diagrams" in text
     assert "Diagrams are not banned" in text
+    assert "Do not\ncreate or update `docs/fluencyloop/README.md`; it is not a planning artifact." in text
     assert "artifact-design" not in text
     assert "Markdown: Open Preview" not in text
     assert "Mermaid" not in text

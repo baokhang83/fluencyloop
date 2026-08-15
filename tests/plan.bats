@@ -10,6 +10,7 @@ setup() { setup_initialized_repo; }
     [ "$status" -eq 0 ]
     [ "$(echo "$output" | json_field slug)" = "revamp-the-checkout-flow" ]
     [ -f "$TESTREPO/docs/fluencyloop/plans/revamp-the-checkout-flow/plan.md" ]
+    [ ! -e "$TESTREPO/docs/fluencyloop/README.md" ]
     # still on main — a plan does not create/switch a branch
     [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ]
 }

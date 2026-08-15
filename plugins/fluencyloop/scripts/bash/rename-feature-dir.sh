@@ -81,8 +81,6 @@ if [ "$OLD" != "$NEW" ]; then
         updated "$(today)"
 fi
 
-"$SCRIPT_DIR/index.sh" >/dev/null
-
 if $JSON_MODE; then
     emit_json \
         slug "$SLUG" \

@@ -26,6 +26,7 @@ Describe 'fluencyloop.ps1 (dispatcher)' {
         $out | Should -Match 'import'
         $out | Should -Match 'check'
         $out | Should -Match 'site'
+        $out | Should -Not -Match 'fluencyloop index'
         $out | Should -Not -Match 'self upgrade'
     }
 
@@ -34,6 +35,13 @@ Describe 'fluencyloop.ps1 (dispatcher)' {
         $LASTEXITCODE | Should -Not -Be 0
         $out = (& $script:PwshExe -NoProfile -File $script:Cli 'bogus' 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
         $out | Should -Match 'Unknown command'
+    }
+
+    It 'rejects the retired index command without creating a docs README' {
+        $script:repo = Initialize-TestRepo
+        & $script:PwshExe -NoProfile -File $script:Cli 'index' *> $null
+        $LASTEXITCODE | Should -Not -Be 0
+        "$script:repo/docs/fluencyloop/README.md" | Should -Not -Exist
     }
 
     It 'check --json is wired through the dispatcher inside a repo' {

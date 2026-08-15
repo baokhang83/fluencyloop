@@ -438,6 +438,11 @@ Run before producing any diagram.
 - [ ] No vertical `writing-mode` text?
 - [ ] `viewBox` expanded for the legend strip (~60px)?
 - [ ] Every font size, coord, width, height, gap divisible by 4?
+- [ ] **Measured every visible text bounding box with its actual font and size? Every label stays
+  inside its intended node with ≥12px horizontal and ≥8px vertical clearance — no clipping or
+  visual overflow?**
+- [ ] **Does every node inside a dashed or solid region leave ≥16px from its outer stroke to every
+  region edge? Is the region sized from the padded contents rather than made to touch a node?**
 
 **Typography:**
 

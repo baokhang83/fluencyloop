@@ -71,7 +71,6 @@ if ($old -ne $new) {
         'last_session', $lastSession, 'base_ref', (FlStateGet 'base_ref'), 'feature_dir', $newRel,
         'plan', (FlStateGet 'plan'), 'updated', (FlToday))
 
-    FlRefreshIndex
 }
 
 if ($jsonMode) {
