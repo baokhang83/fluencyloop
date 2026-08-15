@@ -118,6 +118,9 @@ assert "without asking the developer" in feature_text
 assert "Report real entry points after a fresh init." in feature_text
 assert "`fluencyloop plan \"<intent>\"` or `/fluencyloop:plan`" in feature_text
 assert "`store` must be a path under `docs/fluencyloop/`" in feature_text
+assert "**A planned issue mapping is already a specific ticket answer.**" in feature_text
+assert "Do not ask whether to use `2`; the plan mapping answers" in feature_text
+assert "--plan \"<plan-slug>\" --prefix \"<issue-number>\"" in feature_text
 codex_feature_text = read_text(dist / "skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in codex_feature_text
 assert "state_matches_branch" in codex_feature_text
@@ -149,6 +152,9 @@ assert "request sandbox elevation before its first" in codex_feature_text
 assert "Report real entry points after a fresh init." in codex_feature_text
 assert "`fluencyloop plan \"<intent>\"` or `/fluencyloop:plan`" in codex_feature_text
 assert "never make explanation sound like a burden" in codex_feature_text
+assert "**A planned issue mapping is already a specific ticket answer.**" in codex_feature_text
+assert "Do not ask whether to use `2`; the plan mapping answers" in codex_feature_text
+assert "--plan \"<plan-slug>\" --prefix \"<issue-number>\"" in codex_feature_text
 assert "I am not comfortable" in codex_feature_text
 assert "Understanding checks are self-report, never quizzes" in codex_feature_text
 assert "Do you understand this explanation, or should I clarify anything?" in codex_feature_text
@@ -223,9 +229,19 @@ for diagram_skill_text in [
     assert "exactly one `fluencyloop diagram` command" in diagram_skill_text
     assert "type-architecture.md" in diagram_skill_text
     assert "Do not omit a diagram solely because the native renderer rejects a valid graph" in diagram_skill_text
-    assert "remote-font or first-time style gate" in diagram_skill_text
+    assert "remote-font, first-time style gate, or\n   page-chrome examples" in diagram_skill_text
     assert "Never edit its generated HTML" in diagram_skill_text
     assert "Never write `docs/fluencyloop/product.md`" in diagram_skill_text
+    assert "### Self-containment gate — verify before recording" in diagram_skill_text
+    assert "full guide's Google-font\n`<link>` example" in diagram_skill_text
+    assert "CSS `@import`" in diagram_skill_text
+    assert "confirm it renders with no `Diagram\nunavailable` notice" in diagram_skill_text
+    assert "Do not record or hand off a diagram merely because its file\nexists." in diagram_skill_text
+    assert "### Embedded iframe contract — no scrollbars" in diagram_skill_text
+    assert "no page title, eyebrow, header, footer, outer `.frame` wrapper" in diagram_skill_text
+    assert "Never add `overflow: auto`,\n`overflow-x: auto`, or a positive SVG `min-width`" in diagram_skill_text
+    assert "`scrollWidth <= clientWidth` and `scrollHeight <= clientHeight`" in diagram_skill_text
+    assert "within the reader's fixed 33rem height" in diagram_skill_text
     assert "### Geometry preflight — no cramped or escaping content" in diagram_skill_text
     assert "character count is not a fit check" in diagram_skill_text
     assert "at least 16 SVG units between its outer stroke" in diagram_skill_text
@@ -306,6 +322,8 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "add one short rationale that follows directly" in plan_skill_text
     assert "Never leave `Why: No further rationale was\nrecorded.` for a stated rule." in plan_skill_text
     assert "Keeps responsibilities focused and dependencies understandable" in plan_skill_text
+    assert "That task-to-issue mapping is the feature's\n  tracking prefix" in plan_skill_text
+    assert "without asking the developer again" in plan_skill_text
     assert "fluencyloop principle --number" in plan_skill_text
     assert "Source of truth:" in plan_skill_text
     assert "SpecKit" in plan_skill_text

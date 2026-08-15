@@ -50,13 +50,42 @@ Choose the rendering path by topology, not by the convenience of the renderer:
    [the full guide](references/full-guide.md), then read exactly one relevant type reference
    (`type-architecture.md` for component topology or `type-data-flow.md` for role-scoped flows).
    Apply its hierarchy, connector, and pre-output rules. For this embedded fallback, retain the
-   FluencyLoop contract above instead of the full guide's remote-font or first-time style gate.
-   The generated artifact must be a static, local, theme-aware HTML/SVG document at the fixed
-   FluencyLoop path.
+   FluencyLoop contract above instead of the full guide's remote-font, first-time style gate, or
+   page-chrome examples. The generated artifact must be a static, local, theme-aware HTML/SVG
+   document at the fixed FluencyLoop path.
 4. Do not omit a diagram solely because the native renderer rejects a valid graph. Omit it only
    when prose or a table communicates the relationship better. Confirm the generated file is
    nonempty, contains no active or remote content, and can be opened through
    `fluencyloop site --ensure --open-once --json` when available. Node remains optional.
+
+### Self-containment gate — verify before recording
+
+An embedded diagram that the reader rejects is not delivered. The full guide's Google-font
+`<link>` example and any remote-font, icon, image, stylesheet, or script snippet are forbidden in
+this path. Use only inline SVG and CSS with a system/local font stack; an SVG fragment reference
+such as `url(#arrow)` is fine, but an external URL is not.
+
+Before writing diagram metadata or reporting completion, run a static scan of the finished HTML.
+It must reject `<link>`, `<script>`, `<iframe>`, `<object>`, and `<embed>` tags; event-handler
+attributes; remote or protocol-relative `src`, `href`, or CSS `url(...)`; and CSS `@import`.
+Then open the diagram through its local reader route and confirm it renders with no `Diagram
+unavailable` notice. If either check fails, remove the external or executable content and repeat
+both checks after every revision. Do not record or hand off a diagram merely because its file
+exists.
+
+### Embedded iframe contract — no scrollbars
+
+The local reader already supplies the figure frame and caption. The embedded document contains only
+the diagram: no page title, eyebrow, header, footer, outer `.frame` wrapper, or body padding. Set
+`html, body { margin: 0; padding: 0; overflow: hidden; }` and render the SVG with `display: block;
+width: 100%; max-width: 100%; height: auto; min-width: 0`. Never add `overflow: auto`,
+`overflow-x: auto`, or a positive SVG `min-width` to an embedded diagram.
+
+Before handoff, inspect the iframe at the reader's actual dimensions. Its document must satisfy
+`scrollWidth <= clientWidth` and `scrollHeight <= clientHeight`; there must be no horizontal or
+vertical scrollbar. Calculate the SVG's rendered height from its `viewBox` and available iframe
+width, and keep it within the reader's fixed 33rem height. If the composition does not fit, reduce
+its visual density, choose a wider/shorter layout, or split the explanation—never add a scroller.
 
 ### Geometry preflight — no cramped or escaping content
 

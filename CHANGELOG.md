@@ -2,6 +2,17 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.16
+
+### Fixed
+
+- Embedded-diagram guidance now requires a static self-containment scan and local-reader render
+  check before it records or hands off a diagram.
+- A plan's explicit task-to-issue mapping now supplies the matching feature prefix without a
+  repeated confirmation prompt.
+- Embedded-diagram guidance now forbids page chrome and overflow rules that produce scrollbars in
+  the reader iframe, and requires an actual zero-scrollbar check.
+
 ## 0.3.15
 
 ### Changed
