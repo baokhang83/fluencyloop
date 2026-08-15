@@ -2,6 +2,15 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.17
+
+### Fixed
+
+- Feature guidance now normalizes calibration dimensions before probing, so a recorded familiarity
+  level such as `jacoco-coverage-gates: familiar` is reused rather than asked again.
+- Embedded-diagram guidance now requires a visible SVG title and calculated, padded zone bounds;
+  the reader preflight rejects a missing title or a node that touches a dashed boundary.
+
 ## 0.3.16
 
 ### Fixed

@@ -76,9 +76,12 @@ exists.
 ### Embedded iframe contract — no scrollbars
 
 The local reader already supplies the figure frame and caption. The embedded document contains only
-the diagram: no page title, eyebrow, header, footer, outer `.frame` wrapper, or body padding. Set
-`html, body { margin: 0; padding: 0; overflow: hidden; }` and render the SVG with `display: block;
-width: 100%; max-width: 100%; height: auto; min-width: 0`. Never add `overflow: auto`,
+the diagram: no HTML page title, eyebrow, header, footer, outer `.frame` wrapper, or body padding.
+It **must** include a visible, concise title as an SVG `<text>` element near the top. An HTML
+`<title>` is metadata, not a visible title. Reserve a dedicated top band of at least 40 SVG units
+for it; do not let a zone, connector, or node occupy that band. Set `html, body { margin: 0;
+padding: 0; overflow: hidden; }` and render the SVG with `display: block; width: 100%;
+max-width: 100%; height: auto; min-width: 0`. Never add `overflow: auto`,
 `overflow-x: auto`, or a positive SVG `min-width` to an embedded diagram.
 
 Before handoff, inspect the iframe at the reader's actual dimensions. Its document must satisfy
@@ -98,14 +101,20 @@ iframe width. This applies to native-renderer candidates and fallback HTML alike
   and 8 units of vertical clearance. Widen or heighten the node, use deliberate two-line text, or
   choose a shorter faithful label — never let a label escape or clip.
 - A node inside a dashed or solid region must leave at least 16 SVG units between its outer stroke
-  and every region edge. Compute the region from its contents plus that padding; do not set a node
-  edge equal to the region edge or hide the collision with clipping.
+  and every region edge. Derive each region *after* placing its nodes: use at least 24 SVG units at
+  its left, right, and bottom, and reserve at least 40 SVG units above its first node for the zone
+  label and breathing room. Do not set a node edge equal to a region edge or hide a collision with
+  clipping. If those bounds do not fit, rearrange the nodes or split the visual; never squeeze a
+  dashed boundary against a node.
 - Check both light and dark themes. If a native-renderer result fails either check, it does not fit
   this graph: use the general fallback rather than editing generated HTML or accepting cramped
   geometry. This is a design loop, not a one-shot fallback: measure the fallback, revise its
   node sizes, text treatment, region bounds, or layout, then measure again after every revision.
   Deliver it only after it passes every geometry check. If a clear fallback cannot pass, simplify
   the visual or keep the explanation in prose or a table; never ship a failed first pass.
+- Inspect the completed reader rendering, not only the source. Confirm that the SVG title is
+  visible and that every dashed boundary has clear space around its enclosed nodes. A missing title
+  or even one node visually touching a boundary fails the preflight and requires another revision.
 
 ## Non-embedded diagrams
 
