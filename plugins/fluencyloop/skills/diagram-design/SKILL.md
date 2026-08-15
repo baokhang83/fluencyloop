@@ -73,7 +73,10 @@ iframe width. This applies to native-renderer candidates and fallback HTML alike
   edge equal to the region edge or hide the collision with clipping.
 - Check both light and dark themes. If a native-renderer result fails either check, it does not fit
   this graph: use the general fallback rather than editing generated HTML or accepting cramped
-  geometry.
+  geometry. This is a design loop, not a one-shot fallback: measure the fallback, revise its
+  node sizes, text treatment, region bounds, or layout, then measure again after every revision.
+  Deliver it only after it passes every geometry check. If a clear fallback cannot pass, simplify
+  the visual or keep the explanation in prose or a table; never ship a failed first pass.
 
 ## Non-embedded diagrams
 

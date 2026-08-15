@@ -230,6 +230,9 @@ for diagram_skill_text in [
     assert "character count is not a fit check" in diagram_skill_text
     assert "at least 16 SVG units between its outer stroke" in diagram_skill_text
     assert "use the general fallback rather than editing generated HTML" in diagram_skill_text
+    assert "This is a design loop, not a one-shot fallback" in diagram_skill_text
+    assert "then measure again after every revision" in diagram_skill_text
+    assert "never ship a failed first pass" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),
