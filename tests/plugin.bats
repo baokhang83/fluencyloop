@@ -226,6 +226,11 @@ for diagram_skill_text in [
     assert "remote-font or first-time style gate" in diagram_skill_text
     assert "Never edit its generated HTML" in diagram_skill_text
     assert "Never write `docs/fluencyloop/product.md`" in diagram_skill_text
+    assert "### Self-containment gate — verify before recording" in diagram_skill_text
+    assert "full guide's Google-font\n`<link>` example" in diagram_skill_text
+    assert "CSS `@import`" in diagram_skill_text
+    assert "confirm it renders with no `Diagram\nunavailable` notice" in diagram_skill_text
+    assert "Do not record or hand off a diagram merely because its file\nexists." in diagram_skill_text
     assert "### Geometry preflight — no cramped or escaping content" in diagram_skill_text
     assert "character count is not a fit check" in diagram_skill_text
     assert "at least 16 SVG units between its outer stroke" in diagram_skill_text

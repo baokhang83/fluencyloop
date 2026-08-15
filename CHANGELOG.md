@@ -2,6 +2,13 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## Unreleased
+
+### Fixed
+
+- Embedded-diagram guidance now requires a static self-containment scan and local-reader render
+  check before it records or hands off a diagram.
+
 ## 0.3.15
 
 ### Changed
