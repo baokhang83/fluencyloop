@@ -2,6 +2,14 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.15
+
+### Changed
+
+- Planning now asks one short, grouped question about project preconditions for Guardrails,
+  Architecture, Test strategy, and Security. It does not require a response for six fixed
+  constitution areas; developers may still add data/state or dependency constraints.
+
 ## 0.3.14
 
 ### Fixed
