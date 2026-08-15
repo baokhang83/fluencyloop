@@ -247,17 +247,22 @@ for diagram_skill_text in [
     assert "visible, concise title as an SVG `<text>` element" in diagram_skill_text
     assert "An HTML\n`<title>` is metadata, not a visible title." in diagram_skill_text
     assert "dedicated top band of at least 40 SVG units" in diagram_skill_text
+    assert "at least 32 CSS pixels below the title's rendered bottom" in diagram_skill_text
     assert "Never add `overflow: auto`,\n`overflow-x: auto`, or a positive SVG `min-width`" in diagram_skill_text
     assert "`scrollWidth <= clientWidth` and `scrollHeight <= clientHeight`" in diagram_skill_text
     assert "within the reader's fixed 33rem height" in diagram_skill_text
     assert "### Geometry preflight — no cramped or escaping content" in diagram_skill_text
     assert "character count is not a fit check" in diagram_skill_text
+    assert "each `tspan` line" in diagram_skill_text
+    assert "at least 16 SVG units of\n  horizontal and 12 SVG units of vertical clearance" in diagram_skill_text
+    assert "at least 8 CSS pixels of side clearance" in diagram_skill_text
+    assert "never compress text with `textLength`" in diagram_skill_text
     assert "at least 16 SVG units between its outer stroke" in diagram_skill_text
     assert "use the general fallback rather than editing generated HTML" in diagram_skill_text
     assert "This is a design loop, not a one-shot fallback" in diagram_skill_text
     assert "then measure again after every revision" in diagram_skill_text
     assert "never ship a failed first pass" in diagram_skill_text
-    assert "A missing title\n  or even one node visually touching a boundary fails the preflight" in diagram_skill_text
+    assert "A missing title, a cramped title gap,\n  overflowing label" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),
@@ -275,6 +280,7 @@ for architecture_reference in [
     assert "at least 24px outside the extreme node strokes" in architecture_reference
     assert "top at least 40px above the first node" in architecture_reference
     assert "including the bottom and sides" in architecture_reference
+    assert "Do not use a generic 12–16px top gap." in architecture_reference
 claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
 assert "**Migrate imported history before planning.**" in claude_plan_text

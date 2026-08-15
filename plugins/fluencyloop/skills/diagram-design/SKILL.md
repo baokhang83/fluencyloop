@@ -79,7 +79,9 @@ The local reader already supplies the figure frame and caption. The embedded doc
 the diagram: no HTML page title, eyebrow, header, footer, outer `.frame` wrapper, or body padding.
 It **must** include a visible, concise title as an SVG `<text>` element near the top. An HTML
 `<title>` is metadata, not a visible title. Reserve a dedicated top band of at least 40 SVG units
-for it; do not let a zone, connector, or node occupy that band. Set `html, body { margin: 0;
+for it, then measure the title's rendered bounding box. The first zone, connector, or node must
+start at least 32 CSS pixels below the title's rendered bottom in the reader iframe. Do not rely on
+the nominal band alone and do not let a zone, connector, or node occupy that gap. Set `html, body { margin: 0;
 padding: 0; overflow: hidden; }` and render the SVG with `display: block; width: 100%;
 max-width: 100%; height: auto; min-width: 0`. Never add `overflow: auto`,
 `overflow-x: auto`, or a positive SVG `min-width` to an embedded diagram.
@@ -95,11 +97,12 @@ its visual density, choose a wider/shorter layout, or split the explanation—ne
 Before delivering an embedded diagram, validate the rendered SVG in the local reader at its actual
 iframe width. This applies to native-renderer candidates and fallback HTML alike:
 
-- Measure every visible text element with the chosen font and size (for example, with SVG
-  `getBBox()` or `getComputedTextLength()` in a browser); character count is not a fit check. Its
-  measured bounds must remain inside its intended node with at least 12 SVG units of horizontal
-  and 8 units of vertical clearance. Widen or heighten the node, use deliberate two-line text, or
-  choose a shorter faithful label — never let a label escape or clip.
+- Measure every visible text element and each `tspan` line with the chosen font and size (for
+  example, with SVG `getBBox()` in a browser); character count is not a fit check. Its measured
+  bounds must remain inside the node's inner content rectangle with at least 16 SVG units of
+  horizontal and 12 SVG units of vertical clearance. Also confirm at the reader's actual scale
+  that the glyph bounds have at least 8 CSS pixels of side clearance. Widen or heighten the node,
+  then use deliberate line breaks; never compress text with `textLength`, let it escape, or clip.
 - A node inside a dashed or solid region must leave at least 16 SVG units between its outer stroke
   and every region edge. Derive each region *after* placing its nodes: use at least 24 SVG units at
   its left, right, and bottom, and reserve at least 40 SVG units above its first node for the zone
@@ -113,8 +116,10 @@ iframe width. This applies to native-renderer candidates and fallback HTML alike
   Deliver it only after it passes every geometry check. If a clear fallback cannot pass, simplify
   the visual or keep the explanation in prose or a table; never ship a failed first pass.
 - Inspect the completed reader rendering, not only the source. Confirm that the SVG title is
-  visible and that every dashed boundary has clear space around its enclosed nodes. A missing title
-  or even one node visually touching a boundary fails the preflight and requires another revision.
+  visible, has at least 32 CSS pixels of space before the first diagram element, and that every
+  dashed boundary has clear space around its enclosed nodes. A missing title, a cramped title gap,
+  overflowing label, or even one node visually touching a boundary fails the preflight and
+  requires another revision.
 
 ## Non-embedded diagrams
 

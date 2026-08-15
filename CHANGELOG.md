@@ -10,6 +10,8 @@ All notable changes to FluencyLoop are documented here.
   level such as `jacoco-coverage-gates: familiar` is reused rather than asked again.
 - Embedded-diagram guidance now requires a visible SVG title and calculated, padded zone bounds;
   the reader preflight rejects a missing title or a node that touches a dashed boundary.
+- Embedded-diagram guidance now measures the title-to-diagram gap in the reader and every label
+  line inside a node, rejecting cramped title spacing and overflowing detail text.
 
 ## 0.3.16
 
