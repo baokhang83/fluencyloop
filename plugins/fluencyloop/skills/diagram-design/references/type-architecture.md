@@ -67,7 +67,8 @@ Group 2+ nodes that serve the same tier or trust boundary with a zone rect — d
 ```
 
 Rules:
-- Leave 12–16px above the first enclosed node — the eyebrow label sits in this margin.
+- Derive the zone bounds from placed node rectangles: use at least 24px at the sides and bottom,
+  and 40px above the first enclosed node. Do not use a generic 12–16px top gap.
 - Zone fill: `rgba(45,49,66,0.02)` (2% ink wash). Any stronger competes with node fills.
 - Max 3 zones per diagram. More and it reads like a swimlane (use that type instead).
 - Dark mode: swap `rgba(45,49,66,…)` → `rgba(245,245,245,…)` same opacities; label mask fill = `paper` (dark).

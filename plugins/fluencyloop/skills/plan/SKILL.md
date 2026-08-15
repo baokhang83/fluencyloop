@@ -238,6 +238,12 @@ a stable, small evidence range. Do not use absolute paths, URLs, invented source
 symbol name in place of a path. The reader can then link the record to source without making the
 plan guess at a future implementation. Cite Constitution principles by their recorded `§N`.
 
+**A plan is never implementation evidence.** Never use `plan.md`, a roadmap, a design document,
+or any other planning Markdown file as `--realized-by`. If a concept has no existing source path,
+explain it in the plan but wait for the feature that implements it to append or replace the concept
+record with real source paths. Do not create a placeholder realization merely to make the concept
+appear in the reader.
+
 `plan.md` is planning prose, not a local-reader page. Do not add raw Markdown file links to it.
 When later distillation prose needs inspectable support, use `[[record-slug]]`,
 `[[src/path/to/file.ts]]`, `[[ed8821a]]`, or `[[§8]]` only after the target exists.
