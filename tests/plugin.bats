@@ -182,6 +182,10 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "[[src/path/to/file.ts]]" in feature_skill_text
     assert "[[ed8821a]]" in feature_skill_text
     assert "Make record evidence linkable." in feature_skill_text
+    assert "**Replace plan-era evidence when code arrives.**" in feature_skill_text
+    assert "If its `realized_by` points to `plan.md`, another planning document," in feature_skill_text
+    assert "every real project-relative source path that realizes it" in feature_skill_text
+    assert "the store is append-only and the reader resolves the newer evidence" in feature_skill_text
     assert "**only after the feature is complete**" in feature_skill_text
     assert "Never distill during a slice, after a decision, or as a turn-by-turn summary" in feature_skill_text
     assert "fluencyloop calibration show --json" in feature_skill_text
@@ -346,6 +350,10 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "Source of truth:" in plan_skill_text
     assert "SpecKit" in plan_skill_text
     assert "Never author cold" not in plan_skill_text
+    assert "**A plan is never implementation evidence.**" in plan_skill_text
+    assert "Never use `plan.md`, a roadmap, a design document," in plan_skill_text
+    assert "wait for the feature that implements it to append or replace the concept" in plan_skill_text
+    assert "Do not create a placeholder realization merely to make the concept" in plan_skill_text
 plan_template = read_text(dist / "templates" / "plan.md")
 assert "## Open questions" in plan_template
 assert "rather than silently assuming an answer" in plan_template

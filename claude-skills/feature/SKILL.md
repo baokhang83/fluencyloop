@@ -418,6 +418,13 @@ Build the feature one **meaningful slice** at a time (a logical, commit-worthy c
      Re-stating a name records the refined concept; use relations to connect concepts to each
      other, their realizing components, or the feature that changed them.
 
+     **Replace plan-era evidence when code arrives.** Before feature handoff, inspect every
+     relevant existing concept. If its `realized_by` points to `plan.md`, another planning document,
+     or no source path, and this feature implements the concept, append a newer record with the
+     same name and every real project-relative source path that realizes it. Keep the old record:
+     the store is append-only and the reader resolves the newer evidence. Never carry a planning
+     document forward as implementation evidence or replace several components with one vague area.
+
      **Tags are mandatory for every new architectural record.** Choose one to three `--tag` values
      *before* you call the writer; never append an untagged record with an intention to repair it
      later. Tags name the widely-known ideas the record is an instance of — at most three words

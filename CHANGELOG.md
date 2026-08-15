@@ -8,6 +8,8 @@ All notable changes to FluencyLoop are documented here.
 
 - Embedded-diagram guidance now measures the title-to-diagram gap in the reader and every label
   line inside a node, rejecting cramped title spacing and overflowing detail text.
+- Planning no longer records plan documents as implementation evidence. Implementing features now
+  replace plan-era concept records with the concrete source paths that realize them.
 
 ## 0.3.17
 
