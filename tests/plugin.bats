@@ -282,12 +282,10 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "[[record-slug]]" in plan_skill_text
     assert "only after the target exists" in plan_skill_text
     assert "## 5. Elicit the constitution" in plan_skill_text
-    for area in [
-        "Guardrails", "Architecture principles", "Test methodology", "Data and state",
-        "Dependencies", "Security and privacy",
-    ]:
-        assert area in plan_skill_text
-    assert "The model raises each area; it never supplies the stance." in plan_skill_text
+    assert "Do you have any preconditions for Guardrails, Architecture, Test strategy, or Security?" in plan_skill_text
+    assert "Do not enumerate six questions or require a position on every constitution area." in plan_skill_text
+    assert "data/state or dependency constraints" in plan_skill_text
+    assert "Use their terms; do not supply" in plan_skill_text
     assert "_No stance recorded yet._" in plan_skill_text
     assert "fluencyloop principle --number" in plan_skill_text
     assert "Source of truth:" in plan_skill_text

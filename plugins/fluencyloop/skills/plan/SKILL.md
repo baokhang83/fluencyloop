@@ -263,7 +263,7 @@ Order the tasks by dependency into `## Roadmap & critical path`:
   finish. Call it out explicitly (`T1 → T3 → T6`) so it's scheduled first and watched. Teach
   *why* it's the critical path — that's an architectural insight worth the developer holding.
 
-## 5. Elicit the constitution — every project needs a stated position
+## 5. Elicit the constitution — invite project preconditions
 
 Read `docs/fluencyloop/constitution.md`. If it contains a `Source of truth:` pointer, leave
 that pointer in place and amend the cited source instead, following its conventions. In particular,
@@ -271,16 +271,14 @@ amend SpecKit's `.specify/memory/constitution.md` rather than forking a second c
 its version and Sync Impact Report conventions intact. Otherwise amend the existing local
 constitution in place — whether it is the empty stub or already has principles.
 
-Raise the following **fixed areas**. The model raises each area; it never supplies the stance.
-Ask the developer for their position on every area in one clearly labelled, batched set of
-questions, using **Question delivery — preserve the pause** above:
+Ask one short, open, batched preconditions question using **Question delivery — preserve the
+pause** above. Prefer this wording:
 
-1. **Guardrails** — what must never happen in this codebase?
-2. **Architecture principles** — which boundaries, coupling, or layering rules matter?
-3. **Test methodology** — what must be tested, and how, before work is done?
-4. **Data and state** — what is persisted, derived, or never stored?
-5. **Dependencies** — what earns a new dependency?
-6. **Security and privacy** — what never leaves the machine or is never committed?
+> Do you have any preconditions for Guardrails, Architecture, Test strategy, or Security?
+
+Do not enumerate six questions or require a position on every constitution area. The developer may
+also state data/state or dependency constraints in the same reply. Use their terms; do not supply
+or imply a stance.
 
 Do not infer, fill, or soften an answer from the architecture, existing code, or general best
 practice. A question with no answer is still useful: retain that area in `constitution.md` as
