@@ -2,6 +2,17 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## 0.3.14
+
+### Fixed
+
+- Source evidence now recognizes Java files and uses the bundled Java grammar when available.
+- An intentionally absent optional product-overview diagram no longer renders as an unavailable
+  diagram warning; unsafe present diagrams remain rejected and explained.
+- Diagram guidance now chooses the renderer by graph topology. Complex valid graphs use the
+  standalone architecture or data-flow workflow instead of being omitted when the native renderer
+  cannot express them.
+
 ## 0.3.13
 
 ### Added

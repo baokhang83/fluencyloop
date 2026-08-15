@@ -553,16 +553,14 @@ Choose the visual yourself from the implemented product shape:
 - Otherwise omit the diagram. A short hierarchy, list, or simple before/after statement remains
   prose or a table; never manufacture a visual merely because `product.md` exists.
 
-When it qualifies, load the bundled `diagram-design` skill and use its **FluencyLoop native
-renderer**. Give it the output path, a bounded graph (2–8 concise nodes and at most 10 edges), and
-the matching linear, hub, merge, or layered layout. Use `merge` when independent inputs or short
-chains converge on one result, and supply a short `--edge-label` for each relationship. Do not
-search the codebase for styling, read templates, invoke Playwright, take screenshots, inspect
-themes, or iterate on the diagram. The renderer owns geometry, routes, attachment points,
-relationship labels, dark theme, and no-scroll document height; never write or edit HTML, SVG, or
-CSS for it. If it rejects the graph, omit the overview diagram rather than escalating to general
-diagram design. The local site embeds its output through a sandboxed route. Keep `product.md`
-prose-only.
+When it qualifies, load the bundled `diagram-design` skill and let topology choose the writer.
+Use the native renderer only when its linear, hub, merge, or layered layouts faithfully describe
+every material relationship in a bounded graph (2–8 concise nodes and at most 10 edges). Use its
+full architecture or data-flow workflow when parallel paths merge and continue, or when another
+valid topology exceeds those layouts. Do not simplify the product shape merely to satisfy the
+native renderer, and do not omit a diagram solely because it rejects a valid graph. Embedded output
+must remain a static, local, light/dark-theme-aware HTML/SVG document with no remote or executable
+content; the local site embeds it through a sandboxed route. Keep `product.md` prose-only.
 Confirm the file is nonempty, then use
 `fluencyloop site --ensure --open-once --json` when Node is available.
 

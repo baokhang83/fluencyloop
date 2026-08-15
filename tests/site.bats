@@ -637,6 +637,8 @@ PY
     [[ "$output" == *":root[data-theme=\"dark\"]"* ]]
     [[ "$output" == *"prefers-reduced-motion"* ]]
     [[ "$output" == *"overflow-x: hidden"* ]]
+    [[ "$output" == *".record-row {"* ]]
+    [[ "$output" == *"background: var(--surface);"* ]]
     # The reader ships no bundled typeface: it sets type in the system UI font, so no @font-face
     # or font asset should be served at all.
     [[ "$output" != *"@font-face"* ]]
@@ -709,6 +711,10 @@ PY
     for number in $(seq 1 81); do
         printf 'export const evidenceLine%s = %s;\n' "$number" "$number" >> "$TESTREPO/src/mcp/server.ts"
     done
+    mkdir -p "$TESTREPO/src/main/java/example"
+    printf '%s\n' 'package example;' 'final class Evidence {}' > "$TESTREPO/src/main/java/example/Evidence.java"
+    mkdir -p "$TESTREPO/internal/evidence"
+    printf '%s\n' 'package evidence' 'func Ready() bool { return true }' > "$TESTREPO/internal/evidence/ready.go"
     printf '%s\n' '{"schema_version":"1","type":"principle","ts":"2026-08-14","feature":"global","session":"none","commit":"ed8821a","number":"§4","title":"Evidence stays local","rule":"Keep evidence in the reader.","why":"Readers need inspectable records."}' \
         > "$TESTREPO/docs/fluencyloop/store/principles.jsonl"
     printf '%s\n' '{"schema_version":"1","type":"concept","ts":"2026-08-14","feature":"evidence","session":"001","commit":"ed8821a","name":"record resolver","problem":"Readers need evidence.","how":"Resolve constrained links.","realized_by":"src/mcp/server.ts#L1-L2"}' \
@@ -723,6 +729,7 @@ PY
     [ "$status" -eq 0 ]
     [[ "$output" != *"<h2>Architectural records</h2>"* ]]
     [[ "$output" != *"<h2>Features as deltas</h2>"* ]]
+    [[ "$output" != *"Diagram unavailable."* ]]
     [[ "$output" == *'href="/constitution/#4"'* ]]
     [[ "$output" == *'href="/records/record-resolver"'* ]]
 
@@ -746,6 +753,14 @@ PY
     [[ "$output" == *"First 80 meaningful lines"* ]]
     [[ "$output" == *'class="language-typescript"'* ]]
     [[ "$output" == *"Show full file"* ]]
+
+    run request /code/src/main/java/example/Evidence.java
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'class="language-java"'* ]]
+
+    run request /code/internal/evidence/ready.go
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'class="language-go"'* ]]
 
     run request /assets/highlight-11.12.0-common.min.js
     [ "$status" -eq 0 ]
