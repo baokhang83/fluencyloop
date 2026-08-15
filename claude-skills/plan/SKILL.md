@@ -270,7 +270,9 @@ Check `gh auth status` **first**:
   milestone** (one issue per task item; the milestone is the initiative), confirmed **per plan**:
   *"Create these N issues + the '<initiative>' milestone now?"* On yes, create the milestone then
   the issues (title = task intent, body = intent + dependencies, `--milestone` set) and record the
-  links back into `plan.md` under `## Tickets`.
+  links back into `plan.md` under `## Tickets`. That task-to-issue mapping is the feature's
+  tracking prefix: when its task starts, pass the mapped issue number to `fluencyloop feature
+  --prefix` without asking the developer again.
 
 - **`gh` is missing or unauthed** — this is worth a **one-time** setup offer, because `gh` unlocks
   real automation. Check `~/.fluencyloop/preferences.md` for a settled `gh-setup` choice:

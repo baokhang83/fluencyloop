@@ -8,6 +8,8 @@ All notable changes to FluencyLoop are documented here.
 
 - Embedded-diagram guidance now requires a static self-containment scan and local-reader render
   check before it records or hands off a diagram.
+- A plan's explicit task-to-issue mapping now supplies the matching feature prefix without a
+  repeated confirmation prompt.
 
 ## 0.3.15
 

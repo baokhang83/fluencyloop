@@ -188,9 +188,18 @@ feature dir is prefixed (`<prefix>-<slug>`) so `features/` sorts and scans inste
 flat pile. Which prefix to use is a recurring workflow choice, not a per-feature judgment call.
 Check `~/.fluencyloop/preferences.md` (loaded in §0) for `feature-numbering`:
 
+**A planned issue mapping is already a specific ticket answer.** Before asking for a ticket id,
+read the selected plan's `## Tickets` section. When its selected task item unambiguously maps to
+an issue (for example, `T2` → GitHub issue `#2`), use that number silently as this feature's
+`--prefix` and pass `--plan "<plan-slug>"`. Do not ask whether to use `2`; the plan mapping answers
+that question. If `feature-numbering` is absent, record `feature-numbering: ticket` at this point.
+If it is already `ticket`, use the mapping. If a recorded `pr` or `sequential` preference conflicts,
+honor that preference silently instead. Ask for a specific ticket id only when ticket numbering is
+selected but no unambiguous plan mapping exists.
+
 - **A preference is already recorded** — honor it silently, and **do not re-ask**:
-  - `ticket` — ask the developer for *this* feature's specific ticket/story id (e.g. `JIRA-1234`)
-    and pass it as `--prefix "<id>"`.
+  - `ticket` — use an unambiguous plan issue mapping as above; otherwise ask the developer for
+    *this* feature's specific ticket/story id (e.g. `JIRA-1234`) and pass it as `--prefix "<id>"`.
   - `pr` — declare with no `--prefix`; the store-backed slug remains stable after the PR opens.
     Do not create or rename a feature directory.
   - `sequential` — declare with no `--prefix`; the built-in zero-padded counter handles it.
@@ -217,6 +226,7 @@ Take the user's one-line intent. Run:
 ```bash
 fluencyloop feature --json "<intent>"                      # sequential mode
 fluencyloop feature --json --prefix "<ticket-id>" "<intent>"  # ticket mode
+fluencyloop feature --json --plan "<plan-slug>" --prefix "<issue-number>" "<task intent>"  # mapped plan task
 ```
 
 This creates the `feature/<slug>` branch (switching to it) and its store record. Parse the JSON

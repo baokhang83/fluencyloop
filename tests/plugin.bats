@@ -118,6 +118,9 @@ assert "without asking the developer" in feature_text
 assert "Report real entry points after a fresh init." in feature_text
 assert "`fluencyloop plan \"<intent>\"` or `/fluencyloop:plan`" in feature_text
 assert "`store` must be a path under `docs/fluencyloop/`" in feature_text
+assert "**A planned issue mapping is already a specific ticket answer.**" in feature_text
+assert "Do not ask whether to use `2`; the plan mapping answers" in feature_text
+assert "--plan \"<plan-slug>\" --prefix \"<issue-number>\"" in feature_text
 codex_feature_text = read_text(dist / "skills" / "feature" / "SKILL.md")
 assert "**Refuse split state.**" in codex_feature_text
 assert "state_matches_branch" in codex_feature_text
@@ -149,6 +152,9 @@ assert "request sandbox elevation before its first" in codex_feature_text
 assert "Report real entry points after a fresh init." in codex_feature_text
 assert "`fluencyloop plan \"<intent>\"` or `/fluencyloop:plan`" in codex_feature_text
 assert "never make explanation sound like a burden" in codex_feature_text
+assert "**A planned issue mapping is already a specific ticket answer.**" in codex_feature_text
+assert "Do not ask whether to use `2`; the plan mapping answers" in codex_feature_text
+assert "--plan \"<plan-slug>\" --prefix \"<issue-number>\"" in codex_feature_text
 assert "I am not comfortable" in codex_feature_text
 assert "Understanding checks are self-report, never quizzes" in codex_feature_text
 assert "Do you understand this explanation, or should I clarify anything?" in codex_feature_text
@@ -311,6 +317,8 @@ for plan_skill_text in [claude_plan_text, codex_plan_text]:
     assert "add one short rationale that follows directly" in plan_skill_text
     assert "Never leave `Why: No further rationale was\nrecorded.` for a stated rule." in plan_skill_text
     assert "Keeps responsibilities focused and dependencies understandable" in plan_skill_text
+    assert "That task-to-issue mapping is the feature's\n  tracking prefix" in plan_skill_text
+    assert "without asking the developer again" in plan_skill_text
     assert "fluencyloop principle --number" in plan_skill_text
     assert "Source of truth:" in plan_skill_text
     assert "SpecKit" in plan_skill_text
