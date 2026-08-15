@@ -2,6 +2,13 @@
 
 All notable changes to FluencyLoop are documented here.
 
+## Unreleased
+
+### Fixed
+
+- Feature guidance now normalizes calibration dimensions before probing, so a recorded familiarity
+  level such as `jacoco-coverage-gates: familiar` is reused rather than asked again.
+
 ## 0.3.16
 
 ### Fixed

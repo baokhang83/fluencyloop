@@ -185,6 +185,11 @@ for feature_skill_text in [feature_text, codex_feature_text]:
     assert "**only after the feature is complete**" in feature_skill_text
     assert "Never distill during a slice, after a decision, or as a turn-by-turn summary" in feature_skill_text
     assert "fluencyloop calibration show --json" in feature_skill_text
+    assert "**Match calibration dimensions before asking.**" in feature_skill_text
+    assert "Thus `JaCoCo coverage gates`\nmatches `jacoco-coverage-gates`." in feature_skill_text
+    assert "including `familiar`**—settles the\nfamiliarity question" in feature_skill_text
+    assert "Never ask a familiarity question for a matched\ndimension" in feature_skill_text
+    assert "Only a concept with no\nnormalized profile match is unknown." in feature_skill_text
     assert "docs/fluencyloop/distillations/" in feature_skill_text
     assert "**Feature delta**" in feature_skill_text
     assert "**no overview rewrite**" in feature_skill_text

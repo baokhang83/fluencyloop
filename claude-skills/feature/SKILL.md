@@ -139,6 +139,14 @@ person-specific knowledge lives (the repo journal stays person-neutral; see Rule
 entirely is fine — you'll *build* it (see §3.4); `fluencyloop calibration init` seeds it. Never
 block on it.
 
+**Match calibration dimensions before asking.** Normalize each needed concept and every profile
+key to lowercase kebab case: replace every run of non-alphanumeric characters with one `-`, then
+trim leading/trailing `-`. Use an exact match on that normalized key. Thus `JaCoCo coverage gates`
+matches `jacoco-coverage-gates`. A matched profile value—**including `familiar`**—settles the
+familiarity question: apply its teaching depth and do not probe it again. Only a concept with no
+normalized profile match is unknown. Do not use loose semantic guessing to manufacture a match,
+but never miss an exact normalized match because prose used spaces, case, or punctuation.
+
 **Load the learner's preferences.** Also read `~/.fluencyloop/preferences.md` — a sibling to
 `calibration.md` (global, per-developer, **never committed**) that records recurring *workflow*
 choices already settled once, so you never re-ask them — e.g. the completion hand-off (commit +
@@ -150,11 +158,13 @@ time a recurring choice comes up.
 
 **Probe before you dive in.** Continuously estimating the learner's knowledge is critical, and it
 starts *before* the first explanation. From the feature's intent and the code, list the domain
-concepts this work will actually require, and for each one the knowledge base doesn't already
-settle, **ask** — concisely and batched (one tab per concept in Claude Code; one concise, clearly
-separated chat prompt in Codex), then wait. For example, before building a Maven plugin: *"Are you familiar with `plugin.xml` and
-Mojo objects (`@Mojo` / `AbstractMojo`)?"* — rather than silently guessing and either boring or
-losing them. Record the answers into the knowledge base and let them set your opening depth.
+concepts this work will actually require, normalize them against the profile as above, and ask only
+for the unmatched ones — concisely and batched (one tab per concept in Claude Code; one concise,
+clearly separated chat prompt in Codex), then wait. Never ask a familiarity question for a matched
+dimension, even when its level is `familiar`; use that level's teaching depth instead. For example,
+before building a Maven plugin: *"Are you familiar with `plugin.xml` and Mojo objects (`@Mojo` /
+`AbstractMojo`)?"* — rather than silently guessing and either boring or losing them. Record the
+answers into the knowledge base and let them set your opening depth.
 
 **Probe neutrally; never make explanation sound like a burden.** Do not ask whether you should
 "keep it light," or imply that the developer needs to opt in to an explanation. Ask what they know
