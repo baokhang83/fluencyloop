@@ -15,8 +15,7 @@
 
 <p align="center">FluencyLoop captures the decisions behind each feature while your agent builds it,<br/>so the codebase remains explainable.</p>
 
-
-[![Watch the video](https://i.sstatic.net/Vp2cE.png)](https://github.com/user-attachments/assets/fe6651bf-e696-40eb-9a16-cdd70e387317)
+[![Watch the video](https://i.sstatic.net/Vp2cE.png)](https://github.com/user-attachments/assets/161f1def-13a9-4a1b-a7b1-724eedc39c39)
 
 
 ## Table of contents
