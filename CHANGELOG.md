@@ -10,6 +10,8 @@ All notable changes to FluencyLoop are documented here.
   check before it records or hands off a diagram.
 - A plan's explicit task-to-issue mapping now supplies the matching feature prefix without a
   repeated confirmation prompt.
+- Embedded-diagram guidance now forbids page chrome and overflow rules that produce scrollbars in
+  the reader iframe, and requires an actual zero-scrollbar check.
 
 ## 0.3.15
 

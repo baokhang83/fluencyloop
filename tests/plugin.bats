@@ -229,7 +229,7 @@ for diagram_skill_text in [
     assert "exactly one `fluencyloop diagram` command" in diagram_skill_text
     assert "type-architecture.md" in diagram_skill_text
     assert "Do not omit a diagram solely because the native renderer rejects a valid graph" in diagram_skill_text
-    assert "remote-font or first-time style gate" in diagram_skill_text
+    assert "remote-font, first-time style gate, or\n   page-chrome examples" in diagram_skill_text
     assert "Never edit its generated HTML" in diagram_skill_text
     assert "Never write `docs/fluencyloop/product.md`" in diagram_skill_text
     assert "### Self-containment gate — verify before recording" in diagram_skill_text
@@ -237,6 +237,11 @@ for diagram_skill_text in [
     assert "CSS `@import`" in diagram_skill_text
     assert "confirm it renders with no `Diagram\nunavailable` notice" in diagram_skill_text
     assert "Do not record or hand off a diagram merely because its file\nexists." in diagram_skill_text
+    assert "### Embedded iframe contract — no scrollbars" in diagram_skill_text
+    assert "no page title, eyebrow, header, footer, outer `.frame` wrapper" in diagram_skill_text
+    assert "Never add `overflow: auto`,\n`overflow-x: auto`, or a positive SVG `min-width`" in diagram_skill_text
+    assert "`scrollWidth <= clientWidth` and `scrollHeight <= clientHeight`" in diagram_skill_text
+    assert "within the reader's fixed 33rem height" in diagram_skill_text
     assert "### Geometry preflight — no cramped or escaping content" in diagram_skill_text
     assert "character count is not a fit check" in diagram_skill_text
     assert "at least 16 SVG units between its outer stroke" in diagram_skill_text
