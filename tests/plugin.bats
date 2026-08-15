@@ -243,7 +243,10 @@ for diagram_skill_text in [
     assert "confirm it renders with no `Diagram\nunavailable` notice" in diagram_skill_text
     assert "Do not record or hand off a diagram merely because its file\nexists." in diagram_skill_text
     assert "### Embedded iframe contract — no scrollbars" in diagram_skill_text
-    assert "no page title, eyebrow, header, footer, outer `.frame` wrapper" in diagram_skill_text
+    assert "no HTML page title, eyebrow, header, footer, outer `.frame` wrapper" in diagram_skill_text
+    assert "visible, concise title as an SVG `<text>` element" in diagram_skill_text
+    assert "An HTML\n`<title>` is metadata, not a visible title." in diagram_skill_text
+    assert "dedicated top band of at least 40 SVG units" in diagram_skill_text
     assert "Never add `overflow: auto`,\n`overflow-x: auto`, or a positive SVG `min-width`" in diagram_skill_text
     assert "`scrollWidth <= clientWidth` and `scrollHeight <= clientHeight`" in diagram_skill_text
     assert "within the reader's fixed 33rem height" in diagram_skill_text
@@ -254,6 +257,7 @@ for diagram_skill_text in [
     assert "This is a design loop, not a one-shot fallback" in diagram_skill_text
     assert "then measure again after every revision" in diagram_skill_text
     assert "never ship a failed first pass" in diagram_skill_text
+    assert "A missing title\n  or even one node visually touching a boundary fails the preflight" in diagram_skill_text
 for full_guide_text in [
     read_text(root / "claude-skills" / "diagram-design" / "references" / "full-guide.md"),
     read_text(dist / "skills" / "diagram-design" / "references" / "full-guide.md"),
@@ -267,6 +271,9 @@ for architecture_reference in [
     read_text(dist / "skills" / "diagram-design" / "references" / "type-architecture.md"),
 ]:
     assert "**Zone label and containment margin.**" in architecture_reference
+    assert "Derive the zone from the placed node rectangles; do not\neyeball the dashed box." in architecture_reference
+    assert "at least 24px outside the extreme node strokes" in architecture_reference
+    assert "top at least 40px above the first node" in architecture_reference
     assert "including the bottom and sides" in architecture_reference
 claude_plan_text = read_text(root / "claude-skills" / "plan" / "SKILL.md")
 codex_plan_text = read_text(dist / "skills" / "plan" / "SKILL.md")
