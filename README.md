@@ -1,4 +1,3 @@
-<img width="826" height="461" alt="preview" src="https://github.com/user-attachments/assets/cb19678e-c3dd-47ff-bc46-ae240e4be36b" />
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/374c1a23-b1f1-402d-9e66-424f6793cdbd" alt="FluencyLoop — stay fluent in the code your AI agent writes" width="300" style="max-width: 100%; height: auto;"/>
@@ -16,7 +15,7 @@
 
 <p align="center">FluencyLoop captures the decisions behind each feature while your agent builds it,<br/>so the codebase remains explainable.</p>
 
-[![Watch the video](https://github.com/user-attachments/assets/7fb63980-b959-44ef-a398-c914e58ad725)](https://github.com/user-attachments/assets/161f1def-13a9-4a1b-a7b1-724eedc39c39)
+[![Watch the video](https://github.com/user-attachments/assets/cb19678e-c3dd-47ff-bc46-ae240e4be36b)](https://github.com/user-attachments/assets/161f1def-13a9-4a1b-a7b1-724eedc39c39)
 
 ## Table of contents
 
