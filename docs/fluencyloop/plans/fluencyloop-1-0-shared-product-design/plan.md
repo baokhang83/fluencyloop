@@ -10,22 +10,61 @@ Keep **FluencyLoop**. Fluency means that people can reason about the product the
 The loop connects intent, design, implementation, and learning across agent sessions. The name
 supports developers and designers without tying the product to a specific coding assistant.
 
-Proposed positioning: **Keep people and agents aligned as the product evolves.**
+Proposed positioning: **Stay fluent as people and agents evolve the product.**
 
-The flagship behavior is the agent's explanation before a meaningful change:
+The flagship describes the reasoning the agent must perform for consequential design choices:
 
 > This serves this product goal. These principles and prior decisions apply. I propose this
 > approach because of these tradeoffs. It preserves—or deliberately revises—this part of the
 > existing design.
 
-The loop is complete only when the implemented result is reconciled with that proposal and the
-shared product model is updated. Explanation and human understanding remain essential. The
-primary improvement is that retained knowledge actively informs the next design decision.
+Its visible expression is proportional to the decision and the person's needs. Incorporate it
+into the existing design explanation; do not recite the whole statement before every change.
+At a natural completion boundary, reconcile the result and update the affected shared model.
+People must remain able to understand, challenge, and change the design. Agent consistency
+alone is not success.
+
+## Interaction contract — preserve the strong principles
+
+> Use retained product reasoning automatically. Explain consequential choices at the right depth.
+> Recommend a path. Continue within agreed intent. Ask when human judgment is needed. Update the
+> shared model at natural boundaries.
+
+- **Recommend and continue:** Within authorized scope and agreed intent, state the recommended
+  approach and its useful reason, then act. Existing authorization also covers its necessary
+  implementation decisions. Do not request separate approval for a proposal record or routine
+  choice. A recommendation is not an unranked menu of options.
+- **Ask only for consequential unresolved judgment:** Batch independent material questions at
+  the next useful boundary, include a recommendation, and reuse settled answers and preferences.
+  Wait for an answer before dependent work. Continue independent work where possible. An explicit
+  instruction that already resolves the choice does not need another confirmation.
+- **Documentation is advisory:** Missing goals, unreviewed records, stale prose, broken historical
+  links, and incomplete metadata do not by themselves block implementation or delivery. Ask only
+  if the underlying uncertainty changes the requested work. Surface unrelated exposure briefly
+  at handoff or in the site; do not demand a cleanup session.
+- **No direction-document prerequisite:** Use the user's expressed intent and available evidence.
+  Offer a brief distilled from that conversation at a natural boundary. Record uncertainty
+  honestly; do not invent a goal or require a strategy workshop before ordinary work.
+- **Explain without adding a checkpoint:** Use calibration and expressed needs for depth. Familiar
+  work gets a short reason; routine edits need no flagship recital. Unknown familiarity does not
+  mean fluent and does not automatically trigger a blocking probe or comprehension confirmation.
+  A person who requests guided learning can choose deliberate teaching pauses. Preserve that
+  preference, trust self-report, and never quiz or infer engagement from silence.
+- **Capture once:** Link the existing design rationale and record only deviations at closure.
+  Scripts assemble mechanical views. Distill once at wrap-up; do not duplicate rationale across
+  proposals, decisions, outcomes, feature deltas, and review prose.
+- **Prove value before machinery:** T1 runs a small pilot using existing records before new
+  lifecycle/runtime infrastructure. Use the results to retain, narrow, or defer later tasks.
+
+This explicitly resolves inherited tension between staying out of the way and the current
+skills' automatic familiarity probes and mandatory understanding checks. T5 changes those rules
+in both distributions; current runtime/skill behavior is not changed by this planning PR.
 
 ## Goal & scope
 
 - **Goal:** A fresh agent session can recover product direction and relevant design decisions,
-  explain a grounded proposal, and leave a coherent current model after implementation.
+  recommend a grounded approach without unnecessary interruption, and leave a coherent current
+  model after implementation that the person can understand and challenge.
 - **Users:** Developers and designers working with agents and repository-owned artifacts.
   A designer can record a journey, interaction rule, terminology choice, accessibility constraint,
   or experience tradeoff without inventing a Java class or source-code implementation anchor.
@@ -35,7 +74,8 @@ primary improvement is that retained knowledge actively informs the next design 
   migration, behavior evaluation, and release documentation.
 - **Non-goals:** A project-management suite; hosted collaboration; Figma integration; vector
   search or a new database; automatic product strategy; comprehensive documentation of every
-  code change; mandatory quizzes; new merge gates; claims that readable records prove fluency.
+  code change; mandatory quizzes; new implementation or merge approval gates; mandatory product
+  briefs; claims that readable records prove fluency.
 - **Version:** 1.0 is a proposed first stable product contract. The current version is 0.3.18,
   so 2.0 would be misleading. Do not bump runtime versions until the release task.
 
@@ -44,7 +84,9 @@ primary improvement is that retained knowledge actively informs the next design 
 Agreed in the product discussion: retain the name; make the flagship statement central; improve
 the agent's ability to design consistently toward a product vision; give the constitution and
 architectural decisions greater product weight than feature inventories. The user authorized
-creation of the milestone and its task issues.
+creation of the milestone and its task issues. The subsequent principle review established the
+interaction contract above: preserve flow, recommend and continue within authorized intent,
+avoid duplicated capture, and pilot the behavior before committing to more machinery.
 
 This plan recommends the architecture and sequence below. A filed issue is scheduled work, not
 evidence that its proposed product policy has already been approved or implemented.
@@ -52,8 +94,8 @@ evidence that its proposed product policy has already been approved or implement
 Open product choices to resolve through T1 and dogfooding:
 
 - Confirm the final positioning sentence and 1.0 release label before publication.
-- Agree which changes deserve a proposal. Starting recommendation: consequential behavior,
-  interaction, dependency, boundary, or principle changes; routine local fixes stay lightweight.
+- Tune explanation/capture thresholds from the pilot. Consequential choices need grounded
+  reasoning; this is not a new mandatory approval stage or fixed speech template.
 - Agree acceptable attention and context cost from measured baseline runs. Do not invent a
   retention benefit or a universal token/time budget before collecting evidence.
 
@@ -80,13 +122,14 @@ failure to reproduce in evaluation, not proof that all overview statements can b
 
 | Source | Question it answers | Authority and boundary |
 |---|---|---|
-| Product brief | Who is this for, what outcome matters, and what do we exclude? | Human-owned intent; agent amendments remain proposals until explicitly agreed. |
+| Product brief | Who is this for, what outcome matters, and what do we exclude? | Human-owned intent; draft from expressed intent. Material new direction needs human judgment unless already authorized. Absence does not block work. |
 | Constitution | Which principles govern tradeoffs? | Explicit project rules; cite applicable rules and expose tension. |
 | Current design | How does the product or experience work now? | Concepts, relationships, and inspectable evidence; distinguish planned from implemented. |
-| Decision history | Why was an approach chosen, and does it still apply? | Scoped rationale, alternatives, assumptions, status, and replacement links. |
-| Change proposal and outcome | How does this work serve or revise the shared model? | Bounded pre-change reasoning followed by an evidence-backed reconciliation. |
+| Decision history | Why was an approach chosen, and does it still apply? | Scoped rationale and replacement links. Distinguish delegated agent choices from separately confirmed human choices; both can be valid working decisions. |
+| Design rationale and outcome | How does this work serve or revise the shared model? | Reuse existing explanation; capture deviations at natural closure without another approval stage. |
 
-Start with one concise, versioned product brief at `docs/fluencyloop/direction.md`. Give goals and
+When useful, distill one concise, versioned product brief at `docs/fluencyloop/direction.md` from
+the user's expressed intent and existing agreements. Offer it at a natural boundary. Give goals and
 non-goals stable anchors. The brief is the canonical source of intent. The site and agent context
 read it directly; do not maintain a competing generated vision. Reference the relevant revision
 when a proposal is made. Keep the existing product distillation as the explanation of current
@@ -96,7 +139,10 @@ Keep structured decisions and change records in the existing JSONL store. Extend
 schema with stable identities, explicit references, lifecycle transitions, proposals, and outcomes.
 Preserve existing identifiers and historical records through a compatibility resolver. Separate
 decision status from evidence trust: an agreed choice can still have an unverified rationale.
-An agent's suggestion must not become a human-approved decision through a default status.
+An agent's choice within delegated scope can be active without a separate human-approval event.
+Preserve that provenance; do not relabel it as human-approved. Product or principle changes
+outside current authorization need human judgment, not a default approval status. Add only the
+fields the pilot justifies; missing lifecycle metadata must not freeze normal work.
 
 ### Context assembly
 
@@ -104,6 +150,10 @@ Add a core CLI context operation in both Bash and PowerShell. It supplies the br
 constitution plus a bounded selection of current decisions, concepts, and open questions.
 Select deterministically from explicit references, affected areas, existing relationships, and
 tags. Let the agent expand the selection with a stated reason. Semantic search is deferred.
+
+Reuse unchanged context within an active task. Refresh when intent, relevant files (including
+uncommitted edits), principles, or referenced decisions change. Do not key freshness solely to
+HEAD or repeatedly reload the whole model at every slice. Keep refresh metadata mechanical.
 
 The result includes source references and revisions, selection reasons, unresolved references,
 conflicts, and omitted-context warnings. A bounded result must never claim exhaustive coverage.
@@ -116,18 +166,19 @@ Cycles and ambiguous active successors are visible warnings, not guessed authori
 
 ### Design and implementation flow
 
-1. Load direction and applicable context before selecting the approach.
-2. Explain the goal, applicable rules and precedents, alternatives, and preserved/revised design.
-3. Record a compact proposal with references to its context. Reuse an existing goal or state
-   that no agreed goal covers the request. Ask only when a missing answer materially changes work.
-4. Implement in proportional slices. Use existing teaching calibration to choose explanation
-   depth. Familiarity must not change technical or product authority.
-5. Reconcile intended and actual behavior. Record deviations and supporting evidence. Mark a
-   proposal implemented, changed, abandoned, or incomplete as appropriate; do not equate code
-   completion with human approval or independently verified correctness.
-6. Update affected current-design records and distillations. Propose changes to direction or
-   principles separately. Preserve history and flag unresolved differences.
-7. Present the resulting shared model and supporting changes in the site and review output.
+1. Load or reuse applicable context automatically. Missing direction is an explicit unknown.
+2. At the existing design boundary, explain the consequential reasoning at the right depth and
+   recommend a path. Reference actual goals and precedents when they exist; never fabricate them.
+3. Continue within authorized intent. Ask only for consequential unresolved judgment, with a
+   recommendation. Record the existing rationale once; do not create a separate approval exchange.
+4. Implement in proportional slices. Teach useful choices in context without repeating the
+   proposal. Calibration changes explanation depth, never technical or product authority.
+5. At natural completion, link the rationale and record actual deviations and outcome state.
+   Do not rewrite unchanged reasoning or imply human approval/verified correctness from completion.
+6. Update affected current-design records and distill once at wrap-up. Apply already-authorized
+   direction changes; raise genuinely new direction choices together at a useful boundary.
+7. Let the site and review assemble the human view from those records. Unrelated documentation
+   gaps remain advisory rather than blocking completion of the requested work.
 
 The same flow covers product design artifacts. Evidence may be a repository-owned journey,
 interaction specification, prototype, or design asset. Validate its path and artifact kind; do
@@ -139,6 +190,8 @@ Capture which source revisions support proposals and distillations. Changed depe
 mark an explanation as needing review. This is a mechanical exposure signal, not semantic proof
 that every dependent sentence is wrong. Show evidence checked at a revision separately from the
 date a record was written. Never relabel historical evidence as verified against current code.
+Keep such exposure passive by default. A changed source reference does not automatically create
+a user question or demand immediate prose repair.
 
 Backfill reconstructs history from evidence. It must not invent a contemporaneous proposal,
 human approval, or original product intent. Existing records without new links remain browsable;
@@ -146,10 +199,10 @@ unknown intent and missing associations stay explicit.
 
 ### Main architectural choice
 
-Reuse the shell-written store and local reader. Add the missing feedback loop around them.
-A prompt-only change is cheaper but leaves retrieval, lifecycle, and freshness unreliable.
-A new knowledge platform adds operating cost and migration risk before the behavior is proven.
-The proposed approach adds structured references only where they support a real decision.
+Pilot the feedback loop using the existing store, skills, and a short direction note first.
+This establishes behavior and cost before expanding the data model. Retain the shell-written
+store and local reader for the durable implementation. Add retrieval, references, and lifecycle
+only where observed failures justify them. A new knowledge platform remains outside scope.
 
 ## Site impact
 
@@ -157,13 +210,18 @@ The primary path explains intent, current design, and consequential choices. Cha
 supports those views. The site remains a local reader; intent authoring stays in files and agent
 conversation during this version.
 
+The site helps a person understand and challenge the design. It is optional to open during work.
+Do not turn it into a compliance dashboard with approval badges, completeness scores, blocking
+warnings, or mandatory tasks to repair the knowledge base. Missing intent is a useful empty state,
+not failed onboarding. Expose uncertainty and provenance on inspection without recurring nags.
+
 | Screen | Content and reading path | Existing material reused |
 |---|---|---|
 | Product | Agreed direction and non-goals; separately labeled current behavior; major flow; unresolved gaps; links into design and decisions | Product distillation plus the new brief |
 | Constitution | Principles, reasons, representative applications, and explicit tensions | Principle records and references |
 | Architecture | Current technical or experience model; concepts, relationships, evidence, and decision links | Architectural records and explanations |
 | Decisions | Active choices first; rationale, alternatives, assumptions, evidence trust, superseded history, and affected design | Existing decisions plus lifecycle and references |
-| Changes | Human-readable title, goal served, proposal, outcome, preserved/revised design, and evidence | Feature deltas, proposal/outcome records, and sessions |
+| Changes | Human-readable title, intent/goal when known, actual change, deviations, and preserved/revised design; rationale on demand | Existing feature deltas and linked decision/outcome evidence |
 
 Architecture and decisions are different views: one explains the current model, the other why
 it took that shape. Use progressive disclosure for small implementation decisions. Do not require
@@ -181,11 +239,11 @@ against `dev`. Detailed acceptance and validation live in the linked issue.
 
 | ID | Task | Size | Dependencies | Issue |
 |---|---|---|---|---|
-| T1 | Define the flagship contract and authoritative product brief | M | — | [#177](https://github.com/baokhang83/fluencyloop/issues/177) |
+| T1 | Pilot recommendation-first design and define the flow contract | M | — | [#177](https://github.com/baokhang83/fluencyloop/issues/177) |
 | T2 | Add stable record references and explicit decision lifecycle | L | T1 | [#178](https://github.com/baokhang83/fluencyloop/issues/178) |
 | T3 | Assemble bounded design context in Bash and PowerShell | L | T2 | [#179](https://github.com/baokhang83/fluencyloop/issues/179) |
-| T4 | Write proposals and reconciled outcomes with evidence references | M | T2 | [#180](https://github.com/baokhang83/fluencyloop/issues/180) |
-| T5 | Make grounded proposals part of plan and feature workflows | M | T3, T4 | [#181](https://github.com/baokhang83/fluencyloop/issues/181) |
+| T4 | Link existing design rationale and capture outcome deviations once | M | T2 | [#180](https://github.com/baokhang83/fluencyloop/issues/180) |
+| T5 | Recommend and continue within authorized intent in plan and feature workflows | M | T3, T4 | [#181](https://github.com/baokhang83/fluencyloop/issues/181) |
 | T6 | Reconcile implementation and update review/backfill workflows | M | T5 | [#182](https://github.com/baokhang83/fluencyloop/issues/182) |
 | T7 | Make Product and Constitution the human view of direction and principles | M | T1, T2 | [#183](https://github.com/baokhang83/fluencyloop/issues/183) |
 | T8 | Separate current architecture from decision history in the site | L | T2, T7 | [#184](https://github.com/baokhang83/fluencyloop/issues/184) |
@@ -196,10 +254,14 @@ against `dev`. Detailed acceptance and validation live in the linked issue.
 
 ## Roadmap & critical path
 
-- **A — Contract and foundations:** T1 → T2. Specify authority, identities, and reference
-  resolution before extending writers or screens. Create evaluation scenarios during T1.
-- **B — First working loop:** T3 and T4 → T5 → T6. Demonstrate one meaningful change in a
-  fresh session with retained prior rationale and an honest reconciled result.
+- **A — Evidence before foundations:** T1 is a small observed pilot, not only a contract-writing
+  task. Use existing records and a short direction note. Cover an authorized feature, a routine
+  fix, a designer change, and a genuinely unresolved choice in fresh sessions. Compare with 0.3;
+  measure useful reasoning, human understanding, interruption count, and context/attention cost.
+  Record a proceed/narrow/defer recommendation before T2. Revise downstream scope from the results.
+- **B — Justified foundations and working loop:** T2 → T3 and T4 → T5 → T6. Specify only the
+  authority, identities, and references the pilot shows are needed. Demonstrate recommendation,
+  delegated action, and natural closure without an extra approval workflow.
 - **C — Human inspection:** T7 → T8 → T9. T7 can start after T2 while runtime work continues.
   Review the proposed page hierarchy using real content before implementing all views.
 - **D — Adoption and evidence:** T10 → T11. T10 can start once T6 lands. Exercise both a
@@ -208,7 +270,8 @@ against `dev`. Detailed acceptance and validation live in the linked issue.
 
 The expected critical chain is **T1 → T2 → T3 → T5 → T6 → T9 → T11 → T12**. T4 joins at
 T5, T8 joins at T9, and T10 joins at T11. Relative sizes are provisional; revise the critical
-path after task estimation. A polished site cannot compensate for an unproven agent loop.
+path and task scope after the early pilot. T11 is the full regression evaluation, not the first
+evidence of value. A polished site cannot compensate for an unproven agent loop.
 
 ## Validation and release criteria
 
@@ -218,23 +281,35 @@ that an agent actually uses retrieved evidence appropriately.
 
 Required scenarios:
 
-1. A fresh session reuses an applicable prior decision and cites its real goal and principle.
+1. A fresh session reuses applicable prior reasoning, recommends a grounded approach, and
+   continues authorized work without asking for a separate proposal approval.
 2. A request conflicts with a principle. The agent surfaces the conflict before the dependent work.
 3. A changed assumption warrants a different design. The agent proposes a revision, preserves
    history, and avoids treating the replaced decision as active context.
 4. A routine local fix proceeds without a full proposal ceremony or product brief rewrite.
 5. A scope change during implementation is reconciled; the final explanation matches the result.
 6. A designer changes a user journey and records an experience tradeoff with valid artifact evidence.
-7. A legacy project has no agreed direction. The agent exposes the gap without inventing a vision.
+7. A legacy project has no brief. The agent uses expressed intent and proceeds where sufficient;
+   it neither invents a vision nor requires a strategy workshop or documentation cleanup.
 8. A record is reconstructed after merge. Its inferred rationale and provenance remain explicit.
 9. An overview retains the mnemo-warmup fetch/run contradiction. Closure corrects the overview or
    reports the unresolved discrepancy; a new timestamp alone cannot count as correction.
 10. Concurrent changes leave ambiguous successors or missing references. All readers expose the
     ambiguity consistently, without silently selecting a convenient active decision.
+11. A person can locate, understand, and challenge a consequential design choice in the site
+    without reading the original conversation. Approval counts cannot substitute for this.
+12. A familiar task gets concise reasoning; unknown familiarity does not force a probe or
+    comprehension checkpoint. Requested guided learning remains supported without quizzes.
+13. A genuine unresolved choice receives a recommendation and a batched question; the agent
+    waits only on dependent work and does not re-ask a choice the user already settled.
+14. Missing references and unrelated stale documentation remain advisory. Unchanged rationale
+    and context are reused rather than repeatedly summarized or loaded at each slice.
 
 Run representative sessions in Claude Code and Codex. Save person-neutral evidence, observed
 failures, record counts, context size, extra interactions, and time spent on the loop. Compare with
-the 0.3 baseline. Agree release thresholds from the pilot before making marketing claims.
+the 0.3 baseline. Count forced pauses and repeated questions separately from useful explanations.
+Record whether the person could follow and challenge the design; never infer learning from
+silence or journal volume. Agree release thresholds from T1 before making marketing claims.
 
 The release needs green Linux/Git Bash Bats, native-Windows Pester, ShellCheck/PSScriptAnalyzer,
 Node-optional checks, schema/compatibility fixtures, and relevant site/browser checks. Validate
@@ -253,9 +328,15 @@ Existing documented constraints remain applicable:
   must be idempotent and retain provenance; avoid retroactive intent or approval claims.
 - Privacy model: calibration remains private and local. Shared records describe the product and
   work, never a person's inferred competence.
-- Human authorship: propose material changes to intent and principles; do not silently ratify them.
-- Proportionality: the new workflow surfaces conflicts without adding a merge gate or requiring
-  a full design ceremony for routine edits.
+- Human authorship: honor authorized intent, including explicit revisions; ask only for new
+  consequential judgment. Record delegated agent decisions without inventing human approval.
+- Proportionality: no new approval gate for implementation or merge. Explain and recommend at
+  useful boundaries; missing documentation alone cannot hold the work hostage.
+- Teaching: preserve useful calibrated explanation and private preferences. T5 deliberately
+  replaces automatic blocking familiarity/understanding checks with the interaction contract;
+  deliberate learning pauses remain available when requested.
+- Efficiency: reuse context until relevant inputs change, capture rationale once, generate
+  mechanical views, and distill only at wrap-up. T1 proves benefit before infrastructure grows.
 - `RELEASING.md`: build on `dev`. Promotion to `main` distributes the new plugin through startup
   updates, so release only the complete experience with compatibility behavior in place.
 
@@ -273,6 +354,9 @@ rollback capability the current updater does not provide.
 | Retrieval omits the important prior choice | Show selection reasons and omissions; permit bounded expansion; test known missed-decision cases. |
 | Old decisions freeze the design | Capture scope and assumptions; support explicit reconsideration and replacement. |
 | Record volume overwhelms humans and agents | Select consequential choices, bound context, and progressively disclose detail. |
+| Proposals become repeated approval requests | Continue delegated work; ask only for unresolved human judgment and reuse settled answers. |
+| Knowledge gaps block ordinary implementation | Keep absent briefs, missing links, and stale prose advisory unless the underlying ambiguity changes the work. |
+| People become spectators of consistent agent output | Evaluate understanding and ability to challenge design alongside agent behavior. |
 | Direction and implemented behavior drift | Keep authority distinct; reconcile outcomes and expose changed supporting references. |
 | Designer support becomes a label on code-only records | Include a genuine journey/specification scenario and typed artifact evidence. |
 | Two runtimes and the site disagree | Share contract fixtures for identity, lifecycle, and current-context resolution. |
@@ -288,6 +372,7 @@ artifacts; no feature implementation or release has started.
 
 ## First delivery
 
-Start with T1, then prove T2–T6 on one meaningful change before completing the site transition.
-Use the flagship statement as the review lens for every task. Preserve FluencyLoop's teaching
-strength while making the retained knowledge change what the next agent actually does.
+Start with T1's observed pilot using existing artifacts before committing to T2–T6 infrastructure.
+Review its proceed/narrow/defer recommendation and adjust later issues. Keep the flagship as the
+reasoning lens, with a concise visible recommendation at the existing design boundary. The loop
+must improve design and human fluency without inserting a new approval ritual into normal work.
