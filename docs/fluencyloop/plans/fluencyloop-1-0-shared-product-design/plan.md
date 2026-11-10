@@ -71,7 +71,7 @@ in both distributions; current runtime/skill behavior is not changed by this pla
 - **In scope:** An authoritative product brief; stable references and decision lifecycle;
   bounded context retrieval; proposals and outcome reconciliation; changes to plan, feature,
   review, and backfill skills; a site organized around direction, current design, and decisions;
-  migration, behavior evaluation, and release documentation.
+  compatibility without mandatory data migration, behavior evaluation, and release documentation.
 - **Non-goals:** A project-management suite; hosted collaboration; Figma integration; vector
   search or a new database; automatic product strategy; comprehensive documentation of every
   code change; mandatory quizzes; new implementation or merge approval gates; mandatory product
@@ -139,6 +139,12 @@ Keep structured decisions and change records in the existing JSONL store. Extend
 schema with stable identities, explicit references, lifecycle transitions, proposals, and outcomes.
 Preserve existing identifiers and historical records through a compatibility resolver. Separate
 decision status from evidence trust: an agreed choice can still have an unverified rationale.
+T2 must support existing record identities at read time without writing replacement records.
+Derive deterministic references from the existing logical identity where possible; define honest
+ambiguity handling where it is not. New records can reference old decisions and append explicit
+replacement links when real work changes a choice. Do not backfill IDs or lifecycle metadata
+across customer history as an upgrade step. Product versions and stored-data versions are separate;
+releasing 1.0 does not itself require a schema bump or project-data conversion.
 An agent's choice within delegated scope can be active without a separate human-approval event.
 Preserve that provenance; do not relabel it as human-approved. Product or principle changes
 outside current authorization need human judgment, not a default approval status. Add only the
@@ -248,7 +254,7 @@ against `dev`. Detailed acceptance and validation live in the linked issue.
 | T7 | Make Product and Constitution the human view of direction and principles | M | T1, T2 | [#183](https://github.com/baokhang83/fluencyloop/issues/183) |
 | T8 | Separate current architecture from decision history in the site | L | T2, T7 | [#184](https://github.com/baokhang83/fluencyloop/issues/184) |
 | T9 | Replace feature inventories with goal-linked changes and site-wide search | M | T4, T6, T8 | [#185](https://github.com/baokhang83/fluencyloop/issues/185) |
-| T10 | Upgrade existing projects without inventing intent or rewriting history | M | T3, T4, T6 | [#186](https://github.com/baokhang83/fluencyloop/issues/186) |
+| T10 | Read existing project data without migration | M | T3, T4, T6 | [#186](https://github.com/baokhang83/fluencyloop/issues/186) |
 | T11 | Evaluate fresh-session design behavior and dogfood developer/designer journeys | L | T6, T9, T10 | [#187](https://github.com/baokhang83/fluencyloop/issues/187) |
 | T12 | Package and release the complete 1.0 experience | M | T11 | [#188](https://github.com/baokhang83/fluencyloop/issues/188) |
 
@@ -264,8 +270,9 @@ against `dev`. Detailed acceptance and validation live in the linked issue.
   delegated action, and natural closure without an extra approval workflow.
 - **C — Human inspection:** T7 → T8 → T9. T7 can start after T2 while runtime work continues.
   Review the proposed page hierarchy using real content before implementing all views.
-- **D — Adoption and evidence:** T10 → T11. T10 can start once T6 lands. Exercise both a
-  populated 0.3 project and a project without an agreed product brief.
+- **D — Compatibility and evidence:** T10 → T11. T10 integrates the no-migration contract already
+  required of T2 and later readers/writers. Exercise populated 0.3 and older supported projects
+  without modifying their knowledge files; an absent brief is not an upgrade prerequisite.
 - **E — Release:** T12 after T11 provides evidence for the flagship promise and acceptable cost.
 
 The expected critical chain is **T1 → T2 → T3 → T5 → T6 → T9 → T11 → T12**. T4 joins at
@@ -304,6 +311,11 @@ Required scenarios:
     waits only on dependent work and does not re-ask a choice the user already settled.
 14. Missing references and unrelated stale documentation remain advisory. Unchanged rationale
     and context are reused rather than repeatedly summarized or loaded at each slice.
+15. Update the plugin for a populated existing project, start a session, inspect/check context,
+    and browse its site without changing any existing knowledge file or creating conversion or
+    enrichment records. Repeat the sequence and compare the complete knowledge tree and bytes.
+16. Old and new records work together during a normal new feature. New records can reference
+    legacy decisions; no historical ID/goal/lifecycle backfill is required first.
 
 Run representative sessions in Claude Code and Codex. Save person-neutral evidence, observed
 failures, record counts, context size, extra interactions, and time spent on the loop. Compare with
@@ -324,8 +336,9 @@ Existing documented constraints remain applicable:
 
 - `CONTRIBUTING.md`: Node stays optional for the core loop. Implement core changes in Bash and
   PowerShell under the same observable contract.
-- Existing store contract: preserve append-only history and legacy Markdown inputs. Migration
-  must be idempotent and retain provenance; avoid retroactive intent or approval claims.
+- Existing store contract: preserve append-only history and legacy Markdown inputs. Read supported
+  existing formats without mandatory conversion; retain provenance and do not invent intent or
+  approval. The compatibility contract below applies from T2, not only at final release.
 - Privacy model: calibration remains private and local. Shared records describe the product and
   work, never a person's inferred competence.
 - Human authorship: honor authorized intent, including explicit revisions; ask only for new
@@ -340,11 +353,39 @@ Existing documented constraints remain applicable:
 - `RELEASING.md`: build on `dev`. Promotion to `main` distributes the new plugin through startup
   updates, so release only the complete experience with compatibility behavior in place.
 
-T10 must distinguish a runtime update from a project data upgrade. Do not make historical
-enrichment or semantic reconstruction a compulsory startup task. Specify behavior for old records,
-partial upgrades, and recoverable failures before release. Keep copies of original data available
-where a migration adds metadata. Document forward recovery; do not promise client pinning or a
-rollback capability the current updater does not provide.
+### Customer data contract — no mandatory migration
+
+A customer updates the plugin, reopens the project, and continues working. The new runtime and
+site interpret supported existing records where they are. Another project-data migration is not
+an acceptable default for this release.
+
+- No mandatory copying, moving, rewriting, or bulk-appending of project knowledge. An additive
+  reconstruction of thousands of historical records is still a migration and is not permitted
+  as an update prerequisite.
+- Session startup, project opening, context/check reads, and site browsing must not modify
+  project knowledge or create knowledge artifacts, whether tracked or untracked. Runtime process
+  state is distinct from knowledge;
+  ordinary new work may append records and update its affected distillations at normal closure.
+- Read existing 0.3 JSONL and supported earlier Markdown directly through compatibility adapters.
+  Do not rerun an importer merely to populate the redesigned site. Display historical feature
+  explanations in Changes without requiring new goal or proposal records.
+- Old and new records coexist. Resolve old identities at read time and let new work link them.
+  Missing goals, IDs, lifecycle, approval, or original proposals stay explicitly unknown where
+  they cannot be derived. Never reconstruct that information automatically to meet a new schema.
+- Remove the current skills' mandatory repository-wide semantic-assessment prerequisite from
+  normal work. A pending legacy-assessment marker must not force a history sweep before a task.
+- Historical enrichment is a separate, explicitly requested action scoped to selected material.
+  Preserve provenance and originals. Never treat an update, missing field, or stale marker as
+  authorization for enrichment, retrospective approval, or a strategy workshop.
+- Product releases do not automatically advance the on-disk schema. Keep formats independently
+  versioned and document which existing inputs are supported. Unsupported or malformed data gets
+  an honest read diagnostic, not silent conversion or automatic repair.
+
+T10 must verify this contract across Bash, PowerShell, both agent skill entry paths, and the site.
+Use populated fixtures and compare the entire project-knowledge file set and bytes before and
+after update/start/read/repeat sequences, not only whether old records were preserved. Include
+pending legacy assessments, mixed old/new records, and missing briefs. Document forward recovery
+for runtime failures without promising client pinning or downgrade features the updater lacks.
 
 ## Risks and mitigations
 
@@ -360,7 +401,8 @@ rollback capability the current updater does not provide.
 | Direction and implemented behavior drift | Keep authority distinct; reconcile outcomes and expose changed supporting references. |
 | Designer support becomes a label on code-only records | Include a genuine journey/specification scenario and typed artifact evidence. |
 | Two runtimes and the site disagree | Share contract fixtures for identity, lifecycle, and current-context resolution. |
-| An automatic update ships a partial transition | Integrate on dev and promote only after runtime, site, migration, and observed runs agree. |
+| A compatibility update becomes another customer-data migration | Read existing formats directly; verify zero knowledge-file writes on startup/read and forbid compulsory historical enrichment. |
+| An automatic update ships a partial transition | Integrate on dev and promote only after runtime, site, no-migration compatibility, and observed runs agree. |
 
 ## Tickets
 
