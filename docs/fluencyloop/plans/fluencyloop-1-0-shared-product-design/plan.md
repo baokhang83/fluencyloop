@@ -45,6 +45,12 @@ alone is not success.
 - **No direction-document prerequisite:** Use the user's expressed intent and available evidence.
   Offer a brief distilled from that conversation at a natural boundary. Record uncertainty
   honestly; do not invent a goal or require a strategy workshop before ordinary work.
+- **Establish direction before consequential design:** At the first substantial plan or feature,
+  identify the audience, desired outcome, and important exclusions already established by the
+  request and existing evidence. Ask about consequential gaps before selecting a dependent design.
+  Reuse settled answers in later work; reopen direction only for a material unresolved fork or
+  evidence that challenges an assumption. A completed brief is optional; resolving product
+  uncertainty that determines the design is necessary.
 - **Explain without adding a checkpoint:** Use calibration and expressed needs for depth. Familiar
   work gets a short reason; routine edits need no flagship recital. Unknown familiarity does not
   mean fluent and does not automatically trigger a blocking probe or comprehension confirmation.
@@ -133,7 +139,35 @@ the user's expressed intent and existing agreements. Offer it at a natural bound
 non-goals stable anchors. The brief is the canonical source of intent. The site and agent context
 read it directly; do not maintain a competing generated vision. Reference the relevant revision
 when a proposal is made. Keep the existing product distillation as the explanation of current
-behavior, separately labeled. An unfilled brief means direction is unknown, not agent-inferred.
+behavior, separately labeled. Unstated direction remains unknown rather than agent-inferred;
+an absent brief does not erase direction already expressed by the person.
+
+### When product and vision conversations happen
+
+Establish direction early, reuse it during normal work, and reopen it when meaningful uncertainty
+or new evidence warrants human judgment. Missing documentation is different from missing intent:
+a clear user request can provide sufficient direction even when no brief exists.
+
+| Moment | Agent responsibility | Human involvement |
+|---|---|---|
+| First substantial `plan`, or first substantial `feature` when no plan is needed | Before selecting a design, identify the intended audience, outcome, and important exclusions from available intent. Recommend a framing and ask one batched set of consequential unanswered questions. | Supply only the missing judgment; no fixed questionnaire or duplicate confirmation if the request already answers it. |
+| Later initiative or consequential product fork | Reuse established direction. Identify precisely which new uncertainty would change the product or experience and recommend a path. | Answer the unresolved choice before dependent work; do not restate the whole vision or approve ordinary delegated choices. |
+| Evidence challenges a product assumption | At a natural completion/review boundary, explain the evidence and recommend a specific revision to direction, audience, outcomes, or exclusions. Separate an observed fact from an inferred product conclusion. | Resolve genuinely new direction choices. Honor revisions already authorized; no silent rewrite, recurring strategy workshop, or blocking unrelated delivery. |
+
+`init` remains setup and never starts a vision questionnaire. A routine fix is not a trigger for
+initial product framing. A new session or an absent brief does not reset prior agreements.
+If the request already settles audience, outcome, and exclusions, acknowledge the useful framing
+briefly and continue; do not ask those questions again. Questions include a recommendation
+grounded in expressed intent, not a speculative strategy the agent invents for the person.
+
+The agent writes the concise brief from the agreed answers at the normal artifact boundary; the
+person does not fill in a document. That writing needs no separate ratification when it faithfully
+records an agreement already made. Keep unanswered areas explicit and distinguish proposed new
+direction. Do not turn framing into a prerequisite to opening or reading an existing project.
+
+Implementation ownership: T1 tests framing without a supplied brief; T5 implements the first two
+conversation moments in plan/feature; T6 handles evidence-backed revision recommendations at
+closure/review; T11 evaluates all three moments and reuse of settled answers in both agent hosts.
 
 Keep structured decisions and change records in the existing JSONL store. Extend the documented
 schema with stable identities, explicit references, lifecycle transitions, proposals, and outcomes.
@@ -172,7 +206,9 @@ Cycles and ambiguous active successors are visible warnings, not guessed authori
 
 ### Design and implementation flow
 
-1. Load or reuse applicable context automatically. Missing direction is an explicit unknown.
+1. Load or reuse applicable context automatically. At the first substantial plan/feature, establish
+   enough product direction before selecting a dependent design. Use expressed intent and prior
+   agreements; ask only for consequential gaps. A missing brief is not by itself missing intent.
 2. At the existing design boundary, explain the consequential reasoning at the right depth and
    recommend a path. Reference actual goals and precedents when they exist; never fabricate them.
 3. Continue within authorized intent. Ask only for consequential unresolved judgment, with a
@@ -181,8 +217,9 @@ Cycles and ambiguous active successors are visible warnings, not guessed authori
    proposal. Calibration changes explanation depth, never technical or product authority.
 5. At natural completion, link the rationale and record actual deviations and outcome state.
    Do not rewrite unchanged reasoning or imply human approval/verified correctness from completion.
-6. Update affected current-design records and distill once at wrap-up. Apply already-authorized
-   direction changes; raise genuinely new direction choices together at a useful boundary.
+6. Update affected current-design records and distill once at wrap-up. If experience challenges a
+   product assumption, explain the evidence and recommend a specific direction revision at this
+   natural boundary. Apply already-authorized changes; ask only for genuinely new judgment.
 7. Let the site and review assemble the human view from those records. Unrelated documentation
    gaps remain advisory rather than blocking completion of the requested work.
 
@@ -261,8 +298,10 @@ against `dev`. Detailed acceptance and validation live in the linked issue.
 ## Roadmap & critical path
 
 - **A — Evidence before foundations:** T1 is a small observed pilot, not only a contract-writing
-  task. Use existing records and a short direction note. Cover an authorized feature, a routine
-  fix, a designer change, and a genuinely unresolved choice in fresh sessions. Compare with 0.3;
+  task. Use existing records and include initial product framing without a prewritten brief.
+  Include partially specified and fully specified intent, plus later work reusing the answers.
+  Cover an authorized feature, a routine fix, a designer change, and a genuinely unresolved choice
+  in fresh sessions. Compare with 0.3;
   measure useful reasoning, human understanding, interruption count, and context/attention cost.
   Record a proceed/narrow/defer recommendation before T2. Revise downstream scope from the results.
 - **B — Justified foundations and working loop:** T2 → T3 and T4 → T5 → T6. Specify only the
@@ -316,6 +355,17 @@ Required scenarios:
     enrichment records. Repeat the sequence and compare the complete knowledge tree and bytes.
 16. Old and new records work together during a normal new feature. New records can reference
     legacy decisions; no historical ID/goal/lifecycle backfill is required first.
+17. The first substantial plan/feature starts with no brief and an intent missing one product
+    choice that materially affects design. Before choosing that design, the agent recommends a
+    framing and asks only the missing audience/outcome/exclusion question. The agent writes the
+    agreed brief; the person supplies judgment rather than filling a document.
+18. A fully specified request needs no framing questions. Later sessions reuse its agreements;
+    a new initiative asks only its novel product fork. A routine fix and init trigger no vision
+    questionnaire, and a missing brief alone cannot force one.
+19. Evidence at closure/review challenges a product assumption. The agent recommends a specific
+    revision with supporting evidence, distinguishes fact from inference, and asks only for new
+    direction judgment. It neither silently rewrites the vision nor re-asks an authorized revision
+    or blocks unrelated delivery pending that choice.
 
 Run representative sessions in Claude Code and Codex. Save person-neutral evidence, observed
 failures, record counts, context size, extra interactions, and time spent on the loop. Compare with
